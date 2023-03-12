@@ -1,0 +1,22 @@
+@import './button';
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  color: #fff;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-size: 1em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.flex-col {
+  display: flex;
+  align-items: center;
+}
