@@ -1,4 +1,6 @@
-import type { IRoute } from '../interfaces/route';
+import type { IRoute } from '@/interfaces/route';
+
+import DiapoShuffleView from '@/views/DiapoShuffleView.vue';
 
 const routes: IRoute[] = [
   {
@@ -6,21 +8,21 @@ const routes: IRoute[] = [
     name: 'diaposhuffle',
     title: 'DiapoShuffle',
     icon: 'mdi-shuffle-variant',
-    component: () => import('../views/DiapoShuffleView.vue'),
+    component: DiapoShuffleView,
   },
   {
     path: '/export',
     name: 'export',
     title: 'Export',
     icon: 'mdi-database-export',
-    component: () => import('../views/ExportView.vue'),
+    component: () => import('@/views/ExportView.vue'),
   },
   {
     path: '/settings',
     name: 'settings',
     title: 'Settings',
     icon: 'mdi-cog',
-    component: () => import('../views/SettingsView.vue'),
+    component: () => import('@/views/SettingsView.vue'),
   },
 ];
 

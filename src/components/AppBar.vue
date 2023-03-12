@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useGlobalState } from '@/stores';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -10,7 +11,10 @@ const emit = defineEmits<{
   (e: 'toggleTheme'): void;
 }>();
 
-const appTitle = computed((): string => props.title || '');
+const { showTheHelp } = useGlobalState();
+
+// Computeds
+const appTitle = computed(() => props.title || '');
 </script>
 
 <template>
@@ -20,6 +24,12 @@ const appTitle = computed((): string => props.title || '');
     </template>
 
     <v-app-bar-title>{{ appTitle }}</v-app-bar-title>
+
+    <v-spacer></v-spacer>
+
+    <v-btn class="help" icon @click="showTheHelp = true">
+      <v-icon>mdi-help-circle-outline</v-icon>
+    </v-btn>
   </v-app-bar>
 </template>
 

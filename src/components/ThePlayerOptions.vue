@@ -1,156 +1,148 @@
 <script setup lang="ts">
-// TODO: Feature: save in user preferences (bdd or localstorage) the choosen options.
-
-// Types
-import type { Fn } from '@vueuse/core';
-
 // Vendors Libs
-import { ref, watch, onMounted } from 'vue';
-import { useEventListener } from '@vueuse/core';
+import { ref, computed, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { whenever } from '@vueuse/shared';
 
 // Libs
-import { getKey } from '@/utils/utils';
+import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener';
 
 // Stores
 import { useGlobalState } from '@/stores';
+import { useDiapoShuffleStore } from '@/stores/diapoShuffle';
 
 // Components
 import SourceOptions from '@/components/ThePlayerOptions/SourceOptions.vue';
 import PlayerOptions from '@/components/ThePlayerOptions/PlayerOptions.vue';
 import UIOptions from '@/components/ThePlayerOptions/UIOptions.vue';
 
-let stopKeyboardShortcuts: Fn | null;
+const route = useRoute();
+const router = useRouter();
+
+// Stores
+const { showTheHelp } = useGlobalState();
+const { showThePlayer, showFolderBrowser, showTagger } = useDiapoShuffleStore();
+
+const { startListener, stopListener } = useKeyboardShortcutsListener(keyboardShortcuts);
+
+enum TabId {
+  source = 'source',
+  player = 'player',
+  ui = 'ui',
+}
+const TabIds = Object.values(TabId);
+const DEFAULT_TAB_ID = TabId.source;
+
+function getValidTabId(id?: TabId) {
+  return id && TabIds.includes(id) ? id : DEFAULT_TAB_ID;
+}
 
 // Refs
-const tab = ref('source'); // Default tab to display.
-const { isTheHelpShown, isThePlayerShown, toggleTheHelp, setShowThePlayer } = useGlobalState();
-
-const sourceOptionsCmp = ref<{ showFolderBrowser: Function; showTaggerModal: Function } | null>(
-  null
-);
+const hashTabId = computed(() => {
+  const hash = route.hash;
+  if (!hash) {
+    return;
+  }
+  const hashes = route.hash
+    .substring(1)
+    .split('/')
+    .map((p) => {
+      const split = p.split(':');
+      return {
+        key: split[0],
+        value: split[1],
+      };
+    });
+  return hashes.find((p) => p.key === 'tab')?.value as TabId;
+});
+const tabId = ref(getValidTabId(hashTabId.value)); // Default tab to display.
 
 // Watchs
+whenever(hashTabId, (val) => {
+  if (tabId.value === val) {
+    return;
+  }
+  tabId.value = getValidTabId(val);
+});
+
+watch(tabId, (val) => {
+  router.replace({ hash: `#tab:${val}` });
+});
+
 watch(
-  () => isTheHelpShown(),
-  (onShow) => {
-    if (onShow) {
-      removeKeyboardShortcuts();
-    } else if (!isThePlayerShown()) {
-      attachKeyboardShortcuts();
+  () => showTheHelp,
+  (isShow) => {
+    if (isShow) {
+      startListener();
+    } else if (!showThePlayer.value) {
+      stopListener();
     }
   }
 );
 
-watch(
-  () => isThePlayerShown(),
-  (onShow) => {
-    if (onShow) {
-      removeKeyboardShortcuts();
-    } else if (!isThePlayerShown()) {
-      attachKeyboardShortcuts();
-    }
-  }
-);
+watch(showThePlayer, (isShow) => {
+  isShow ? stopListener() : startListener();
+});
+
+watch(showFolderBrowser, (isShow) => {
+  isShow ? stopListener() : startListener();
+});
+
+watch(showTagger, (isShow) => {
+  isShow ? stopListener() : startListener();
+});
 
 // Methods
-function showFolderBrowser() {
-  sourceOptionsCmp.value?.showFolderBrowser();
-}
-
-function onShowFolderBrowser() {
-  removeKeyboardShortcuts();
-}
-
-function onHideFolderBrowser() {
-  attachKeyboardShortcuts();
-}
-
-function showTaggerModal() {
-  sourceOptionsCmp.value?.showTaggerModal();
-}
-
-function onShowTaggerModal() {
-  removeKeyboardShortcuts();
-}
-
-function onHideTaggerModal() {
-  attachKeyboardShortcuts();
-}
-
-function keyboardShortcuts(e: KeyboardEvent) {
-  // console.log('TheHelp e:', e);
-
-  const key = getKey(e);
-
+function keyboardShortcuts(key: string) {
   switch (key) {
     case 'Space':
     case 'Enter':
-      setShowThePlayer(true);
+      showThePlayer.value = true;
       break;
     case 'b':
-      showFolderBrowser();
+      showFolderBrowser.value = true;
       break;
     case 'h':
-      toggleTheHelp();
+      showTheHelp.value = true;
       break;
     case 't':
-      showTaggerModal();
+      showTagger.value = true;
       break;
     default:
   }
 }
-
-function attachKeyboardShortcuts() {
-  if (stopKeyboardShortcuts) {
-    return;
-  }
-  stopKeyboardShortcuts = useEventListener(document, 'keydown', keyboardShortcuts);
-}
-
-function removeKeyboardShortcuts() {
-  stopKeyboardShortcuts && stopKeyboardShortcuts();
-  stopKeyboardShortcuts = null;
-}
-
-onMounted(() => attachKeyboardShortcuts());
 </script>
 
 <template>
-  <v-card class="the-player-options">
-    <v-tabs class="tabs" v-model="tab">
-      <v-tab value="source" href="#source">
+  <v-card v-if="!showThePlayer" class="the-player-options">
+    <v-tabs class="tabs" v-model="tabId">
+      <v-tab :value="TabId.source" :href="'#tab:' + TabId.source">
         <v-icon left> mdi-file-tree </v-icon>
         Source
       </v-tab>
 
-      <v-tab value="player" href="#player">
+      <v-tab :value="TabId.player" :href="'#tab:' + TabId.player">
         <v-icon left> mdi-motion-play-outline </v-icon>
         Player
       </v-tab>
 
-      <v-tab value="ui" href="#ui">
+      <v-tab :value="TabId.ui" :href="'#tab:' + TabId.ui">
         <v-icon left> mdi-monitor-screenshot </v-icon>
         UI
       </v-tab>
     </v-tabs>
 
     <v-card-text>
-      <v-window v-model="tab" class="tabs-items">
-        <v-window-item key="1" value="source">
-          <SourceOptions
-            ref="sourceOptionsCmp"
-            @showFolderBrowser="onShowFolderBrowser"
-            @hideFolderBrowser="onHideFolderBrowser"
-            @showTaggerModal="onShowTaggerModal"
-            @hideTaggerModal="onHideTaggerModal"
-          />
+      <v-window v-model="tabId" class="tabs-items">
+        <v-window-item :key="TabId.source" :value="TabId.source">
+          <SourceOptions />
         </v-window-item>
 
-        <v-window-item key="2" value="player">
+        <v-window-item :key="TabId.player" :value="TabId.player">
           <PlayerOptions />
         </v-window-item>
 
-        <v-window-item key="3" value="ui">
+        <v-window-item :key="TabId.ui" :value="TabId.ui">
           <UIOptions />
         </v-window-item>
       </v-window>

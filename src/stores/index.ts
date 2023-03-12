@@ -20,8 +20,7 @@ export const useGlobalState = createGlobalState(() => {
 
   // State
   const states = useStorage('ds3-index', defaultStates, localStorage, { mergeDefaults: true });
-  const theHelpShown = ref(false);
-  const thePlayerShown = ref(false);
+  const showTheHelp = ref(false);
 
   // Getters
   const getShowMenu = () => states.value.showMenu;
@@ -29,34 +28,24 @@ export const useGlobalState = createGlobalState(() => {
   const getLastVisitedRoute = () => states.value.lastVisitedRoute;
   const getTheme = () => states.value.theme;
 
-  const isTheHelpShown = () => theHelpShown.value;
-  const isThePlayerShown = () => thePlayerShown.value;
-
   // Mutations
   const setShowMenu = (val: boolean) => (states.value.showMenu = val);
   const setRailMenu = (val: boolean) => (states.value.railMenu = val);
   const setLastVisitedRoute = (val: string) => (states.value.lastVisitedRoute = val);
-  const toggleTheHelp = (show?: boolean) => {
-    theHelpShown.value = typeof show === 'boolean' ? show : !theHelpShown.value;
-  };
-  const setShowTheHelp = (show: boolean) => toggleTheHelp(show);
-  const setShowThePlayer = (show: boolean) => (thePlayerShown.value = show);
 
   return {
+    // States
+    showTheHelp,
+
     // Getters
     getShowMenu,
     getRailMenu,
     getLastVisitedRoute,
     getTheme,
-    isTheHelpShown,
-    isThePlayerShown,
 
     // Mutations
     setShowMenu,
     setRailMenu,
     setLastVisitedRoute,
-    toggleTheHelp,
-    setShowTheHelp,
-    setShowThePlayer,
   };
 });

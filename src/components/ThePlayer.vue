@@ -6,20 +6,21 @@
 
 // Types
 import type { Ref } from 'vue';
-import type { Fn } from '@vueuse/core';
 import type { Item } from '@/models/item';
 import type { TagId } from '@/models/tag';
 import { Position } from '@/interfaces/components/PinWrapper';
 
 // Vendors Libs
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { useEventListener } from '@vueuse/core';
 
+// Libs
 import { ERROR_SEVERITY_INFO, buildError } from '@/api/api';
 import { clone, getKey } from '@/utils/utils';
+import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener';
 
 // Stores
 import { useGlobalState } from '@/stores';
+import { useDiapoShuffleStore } from '@/stores/diapoShuffle';
 import { usePlayerOptionsStore } from '@/stores/playerOptions/playerOptions';
 import { useSourceOptionsStore } from '@/stores/playerOptions/sourceOptions';
 import { useUIOptionsStore } from '@/stores/playerOptions/uiOptions';
@@ -41,11 +42,14 @@ import PinWrapper from './ThePlayer/PinWrapper.vue';
 const PINED_ANIMATION_DURATION = 1000;
 const UNPINED_ANIMATION_DURATION = 1000;
 
-let stopKeyboardShortcuts: Fn | null;
 let fetchNextItemPromise: Promise<Item> | undefined = undefined;
 
+const { startListener: startShortcutsListener, stopListener: stopShortcutsListener } =
+  useKeyboardShortcutsListener(keyboardShortcuts);
+
 // Stores
-const globalStore = useGlobalState();
+const { showTheHelp } = useGlobalState();
+const diapoShuffleStore = useDiapoShuffleStore();
 const playerOptsStore = usePlayerOptionsStore();
 const sourceOptsStore = useSourceOptionsStore();
 const uiOptsStore = useUIOptionsStore();
@@ -208,11 +212,7 @@ const deleteSrcText = computed(() => {
   return `Src: ${deleteModal.itemData.value?.src}`;
 });
 
-const isTheHelpShown = computed(() => globalStore.isTheHelpShown());
-
 onMounted(async () => {
-  attachKeyboardShortcuts();
-
   // Reset history index.
   historyIndex.value = historyLength.value - 1;
 
@@ -284,7 +284,7 @@ function stopPlaying() {
 
   TheLoopCmp.value?.stopLooping();
 
-  globalStore.setShowThePlayer(false);
+  diapoShuffleStore.showThePlayer.value = false;
 }
 
 function pausePlaying({ pauseItem = true, pauseLooping = true } = {}) {
@@ -675,7 +675,7 @@ function editHistoryItem(index: number, item: Item) {
 function showDeleteModal({ item, showOptions = false }: { item: Item; showOptions?: boolean }) {
   showUI();
   pausePlaying();
-  removeKeyboardShortcuts();
+  stopShortcutsListener();
 
   deleteModal.itemData.value = item;
   deleteModal.showOptions.value = !!showOptions;
@@ -698,7 +698,7 @@ function hideDeleteModal({
   deleteModal.show.value = false;
   deleteModal.itemData.value = undefined;
 
-  attachKeyboardShortcuts();
+  startShortcutsListener();
 
   if (item && remove) {
     deleteItem({
@@ -718,13 +718,13 @@ function hideDeleteModal({
 
 function showTaggerModal() {
   pausePlaying({ pauseItem: false });
-  removeKeyboardShortcuts();
+  stopShortcutsListener();
   taggerModal.show.value = true;
 }
 
 function hideTaggerModal() {
   taggerModal.show.value = false;
-  attachKeyboardShortcuts();
+  startShortcutsListener();
   showUIDuring(3000);
 }
 
@@ -831,10 +831,6 @@ function triggerUnpinedAnim() {
   }, UNPINED_ANIMATION_DURATION);
 }
 
-function showTheHelp() {
-  globalStore.setShowTheHelp(true);
-}
-
 function displayAlert({
   publicMessage = 'Unknow error.',
   severity = 'error',
@@ -855,10 +851,7 @@ function hideAlert() {
   alert.value.onClose?.();
 }
 
-function keyboardShortcuts(e: KeyboardEvent) {
-  // console.log('ThePlayer e:', e);
-
-  const key = getKey(e);
+function keyboardShortcuts(key: string) {
   switch (key) {
     case 'Space':
       if (pause.value) {
@@ -898,7 +891,7 @@ function keyboardShortcuts(e: KeyboardEvent) {
 
     case 'h':
       pausePlaying();
-      showTheHelp();
+      showTheHelp.value = true;
       break;
 
     case 'p':
@@ -974,23 +967,11 @@ function fetchTagsAndCategories() {
   return Promise.all([taggerStore.fetchTags(), taggerStore.fetchCategories()]);
 }
 
-function attachKeyboardShortcuts() {
-  if (stopKeyboardShortcuts) {
-    return;
-  }
-  stopKeyboardShortcuts = useEventListener(document, 'keydown', keyboardShortcuts);
-}
-
-function removeKeyboardShortcuts() {
-  stopKeyboardShortcuts && stopKeyboardShortcuts();
-  stopKeyboardShortcuts = null;
-}
-
-watch(isTheHelpShown, (onShow) => {
-  if (onShow) {
-    removeKeyboardShortcuts();
+watch(showTheHelp, (isShow) => {
+  if (isShow) {
+    stopShortcutsListener();
   } else {
-    attachKeyboardShortcuts();
+    startShortcutsListener();
   }
 });
 </script>

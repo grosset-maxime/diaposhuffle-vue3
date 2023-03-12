@@ -12,23 +12,26 @@ import StartButton from '@/components/StartButton.vue';
 
 // Stores
 import { useGlobalState } from '@/stores';
+// TODO: should be move to DiapoShuffleView.
+import { useDiapoShuffleStore } from '@/stores/diapoShuffle';
 
 const router = useRouter();
 const route = useRoute();
 
-// Refs
+// Stores
 const {
+  showTheHelp,
+
   // Getters
   getShowMenu,
   getLastVisitedRoute,
   getTheme,
-  isTheHelpShown,
-  isThePlayerShown,
 
   // Actions
   setShowMenu,
   setLastVisitedRoute,
 } = useGlobalState();
+const { showThePlayer } = useDiapoShuffleStore();
 
 // Computeds
 const routePath = computed((): string => route.path);
@@ -86,9 +89,10 @@ router.beforeEach((to, from, next) => {
       </div>
     </v-footer>
 
-    <TheHelp :show="isTheHelpShown()" />
+    <TheHelp :show="showTheHelp" />
 
-    <ThePlayer v-if="isThePlayerShown()" />
+    <!-- TODO: should be moved to DiapoShuffleView -->
+    <ThePlayer v-if="showThePlayer" />
   </v-app>
 </template>
 
@@ -102,9 +106,9 @@ router.beforeEach((to, from, next) => {
   display: flex;
   justify-content: center;
 
-  .start-btn-ctn {
+  /* .start-btn-ctn {
     width: 50%;
     text-align: center;
-  }
+  } */
 }
 </style>

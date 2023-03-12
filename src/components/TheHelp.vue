@@ -1,16 +1,14 @@
 <script setup lang="ts">
 // Types
 import type { DefineComponent } from 'vue';
-import type { Fn } from '@vueuse/core';
 
 // Vendors Libs
 import { computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { useEventListener } from '@vueuse/core';
 
 // Libs
-import { getKey } from '@/utils/utils';
 import { routesMap } from '@/router/routes';
+import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener';
 
 // Components
 import DiapoShuffleHelp from '@/components/Helps/DiapoShuffleHelp.vue';
@@ -18,8 +16,8 @@ import DiapoShuffleHelp from '@/components/Helps/DiapoShuffleHelp.vue';
 // Stores
 import { useGlobalState } from '@/stores';
 
-let stopKeyboardShortcuts: Fn;
 const route = useRoute();
+const { startListener, stopListener } = useKeyboardShortcutsListener(keyboardShortcuts);
 
 const pageHelpCmps: {
   [key: string]: DefineComponent<{}, {}, any>;
@@ -36,7 +34,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 // Refs
-const { toggleTheHelp } = useGlobalState();
+const { showTheHelp } = useGlobalState();
 
 // Computeds
 const routePath = computed((): string => route.path);
@@ -48,22 +46,19 @@ watch(
   () => props.show,
   (onShow) => {
     if (onShow) {
-      attachKeyboardShortcuts();
+      startListener();
     } else {
-      removeKeyboardShortcuts();
+      stopListener();
     }
   }
 );
 
 // Methods
 function closeTheHelp() {
-  toggleTheHelp(false);
+  showTheHelp.value = false;
 }
 
-function keyboardShortcuts(e: KeyboardEvent) {
-  // console.log('TheHelp e:', e);
-
-  const key = getKey(e);
+function keyboardShortcuts(key: string) {
   switch (key) {
     case 'Escape':
     case 'h':
@@ -71,14 +66,6 @@ function keyboardShortcuts(e: KeyboardEvent) {
       break;
     default:
   }
-}
-
-function attachKeyboardShortcuts() {
-  stopKeyboardShortcuts = useEventListener(document, 'keydown', keyboardShortcuts);
-}
-
-function removeKeyboardShortcuts() {
-  stopKeyboardShortcuts && stopKeyboardShortcuts();
 }
 </script>
 
