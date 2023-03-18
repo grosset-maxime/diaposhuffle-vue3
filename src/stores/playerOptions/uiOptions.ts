@@ -1,5 +1,5 @@
-// import { ref } from 'vue';
-import { createGlobalState, useStorage } from '@vueuse/core';
+import { computed } from 'vue'
+import { createGlobalState, useStorage } from '@vueuse/core'
 
 interface states {
   showPath: boolean;
@@ -40,86 +40,100 @@ export const useUIOptionsStore = createGlobalState(() => {
 
     showLoop: true,
     pinLoop: true,
-  };
+  }
 
-  // State
+  // States
   const states = useStorage('ds3-playerOpts-uiOpts', defaultStates, localStorage, {
     mergeDefaults: true,
-  });
+  })
 
-  // Getters
-  const isShowPath = () => states.value.showPath;
-  const isPinPath = () => states.value.pinPath;
-  const isShowTags = () => states.value.showTags;
-  const isPinTags = () => states.value.pinTags;
-  const isShowHistory = () => states.value.showHistory;
-  const isPinHistory = () => states.value.pinHistory;
-  const isShowPined = () => states.value.showPined;
-  const isPinPined = () => states.value.pinPined;
-  const isShowListIndex = () => states.value.showListIndex;
-  const isPinListIndex = () => states.value.pinListIndex;
-  const isShowLoop = () => states.value.showLoop;
-  const isPinLoop = () => states.value.pinLoop;
+  //#region Computeds
+  const showPath = computed({
+    get: () => states.value.showPath,
+    set: (val) => (states.value.showPath = val),
+  })
+  const pinPath = computed({
+    get: () => states.value.pinPath,
+    set: (val) => (states.value.pinPath = val),
+  })
+  const showTags = computed({
+    get: () => states.value.showTags,
+    set: (val) => (states.value.showTags = val),
+  })
+  const pinTags = computed({
+    get: () => states.value.pinTags,
+    set: (val) => (states.value.pinTags = val),
+  })
+  const showHistory = computed({
+    get: () => states.value.showHistory,
+    set: (val) => (states.value.showHistory = val),
+  })
+  const pinHistory = computed({
+    get: () => states.value.pinHistory,
+    set: (val) => (states.value.pinHistory = val),
+  })
+  const showPined = computed({
+    get: () => states.value.showPined,
+    set: (val) => (states.value.showPined = val),
+  })
+  const pinPined = computed({
+    get: () => states.value.pinPined,
+    set: (val) => (states.value.pinPined = val),
+  })
+  const showListIndex = computed({
+    get: () => states.value.showListIndex,
+    set: (val) => (states.value.showListIndex = val),
+  })
+  const pinListIndex = computed({
+    get: () => states.value.pinListIndex,
+    set: (val) => (states.value.pinListIndex = val),
+  })
+  const showLoop = computed({
+    get: () => states.value.showLoop,
+    set: (val) => (states.value.showLoop = val),
+  })
+  const pinLoop = computed({
+    get: () => states.value.pinLoop,
+    set: (val) => (states.value.pinLoop = val),
+  })
+  //#endregion Computeds
 
-  // Mutations
-  const setShowPath = (val: boolean) => (states.value.showPath = val);
-  const setPinPath = (val: boolean) => (states.value.pinPath = val);
-  const setShowTags = (val: boolean) => (states.value.showTags = val);
-  const setPinTags = (val: boolean) => (states.value.pinTags = val);
-  const setShowHistory = (val: boolean) => (states.value.showHistory = val);
-  const setPinHistory = (val: boolean) => (states.value.pinHistory = val);
-  const setShowPined = (val: boolean) => (states.value.showPined = val);
-  const setPinPined = (val: boolean) => (states.value.pinPined = val);
-  const setShowListIndex = (val: boolean) => (states.value.showListIndex = val);
-  const setPinListIndex = (val: boolean) => (states.value.pinListIndex = val);
-  const setShowLoop = (val: boolean) => (states.value.showLoop = val);
-  const setPinLoop = (val: boolean) => (states.value.pinLoop = val);
+  //#region Mutations
   const toggleShowAll = (val: boolean) => {
-    setShowPath(val);
-    setShowTags(val);
-    setShowHistory(val);
-    setShowPined(val);
-    setShowListIndex(val);
-    setShowLoop(val);
-  };
+    showPath.value = val
+    showTags.value = val
+    showHistory.value = val
+    showPined.value = val
+    showListIndex.value = val
+    showLoop.value = val
+  }
   const togglePinAll = (val: boolean) => {
-    setPinPath(val);
-    setPinTags(val);
-    setPinHistory(val);
-    setPinPined(val);
-    setPinListIndex(val);
-    setPinLoop(val);
-  };
+    pinPath.value = val
+    pinTags.value = val
+    pinHistory.value = val
+    pinPined.value = val
+    pinListIndex.value = val
+    pinLoop.value = val
+  }
+  //#endregion Mutations
 
   return {
-    // Getters
-    isShowPath,
-    isPinPath,
-    isShowTags,
-    isPinTags,
-    isShowHistory,
-    isPinHistory,
-    isShowPined,
-    isPinPined,
-    isShowListIndex,
-    isPinListIndex,
-    isShowLoop,
-    isPinLoop,
+    // Writable Computeds
+    showPath,
+    pinPath,
+    showTags,
+    pinTags,
+    showHistory,
+    pinHistory,
+    showPined,
+    pinPined,
+    showListIndex,
+    pinListIndex,
+    showLoop,
+    pinLoop,
 
     // Mutations
-    setShowPath,
-    setPinPath,
-    setShowTags,
-    setPinTags,
-    setShowHistory,
-    setPinHistory,
-    setShowPined,
-    setPinPined,
-    setShowListIndex,
-    setPinListIndex,
-    setShowLoop,
-    setPinLoop,
     toggleShowAll,
     togglePinAll,
-  };
-});
+  }
+})

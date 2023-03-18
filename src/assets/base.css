@@ -24,15 +24,6 @@
   /* --v-theme-primary: 54, 142, 196; */
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  position: relative;
-  font-weight: normal;
-}
-
 body,
 html {
   width: 100vw;
@@ -46,6 +37,6 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
   font-family: 'Open Sans', 'Roboto', sans-serif;
+  overflow: hidden;
 }

@@ -1,4 +1,6 @@
-@mixin w-scrollbar {
+@mixin w-scrollbar ($overflow-y: auto, $overflow-x: auto) {
+  overflow-y: $overflow-y;
+  overflow-x: $overflow-x;
   $w-scroll-bg-color: #33333380;
   $w-scroll-raduis: 15px;
   $w-scroll-size-x: 8px;

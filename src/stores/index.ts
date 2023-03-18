@@ -1,7 +1,7 @@
-import { Theme } from '../interfaces/theme';
+import { Theme } from '../interfaces/theme'
 
-import { ref } from 'vue';
-import { createGlobalState, useStorage } from '@vueuse/core';
+import { ref } from 'vue'
+import { createGlobalState, useStorage } from '@vueuse/core'
 
 interface states {
   showMenu: boolean;
@@ -16,22 +16,22 @@ export const useGlobalState = createGlobalState(() => {
     railMenu: false,
     lastVisitedRoute: '',
     theme: Theme.dark,
-  };
+  }
 
   // State
-  const states = useStorage('ds3-index', defaultStates, localStorage, { mergeDefaults: true });
-  const showTheHelp = ref(false);
+  const states = useStorage('ds3-index', defaultStates, localStorage, { mergeDefaults: true })
+  const showTheHelp = ref(false)
 
   // Getters
-  const getShowMenu = () => states.value.showMenu;
-  const getRailMenu = () => states.value.railMenu;
-  const getLastVisitedRoute = () => states.value.lastVisitedRoute;
-  const getTheme = () => states.value.theme;
+  const getShowMenu = () => states.value.showMenu
+  const getRailMenu = () => states.value.railMenu
+  const getLastVisitedRoute = () => states.value.lastVisitedRoute
+  const getTheme = () => states.value.theme
 
   // Mutations
-  const setShowMenu = (val: boolean) => (states.value.showMenu = val);
-  const setRailMenu = (val: boolean) => (states.value.railMenu = val);
-  const setLastVisitedRoute = (val: string) => (states.value.lastVisitedRoute = val);
+  const setShowMenu = (val: boolean) => (states.value.showMenu = val)
+  const setRailMenu = (val: boolean) => (states.value.railMenu = val)
+  const setLastVisitedRoute = (val: string) => (states.value.lastVisitedRoute = val)
 
   return {
     // States
@@ -47,5 +47,5 @@ export const useGlobalState = createGlobalState(() => {
     setShowMenu,
     setRailMenu,
     setLastVisitedRoute,
-  };
-});
+  }
+})

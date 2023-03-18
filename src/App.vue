@@ -1,22 +1,21 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { RouterView, useRoute, useRouter } from 'vue-router';
-import routesMap from '@/router/routes';
+import { computed } from 'vue'
+import { RouterView, useRoute, useRouter } from 'vue-router'
+import routesMap from '@/router/routes'
 
 // Components
-import NavigationMenu from '@/components/NavigationMenu.vue';
-import AppBar from '@/components/AppBar.vue';
-import TheHelp from '@/components/TheHelp.vue';
-import ThePlayer from '@/components/ThePlayer.vue';
-import StartButton from '@/components/StartButton.vue';
+import NavigationMenu from '@/components/NavigationMenu.vue'
+import AppBar from '@/components/AppBar.vue'
+import TheHelp from '@/components/TheHelp.vue'
+import ThePlayer from '@/components/ThePlayer.vue'
 
 // Stores
-import { useGlobalState } from '@/stores';
+import { useGlobalState } from '@/stores'
 // TODO: should be move to DiapoShuffleView.
-import { useDiapoShuffleStore } from '@/stores/diapoShuffle';
+import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
 
-const router = useRouter();
-const route = useRoute();
+const router = useRouter()
+const route = useRoute()
 
 // Stores
 const {
@@ -30,41 +29,41 @@ const {
   // Actions
   setShowMenu,
   setLastVisitedRoute,
-} = useGlobalState();
-const { showThePlayer } = useDiapoShuffleStore();
+} = useGlobalState()
+const { showThePlayer } = useDiapoShuffleStore()
 
 // Computeds
-const routePath = computed((): string => route.path);
-const title = computed((): string => routesMap.get(routePath.value)?.title || '');
+const routePath = computed((): string => route.path)
+const title = computed((): string => routesMap.get(routePath.value)?.title || '')
 
 // Actions
-function onToggleMenu() {
-  setShowMenu(!getShowMenu());
+function onToggleMenu () {
+  setShowMenu(!getShowMenu())
 }
 
-let isFirstLoad = true;
+let isFirstLoad = true
 router.beforeEach((to, from, next) => {
-  let lastVisitedRoute = getLastVisitedRoute();
+  let lastVisitedRoute = getLastVisitedRoute()
 
   if (isFirstLoad) {
-    isFirstLoad = false;
+    isFirstLoad = false
 
     if (!lastVisitedRoute) {
-      next(router.getRoutes()[0]);
-      return;
+      next(router.getRoutes()[ 0 ])
+      return
     }
     if (to.path === '/' && lastVisitedRoute) {
-      next(lastVisitedRoute);
-      return;
+      next(lastVisitedRoute)
+      return
     }
   }
 
   if (lastVisitedRoute !== to.path) {
-    setLastVisitedRoute(to.path);
+    setLastVisitedRoute(to.path)
   }
 
-  next();
-});
+  next()
+})
 </script>
 
 <template>
@@ -83,12 +82,6 @@ router.beforeEach((to, from, next) => {
       <RouterView />
     </v-main>
 
-    <v-footer app class="the-footer">
-      <div class="start-btn-ctn">
-        <StartButton />
-      </div>
-    </v-footer>
-
     <TheHelp :show="showTheHelp" />
 
     <!-- TODO: should be moved to DiapoShuffleView -->
@@ -101,14 +94,5 @@ router.beforeEach((to, from, next) => {
 .main {
   height: 100%;
   min-height: 100%;
-}
-.the-footer {
-  display: flex;
-  justify-content: center;
-
-  /* .start-btn-ctn {
-    width: 50%;
-    text-align: center;
-  } */
 }
 </style>

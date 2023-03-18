@@ -11,7 +11,7 @@ withDefaults(defineProps<Props>(), {
   width: 10,
   indeterminate: true,
   color: 'orange',
-});
+})
 </script>
 
 <template>

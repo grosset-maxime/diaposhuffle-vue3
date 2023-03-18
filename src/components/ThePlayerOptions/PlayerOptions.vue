@@ -1,41 +1,10 @@
 <script setup lang="ts">
 // TODO: Feature: Add an option to play in infinite loop for video item.
 
-// Vendors Libs
-import { computed } from 'vue';
-
 // Stores
-import { usePlayerOptionsStore } from '@/stores/playerOptions/playerOptions';
+import { usePlayerOptionsStore } from '@/stores/playerOptions/playerOptions'
 
-const playerOptsStore = usePlayerOptionsStore();
-
-// Computeds
-const interval = computed({
-  get() {
-    return playerOptsStore.getInterval();
-  },
-  set(interval) {
-    playerOptsStore.setInterval(interval);
-  },
-});
-
-const isMuteVideoComputed = computed({
-  get() {
-    return playerOptsStore.isMuteVideo();
-  },
-  set(muteVideo) {
-    playerOptsStore.setIsMuteVideo(muteVideo);
-  },
-});
-
-const isFetchItemRandomlyComputed = computed({
-  get() {
-    return playerOptsStore.isFetchItemRandomly();
-  },
-  set(fetchItemRandomly) {
-    playerOptsStore.setIsFetchItemRandomly(fetchItemRandomly);
-  },
-});
+const { interval, isMuteVideo, isFetchItemRandomly, resetInterval } = usePlayerOptionsStore()
 </script>
 
 <template>
@@ -46,25 +15,45 @@ const isFetchItemRandomlyComputed = computed({
           v-model="interval"
           min="1"
           max="60"
+          step="1"
           label="Interval"
-          @click:append="playerOptsStore.resetInterval()"
-          append-icon="mdi-close"
           thumb-label="always"
           thumb-size="24"
-          hint="1 - 60 seconds"
-          persistent-hint
-          ticks="1"
-          dense
-        />
+          thumb-color="primary"
+          track-color="secondary"
+          track-fill-color="primary"
+          messages="1 - 60 seconds"
+          show-ticks
+          tick-size="4"
+        >
+        <template v-slot:append>
+          <v-text-field
+            v-model="interval"
+            type="number"
+            style="width: 80px"
+            density="compact"
+            hide-details
+            variant="outlined"
+            min="1"
+            max="60"
+          ></v-text-field>
+          <v-btn
+            variant="text"
+            icon="mdi-close"
+            @click="resetInterval"
+          ></v-btn>
+        </template>
+      </v-slider>
       </v-col>
     </v-row>
 
     <v-row align="center">
-      <v-col>
+      <v-col class="col-switch">
         <v-switch
-          v-model="isMuteVideoComputed"
+          v-model="isMuteVideo"
           label="Mute video"
-          class="ma-0 pa-0"
+          color="primary"
+          density="compact"
           hide-details
           inset
         />
@@ -72,11 +61,13 @@ const isFetchItemRandomlyComputed = computed({
     </v-row>
 
     <v-row align="center">
-      <v-col>
+      <v-col class="col-switch">
         <v-switch
-          v-model="isFetchItemRandomlyComputed"
+          v-model="isFetchItemRandomly"
           label="Fetch Item Randomly"
           class="ma-0 pa-0"
+          color="primary"
+          density="compact"
           hide-details
           inset
         />
@@ -94,5 +85,8 @@ const isFetchItemRandomlyComputed = computed({
   .v-label {
     margin-right: 20px;
   }
+}
+.col-switch {
+  padding: 6px 12px
 }
 </style>

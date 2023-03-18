@@ -1,5 +1,5 @@
-// import { ref } from 'vue';
-import { createGlobalState, useStorage } from '@vueuse/core';
+import { computed } from 'vue'
+import { createGlobalState, useStorage } from '@vueuse/core'
 
 interface states {
   interval: number;
@@ -9,48 +9,62 @@ interface states {
 }
 
 export const usePlayerOptionsStore = createGlobalState(() => {
-  const DEFAULT_INTERVAL = 3; // seconds
-  const DEFAULT_ZOOM = 1;
-  const DEFAULT_IS_MUTE_VIDEO = false;
-  const DEFAULT_IS_FETCH_ITEM_RAMDOMLY = true;
+  const DEFAULT_INTERVAL = 3 // seconds
+  const DEFAULT_ZOOM = 1
+  const DEFAULT_IS_MUTE_VIDEO = false
+  const DEFAULT_IS_FETCH_ITEM_RAMDOMLY = true
 
   const defaultStates: states = {
     interval: DEFAULT_INTERVAL,
     zoom: DEFAULT_ZOOM,
     isMuteVideo: DEFAULT_IS_MUTE_VIDEO,
     isFetchItemRandomly: DEFAULT_IS_FETCH_ITEM_RAMDOMLY,
-  };
+  }
 
   // State
   const states = useStorage('ds3-playerOpts-playerOpts', defaultStates, localStorage, {
     mergeDefaults: true,
-  });
+  })
 
-  // Getters
-  const getInterval = () => states.value.interval;
-  const getZoom = () => states.value.zoom;
-  const isMuteVideo = () => states.value.isMuteVideo;
-  const isFetchItemRandomly = () => states.value.isFetchItemRandomly;
+  //#region Computeds
+  const interval = computed({
+    get: () => states.value.interval,
+    set: (v) => (
+      states.value.interval = typeof v === 'number'
+        ? v
+        : parseInt(v || `${DEFAULT_INTERVAL}`, 10) || DEFAULT_INTERVAL
+    ),
+  })
+  const zoom = computed({
+    get: () => states.value.zoom,
+    set: (v) => (
+      states.value.zoom = typeof v === 'number'
+        ? v
+        : parseInt(v || `${DEFAULT_ZOOM}`, 10) || DEFAULT_ZOOM
+    ),
+  })
+  const isMuteVideo = computed({
+    get: () => states.value.isMuteVideo,
+    set: (v) => states.value.isMuteVideo = !!v,
+  })
+  const isFetchItemRandomly = computed({
+    get: () => states.value.isFetchItemRandomly,
+    set: (v) => states.value.isFetchItemRandomly = !!v,
+  })
+  //#endregion
 
-  // Mutations
-  const setInterval = (val: number) => (states.value.interval = val);
-  const resetInterval = () => setInterval(DEFAULT_INTERVAL);
-  const setZoom = (val: number) => (states.value.zoom = val);
-  const setIsMuteVideo = (val: boolean) => (states.value.isMuteVideo = val);
-  const setIsFetchItemRandomly = (val: boolean) => (states.value.isFetchItemRandomly = val);
+  //#region Mutations
+  const resetInterval = () => interval.value = DEFAULT_INTERVAL
+  //#endregion
 
   return {
-    // Getters
-    getInterval,
-    getZoom,
+    // Writable computeds
+    interval,
+    zoom,
     isMuteVideo,
     isFetchItemRandomly,
 
     // Mutations
-    setInterval,
     resetInterval,
-    setZoom,
-    setIsMuteVideo,
-    setIsFetchItemRandomly,
-  };
-});
+  }
+})

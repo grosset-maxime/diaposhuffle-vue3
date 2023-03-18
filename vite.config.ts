@@ -1,8 +1,8 @@
-import { fileURLToPath, URL } from 'node:url';
+import { fileURLToPath, URL } from 'node:url'
 
-import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue';
-import vuetify from 'vite-plugin-vuetify';
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import vuetify from 'vite-plugin-vuetify'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -18,15 +18,18 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: `@use 'sass:math';${[
-          '@/styles/_variables.uikit',
-          '@/styles/_mixins.uikit',
-          '@/styles/_variables',
-          '@/styles/_mixins',
-        ]
-          .map((v) => `@import "${v}.scss";`)
-          .join('')}`,
+        additionalData: `
+        @use 'vuetify/settings';
+        @use 'sass:math';
+        ${[
+    '@/styles/_variables.uikit',
+    '@/styles/_mixins.uikit',
+    '@/styles/_variables',
+    '@/styles/_mixins',
+  ]
+    .map((v) => `@import "${v}.scss";`)
+    .join('')}`,
       },
     },
   },
-});
+})

@@ -1,11 +1,11 @@
-import { ref } from 'vue';
-import { createGlobalState } from '@vueuse/core';
+import { ref } from 'vue'
+import { createGlobalState } from '@vueuse/core'
 
 export const useDiapoShuffleStore = createGlobalState(() => {
   // States
-  const showThePlayer = ref(false);
-  const showFolderBrowser = ref(false);
-  const showTagger = ref(false);
+  const showThePlayer = ref(false)
+  const showFolderBrowser = ref(false)
+  const showTagger = ref(false)
 
   // Getters
 
@@ -20,5 +20,5 @@ export const useDiapoShuffleStore = createGlobalState(() => {
     // Getters
 
     // Mutations
-  };
-});
+  }
+})

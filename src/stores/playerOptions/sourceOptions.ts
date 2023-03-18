@@ -1,8 +1,8 @@
 // Types
-import type { TagId } from '@/models/tag';
+import type { TagId } from '@/models/tag'
 
-// import { ref } from 'vue';
-import { createGlobalState, useStorage } from '@vueuse/core';
+import { createGlobalState, useStorage } from '@vueuse/core'
+import { computed } from 'vue'
 
 export enum TagsOperator {
   or = 'OR',
@@ -34,73 +34,84 @@ export const useSourceOptionsStore = createGlobalState(() => {
     FileType.webm,
     FileType.mp4,
     FileType.mkv,
-  ];
+  ]
 
+  // TODO: use set instead of array
   const defaultStates: states = {
-    folders: [], // List of selected folder path.
-    tags: [], // List of selected tags ids.
+    folders: [],
+    tags: [],
     tagsOperator: TagsOperator.and,
-    fileTypes: [], // List of file extensions to filter.
-    isFromPined: false, // Should use pineds items as fetch items source.
-  };
+    fileTypes: [],
+    isFromPined: false,
+  }
 
-  // State
+  // States
   const states = useStorage('ds3-playerOpts-sourceOpts', defaultStates, localStorage, {
     mergeDefaults: true,
-  });
+  })
 
-  // Getters
-  const getAvailableFileTypes = () => [...AVAILABLE_FILE_TYPES];
-  const getFolders = () => states.value.folders;
-  const getTags = () => states.value.tags;
-  const hasTags = () => !!states.value.tags.length;
-  const getTagsOperator = () => states.value.tagsOperator;
-  const getFileTypes = () => states.value.fileTypes;
-  const hasFileTypes = () => !!states.value.fileTypes.length;
-  const isFromPined = () => states.value.isFromPined;
+  //#region Computeds
+  // List of selected folder path.
+  const folders = computed({
+    get: () => states.value.folders,
+    set: (val) => (states.value.folders = val),
+  })
 
-  // Mutations
-  const setFolders = (folders: Array<string>) => (states.value.folders = folders);
-  const setTags = (tags: Array<TagId>) => {
-    states.value.tags = [...tags];
-  };
+  // List of selected tags ids.
+  const tags = computed({
+    get: () => states.value.tags,
+    set: (val) => (states.value.tags = val),
+  })
 
+  const tagsOperator = computed({
+    get: () => states.value.tagsOperator,
+    set: (val) => (states.value.tagsOperator = val),
+  })
+
+  // List of file extensions to filter.
+  const fileTypes = computed({
+    get: () => states.value.fileTypes,
+    set: (val) => (states.value.fileTypes = val),
+  })
+
+  // Should use pineds items as fetch items source.
+  const isFromPined = computed({
+    get: () => states.value.isFromPined,
+    set: (val) => (states.value.isFromPined = !!val),
+  })
+
+  const availableFileTypes = computed(() => [ ...AVAILABLE_FILE_TYPES ])
+  //#endregion Computeds
+
+  //#region Mutations
   const toggleTagsOperator = (val?: TagsOperator) => {
     if (typeof val === 'string') {
-      states.value.tagsOperator = val;
+      tagsOperator.value = val
     } else {
-      const currentVal = states.value.tagsOperator;
-      // eslint-disable-next-line prettier/prettier
-      states.value.tagsOperator = currentVal === TagsOperator.and
+      tagsOperator.value = tagsOperator.value === TagsOperator.and
         ? TagsOperator.or
-        : TagsOperator.and;
+        : TagsOperator.and
     }
-  };
+  }
 
-  const setFileTypes = (fileTypes: Array<FileType>) => {
-    states.value.fileTypes = [...fileTypes];
-  };
-
-  const setIsFromPined = (val: boolean) => {
-    states.value.isFromPined = val;
-  };
+  const setFileTypes = (vals: Array<FileType>) => {
+    fileTypes.value = [ ...vals ]
+  }
+  //#endregion Mutations
 
   return {
-    // Getters
-    getAvailableFileTypes,
-    getFolders,
-    getTags,
-    hasTags,
-    getTagsOperator,
-    getFileTypes,
-    hasFileTypes,
+    // Computeds
+    availableFileTypes,
+
+    // Writable Computeds
+    folders,
+    tags,
+    tagsOperator,
+    fileTypes,
     isFromPined,
 
     // Mutations
-    setFolders,
-    setTags,
     toggleTagsOperator,
     setFileTypes,
-    setIsFromPined,
-  };
-});
+  }
+})
