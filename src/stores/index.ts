@@ -1,7 +1,7 @@
 import { Theme } from '../interfaces/theme'
 
-import { ref } from 'vue'
-import { createGlobalState, useStorage } from '@vueuse/core'
+import { computed, ref } from 'vue'
+import { createGlobalState, eagerComputed, useStorage } from '@vueuse/core'
 
 interface states {
   showMenu: boolean;
@@ -22,30 +22,28 @@ export const useGlobalState = createGlobalState(() => {
   const states = useStorage('ds3-index', defaultStates, localStorage, { mergeDefaults: true })
   const showTheHelp = ref(false)
 
-  // Getters
-  const getShowMenu = () => states.value.showMenu
-  const getRailMenu = () => states.value.railMenu
-  const getLastVisitedRoute = () => states.value.lastVisitedRoute
-  const getTheme = () => states.value.theme
+  const showMenu = computed({
+    get: () => states.value.showMenu,
+    set: (v) => states.value.showMenu = !!v,
+  })
 
-  // Mutations
-  const setShowMenu = (val: boolean) => (states.value.showMenu = val)
-  const setRailMenu = (val: boolean) => (states.value.railMenu = val)
-  const setLastVisitedRoute = (val: string) => (states.value.lastVisitedRoute = val)
+  const railMenu = computed({
+    get: () => states.value.railMenu,
+    set: (v) => states.value.railMenu = !!v,
+  })
+
+  const lastVisitedRoute = computed({
+    get: () => states.value.lastVisitedRoute,
+    set: (v) => states.value.lastVisitedRoute = v,
+  })
+
+  const theme = eagerComputed(() => states.value.theme)
 
   return {
-    // States
     showTheHelp,
-
-    // Getters
-    getShowMenu,
-    getRailMenu,
-    getLastVisitedRoute,
-    getTheme,
-
-    // Mutations
-    setShowMenu,
-    setRailMenu,
-    setLastVisitedRoute,
+    showMenu,
+    railMenu,
+    lastVisitedRoute,
+    theme,
   }
 })

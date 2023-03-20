@@ -7,51 +7,51 @@
 // TODO: Bug: Error on set tag when items come from the bdd.
 
 // Types
-import type { Fn } from '@vueuse/core';
-import type { TagCategoryId, TagId, Tag, TagCategory } from '@/models/tag';
+import type { Fn } from '@vueuse/core'
+import type { TagCategoryId, TagId, Tag, TagData, TagCategoryData } from '@/models/tag'
 
 // Vendors Libs
-import { ref, computed, watch, onMounted } from 'vue';
-import { useEventListener } from '@vueuse/core';
-import Fuse from 'fuse.js';
+import { ref, computed, watch, onMounted } from 'vue'
+import { useEventListener } from '@vueuse/core'
+import Fuse from 'fuse.js'
 
 // Stores
-import { useTaggerStore } from '@/stores/tagger';
+import { useTaggerStore } from '@/stores/tagger'
 
 // Utils
-import { SHAKE_ANIMATION_TIME, getKey, isEmptyObj, getRandomElement } from '@/utils/utils';
+import { SHAKE_ANIMATION_TIME, getKey, isEmptyObj, getRandomElement } from '@/utils/utils'
 
-import { createTagCategory } from '@/models/tag';
+import { createTagCategory } from '@/models/tag'
 
 // Components
-import CategoriesList from './CategoriesList.vue';
-import CircularLoading from '../CircularLoading.vue';
-import TagsList from './TagsList.vue';
-import EditTagModal from './EditTagModal.vue';
-import EditCategoryModal from './EditCategoryModal.vue';
+import CategoriesList from './CategoriesList.vue'
+import CircularLoading from '../CircularLoading.vue'
+import TagsList from './TagsList.vue'
+import EditTagModal from './EditTagModal.vue'
+import EditCategoryModal from './EditCategoryModal.vue'
 
-const taggerStore = useTaggerStore();
-let stopKeyboardShortcuts: Fn | null;
+const taggerStore = useTaggerStore()
+let stopKeyboardShortcuts: Fn | null
 
-const SELECTED_FOCUSED_SECTION_NAME = 'selectedTags';
-const UNSELECTED_FOCUSED_SECTION_NAME = 'unselectedTags';
-const LAST_USED_FOCUSED_SECTION_NAME = 'lastUsedTags';
+const SELECTED_FOCUSED_SECTION_NAME = 'selectedTags'
+const UNSELECTED_FOCUSED_SECTION_NAME = 'unselectedTags'
+const LAST_USED_FOCUSED_SECTION_NAME = 'lastUsedTags'
 
 const sectionsNames = [
   SELECTED_FOCUSED_SECTION_NAME,
   LAST_USED_FOCUSED_SECTION_NAME,
   UNSELECTED_FOCUSED_SECTION_NAME,
-];
+]
 
 // Props
 interface Props {
-  selected?: Array<TagId>;
+  selected?: Set<TagId>;
   editMode?: boolean;
 }
 const props = withDefaults(defineProps<Props>(), {
-  selected: (): Array<TagId> => [],
+  selected: (): Set<TagId> => new Set(),
   editMode: false,
-});
+})
 
 // Emits
 const emit = defineEmits<{
@@ -62,18 +62,18 @@ const emit = defineEmits<{
   (e: 'toggleOpacity'): void;
   (e: 'toggleOpacity'): void;
   (e: 'mounted'): void;
-}>();
+}>()
 
 // Refs
-const selectedTagIdsMap = ref<Map<TagId, boolean>>(new Map());
-const selectedCategoryIdsMap = ref<Map<TagCategoryId, boolean>>(new Map());
-const tagsFilterInfoMap = new Map();
+const selectedTagIdsMap = ref<Set<TagId>>(new Set(props.selected))
+const selectedCategoryIdsMap = ref<Set<TagCategoryId>>(new Set())
+const tagsFilterInfoMap = new Map()
 
 const focused = ref({
   id: '',
   pos: 0,
   section: UNSELECTED_FOCUSED_SECTION_NAME,
-});
+})
 
 const DEFAULT_FILTERS: {
   text: string;
@@ -81,8 +81,8 @@ const DEFAULT_FILTERS: {
 } = {
   text: '',
   categories: new Map(),
-};
-const filters = ref({ ...DEFAULT_FILTERS });
+}
+const filters = ref({ ...DEFAULT_FILTERS })
 
 const sorts = ref({
   field: 'name',
@@ -97,13 +97,13 @@ const sorts = ref({
     { text: 'A - Z', value: 'asc' },
     { text: 'Z - A', value: 'desc' },
   ],
-});
+})
 
-const isFilterTextHasFocus = ref(false);
+const isFilterTextHasFocus = ref(false)
 
-const isLoading = ref(true);
+const isLoading = ref(true)
 
-const shake = ref<Map<string, boolean>>(new Map());
+const shake = ref<Map<string, boolean>>(new Map())
 
 const editTagModal = ref<{
   show: boolean;
@@ -113,7 +113,7 @@ const editTagModal = ref<{
   show: false,
   add: false,
   tagId: undefined,
-});
+})
 
 const editCategoryModal = ref<{
   show: boolean;
@@ -123,693 +123,694 @@ const editCategoryModal = ref<{
   show: false,
   add: false,
   categoryId: undefined,
-});
+})
 
+// TODO
 const filterTextCmp = ref<{
   focus: Function;
-} | null>(null);
+} | null>(null)
 
 // Computeds
-const tagsMap = computed(() => {
-  return taggerStore.getTags();
-});
-
-const tags = computed(() => {
-  return taggerStore.getTagsList();
-});
+const tagsMap = taggerStore.tagsMap
+const tagsList = taggerStore.tagsList
 
 const sortedTags = computed(() => {
-  return [...tags.value].sort((tagA, tagB) => {
-    let sort = 0;
-    const direction = sorts.value.direction === 'asc' ? 1 : -1;
-    const field = sorts.value.field || 'name';
+  return [ ...tagsList.value ].sort((tagA, tagB) => {
+    let sort = 0
+    const direction = sorts.value.direction === 'asc'
+      ? 1
+      : -1
+    const field = sorts.value.field || 'name'
 
     if (field === 'name') {
-      sort = tagA.name.localeCompare(tagB.name);
+      sort = tagA.name.localeCompare(tagB.name)
     }
     if (field === 'category') {
-      sort = tagA.categoryId.localeCompare(tagB.categoryId);
+      sort = tagA.categoryId.localeCompare(tagB.categoryId)
     }
 
-    return direction * sort;
-  });
-});
+    return direction * sort
+  })
+})
 
-const categoriesMap = computed(() => {
-  return taggerStore.getCategories();
-});
+const categoriesMap = taggerStore.categoriesMap
 
 const categoryIds = computed(() => {
-  return Object.values(categoriesMap)
+  return Object.values(categoriesMap.value)
     .sort((catA, catB) => {
-      let sort = 0;
-      const direction = sorts.value.direction === 'asc' ? 1 : -1;
-      const field = sorts.value.field || 'name';
+      let sort = 0
+      const direction = sorts.value.direction === 'asc'
+        ? 1
+        : -1
+      const field = sorts.value.field || 'name'
 
       if (field === 'name') {
-        sort = catA.name.localeCompare(catB.name);
+        sort = catA.name.localeCompare(catB.name)
       }
       if (field === 'category') {
-        sort = catA.id - catB.id;
+        sort = catA.id - catB.id
       }
 
-      return direction * sort;
+      return direction * sort
     })
-    .map((cat) => cat.id);
-});
+    .map((cat) => cat.id)
+})
 
 const selectedTagIds = computed(() => {
-  let sortedTagsValue = sortedTags.value;
+  let sortedTagsValue = sortedTags.value
 
-  sortedTagsValue = sortedTagsValue.filter((tag) => !!selectedTagIdsMap.value.get(tag.id));
+  sortedTagsValue = sortedTagsValue.filter((tag) => selectedTagIdsMap.value.has(tag.id))
 
-  let tagsIds = sortedTagsValue.map((tag) => tag.id);
+  let tagsIds = sortedTagsValue.map((tag) => tag.id)
 
   if (isFiltering.value) {
-    const filteredTagsIds = filteredTags.value
-      .filter((tag) => !!selectedTagIdsMap.value.get(tag.id))
-      .map((tag) => tag.id);
+    const filteredTagsIds = filteredTagsList.value
+      .filter((tag) => selectedTagIdsMap.value.has(tag.id))
+      .map((tag) => tag.id)
 
-    const filteredTagsIdsMap = Object.fromEntries(filteredTagsIds.map((id) => [id, true]));
+    const filteredTagsIdsMap = Object.fromEntries(filteredTagsIds.map((id) => [ id, true ]))
 
-    tagsIds = tagsIds.filter((id) => !filteredTagsIdsMap[id]);
+    tagsIds = tagsIds.filter((id) => !filteredTagsIdsMap[ id ])
 
-    tagsIds = filteredTagsIds.concat(tagsIds);
+    tagsIds = filteredTagsIds.concat(tagsIds)
   }
 
-  return tagsIds;
-});
+  return tagsIds
+})
 
+const lastUsedTagIdsMap = taggerStore.lastUsedTagIdsMap
 /**
  * @returns {string[]} - List of last used tags ids.
  */
 const lastUsedTagIds = computed(() => {
-  let tagsIds = taggerStore.getLastUsedTagIds();
+  let tagsIds = Array.from(lastUsedTagIdsMap.value.keys())
 
   if (isFiltering.value) {
-    const filteredTagsIds = filteredTags.value
-      .filter((tag) => tagsIds.includes(tag.id))
-      .map((tag) => tag.id);
+    const filteredTagsIds = filteredTagsList.value
+      .filter((tag) => lastUsedTagIdsMap.value.has(tag.id))
+      .map((tag) => tag.id)
 
-    const filteredTagsIdsMap = Object.fromEntries(filteredTagsIds.map((id) => [id, true]));
+    const filteredTagsIdsMap = Object.fromEntries(filteredTagsIds.map((id) => [ id, true ]))
 
-    tagsIds = tagsIds.filter((id) => !filteredTagsIdsMap[id]);
+    tagsIds = tagsIds.filter((id) => !filteredTagsIdsMap[ id ])
 
-    tagsIds = filteredTagsIds.concat(tagsIds);
+    tagsIds = filteredTagsIds.concat(tagsIds)
   }
 
-  return tagsIds.filter((tagId) => !selectedTagIdsMap.value.get(tagId));
-});
+  return tagsIds.filter((tagId) => !selectedTagIdsMap.value.has(tagId))
+})
 
 /**
  * @returns {string[]} - List of unselected tags ids.
  */
 const unselectedTagIds = computed(() => {
-  let sortedTagsValue = sortedTags.value;
+  let sortedTagsValue = sortedTags.value
 
-  sortedTagsValue = sortedTagsValue.filter((tag) => !selectedTagIdsMap.value.get(tag.id));
+  sortedTagsValue = sortedTagsValue.filter((tag) => !selectedTagIdsMap.value.has(tag.id))
 
-  let tagsIds = sortedTagsValue.map((tag) => tag.id);
+  let tagsIds = sortedTagsValue.map((tag) => tag.id)
 
   if (isFiltering.value) {
-    const filteredTagsIds = filteredTags.value
-      .filter((tag) => !selectedTagIdsMap.value.get(tag.id))
-      .map((tag) => tag.id);
+    const filteredTagsIds = filteredTagsList.value
+      .filter((tag) => !selectedTagIdsMap.value.has(tag.id))
+      .map((tag) => tag.id)
 
-    const filteredTagsIdsMap = Object.fromEntries(filteredTagsIds.map((id) => [id, true]));
+    const filteredTagsIdsMap = Object.fromEntries(filteredTagsIds.map((id) => [ id, true ]))
 
-    tagsIds = tagsIds.filter((id) => !filteredTagsIdsMap[id]);
+    tagsIds = tagsIds.filter((id) => !filteredTagsIdsMap[ id ])
 
-    tagsIds = filteredTagsIds.concat(tagsIds);
+    tagsIds = filteredTagsIds.concat(tagsIds)
   }
 
-  return tagsIds;
-});
+  return tagsIds
+})
 
-const filteredTags = computed(() => {
+const filteredTagsList = computed(() => {
   if (!isFiltering.value) {
-    return [];
+    return []
   }
 
-  let tagsValue = tags.value;
+  let tagsValue = tagsList.value
 
   if (hasCategoriesFilter.value) {
-    tagsValue = applyCategoriesFilter(tags.value);
+    tagsValue = applyCategoriesFilter(tagsList.value)
   }
 
   if (filters.value.text) {
-    const results = applyTextFilter<Tag>(tags.value);
+    const results = applyTextFilter<Tag>(tagsList.value)
 
     // filters.textResults = results;
 
     tagsValue = results.map((r) => {
       // console.log(r);
-      const tag = r.item;
-      tagsFilterInfoMap.set(tag.id, r);
+      const tag = r.item
+      tagsFilterInfoMap.set(tag.id, r)
 
-      return tag;
-    });
+      return tag
+    })
   }
 
-  return tagsValue;
-});
+  return tagsValue
+})
 
 const filteredTagsMap = computed(() => {
-  return Object.fromEntries(filteredTags.value.map((tag) => [tag.id, tag]));
-});
+  return Object.fromEntries(filteredTagsList.value.map((tag) => [ tag.id, tag ]))
+})
 
 const notFilteredSelectedTagIdsMap = computed(() => {
   if (!isFiltering.value) {
-    return new Map();
+    return new Map()
   }
 
   const notFilteredTagIds = selectedTagIds.value.filter(
-    (tagId) => !(tagId in filteredTagsMap.value)
-  );
+    (tagId) => !(tagId in filteredTagsMap.value),
+  )
 
-  return new Map(notFilteredTagIds.map((tagId) => [tagId, true]));
-});
+  return new Map(notFilteredTagIds.map((tagId) => [ tagId, true ]))
+})
 
 const notFilteredLastUsedTagIdsMap = computed(() => {
   if (!isFiltering.value) {
-    return new Map();
+    return new Map()
   }
 
   const notFilteredTagIds = lastUsedTagIds.value.filter(
-    (tagId) => !(tagId in filteredTagsMap.value)
-  );
+    (tagId) => !(tagId in filteredTagsMap.value),
+  )
 
-  return new Map(notFilteredTagIds.map((tagId) => [tagId, true]));
-});
+  return new Map(notFilteredTagIds.map((tagId) => [ tagId, true ]))
+})
 
 const notFilteredUnselectedTagIdsMap = computed(() => {
   if (!isFiltering.value) {
-    return new Map();
+    return new Map()
   }
 
   const notFilteredTagIds = unselectedTagIds.value.filter(
-    (tagId) => !(tagId in filteredTagsMap.value)
-  );
+    (tagId) => !(tagId in filteredTagsMap.value),
+  )
 
-  return new Map(notFilteredTagIds.map((tagId) => [tagId, true]));
-});
+  return new Map(notFilteredTagIds.map((tagId) => [ tagId, true ]))
+})
 
 const nbTagsMap = computed(() => {
-  const nbTagsMap: Map<TagCategoryId, number> = new Map();
-  const tagIds = ([] as Array<TagId>).concat(selectedTagIds.value, unselectedTagIds.value);
+  const nbTagsMap: Map<TagCategoryId, number> = new Map()
+  const tagIds = ([] as Array<TagId>).concat(selectedTagIds.value, unselectedTagIds.value)
 
-  Object.keys(categoriesMap).forEach((catId) => {
+  Object.keys(categoriesMap.value).forEach((catId) => {
     nbTagsMap.set(
       catId,
-      tagIds.filter((tagId) => tagsMap.value.get(tagId)?.categoryId === catId).length
-    );
-  });
+      tagIds.filter((tagId) => tagsMap.value.get(tagId)?.categoryId === catId).length,
+    )
+  })
 
-  nbTagsMap.set('0', tagIds.filter((tagId) => tagsMap.value.get(tagId)?.categoryId === '0').length);
+  nbTagsMap.set('0', tagIds.filter((tagId) => tagsMap.value.get(tagId)?.categoryId === '0').length)
 
-  return nbTagsMap;
-});
+  return nbTagsMap
+})
 
 const notFilteredCategoryIdsMap = computed<Map<TagCategoryId, boolean>>(() => {
   if (!filters.value.text) {
-    return new Map();
+    return new Map()
   }
 
   const NONE_CATEGORY = {
     id: '0',
     name: 'None',
     color: 'FFFFFF',
-  };
+  }
 
-  const categoriesMapValue = categoriesMap.value;
-  categoriesMapValue.set(NONE_CATEGORY.id, createTagCategory(NONE_CATEGORY));
+  const categoriesMapValue = categoriesMap.value
+  categoriesMapValue.set(NONE_CATEGORY.id, createTagCategory(NONE_CATEGORY))
 
-  const categories = Array.from(categoriesMapValue.values());
+  const categories = Array.from(categoriesMapValue.values())
 
   const matchedCategoryIdsMap = Object.fromEntries(
     applyTextFilter(categories)
       .filter((r) => (r.score || 0) < 0.5)
-      .map((r) => [r.item.id, true])
-  );
+      .map((r) => [ r.item.id, true ]),
+  )
 
-  const notFilteredCategory = Object.keys(categoriesMap).filter(
-    (catId) => !matchedCategoryIdsMap[catId]
-  );
+  const notFilteredCategory = Object.keys(categoriesMap.value).filter(
+    (catId) => !matchedCategoryIdsMap[ catId ],
+  )
 
-  return new Map(notFilteredCategory.map((catId) => [catId, true]));
-});
+  return new Map(notFilteredCategory.map((catId) => [ catId, true ]))
+})
 
 const isFiltering = computed(() => {
-  return hasCategoriesFilter.value || filters.value.text;
-});
+  return hasCategoriesFilter.value || filters.value.text
+})
 
 const hasCategoriesFilter = computed(() => {
-  return !isEmptyObj(filters.value.categories);
-});
+  return !isEmptyObj(filters.value.categories)
+})
 
 const noSelectedTagsText = computed(() => {
   return isFiltering.value && !selectedTagIdsMap.value.size
     ? 'No tags results'
-    : 'No tags selected';
-});
+    : 'No tags selected'
+})
 
 const noLastUsedTagsText = computed(() => {
-  return isFiltering.value ? 'No tags results' : 'No last used tags';
-});
+  return isFiltering.value
+    ? 'No tags results'
+    : 'No last used tags'
+})
 
 const noUnselectedTagsText = computed(() => {
-  return isFiltering.value ? 'No tags results' : '';
-});
+  return isFiltering.value
+    ? 'No tags results'
+    : ''
+})
 
-async function onShow() {
-  attachKeyboardShortcuts();
-  resetFilters();
+async function onShow () {
+  attachKeyboardShortcuts()
+  resetFilters()
 
   try {
-    await fetchTagsAndCategories();
-    onFetchTags();
-    resetFocus();
+    await taggerStore.taggerReadyPromise
+    onFetchTags()
+    resetFocus()
   } catch (e) {
     // TODO: ENH: show error alert.
     // eslint-disable-next-line no-console
-    console.error(e);
+    console.error(e)
   }
 
-  isLoading.value = false;
+  isLoading.value = false
 }
 
-function onFetchTags() {
-  updateSelectedTagIdsMap();
+function onFetchTags () {
+  updateSelectedTagIdsMap()
 }
 
-function onHide() {
-  removeKeyboardShortcuts();
+function onHide () {
+  removeKeyboardShortcuts()
 }
 
-function onSelectCategory(catId: TagCategoryId) {
-  selectedCategoryIdsMap.value.set(catId, true);
-  filters.value.categories.set(catId, true);
+function onSelectCategory (catId: TagCategoryId) {
+  selectedCategoryIdsMap.value.add(catId)
+  filters.value.categories.set(catId, true)
 }
 
-function onUnselectCategory(catId: TagCategoryId) {
-  selectedCategoryIdsMap.value.delete(catId);
-  filters.value.categories.delete(catId);
+function onUnselectCategory (catId: TagCategoryId) {
+  selectedCategoryIdsMap.value.delete(catId)
+  filters.value.categories.delete(catId)
 }
 
-function onTagClick(tagId: TagId) {
-  if (selectedTagIdsMap.value.get(tagId)) {
-    selectedTagIdsMap.value.delete(tagId);
-    emit('unselect', tagId);
+function onTagClick (tagId: TagId) {
+  if (selectedTagIdsMap.value.has(tagId)) {
+    selectedTagIdsMap.value.delete(tagId)
+    emit('unselect', tagId)
   } else {
-    selectedTagIdsMap.value.set(tagId, true);
-    emit('select', tagId);
+    selectedTagIdsMap.value.add(tagId)
+    emit('select', tagId)
 
-    addLastUsedTagId(tagId);
+    addLastUsedTagId(tagId)
   }
 
   // TODO: ENH: if focused tag, move/update focused position.
   // TODO: ENH: on select last tag from a section, set focus on upper section.
   if (focused.value.pos === unselectedTagIds.value.length) {
-    focused.value.pos -= 2;
+    focused.value.pos -= 2
   } else {
-    focused.value.pos -= 1;
+    focused.value.pos -= 1
   }
 
-  setFocusRight();
+  setFocusRight()
 }
 
-function onFilterTextFocus() {
-  isFilterTextHasFocus.value = true;
+function onFilterTextFocus () {
+  isFilterTextHasFocus.value = true
 }
 
-function onFilterTextBlur() {
-  isFilterTextHasFocus.value = false;
+function onFilterTextBlur () {
+  isFilterTextHasFocus.value = false
 }
 
-async function onDeleteEditTagModal(tagId: TagId) {
-  await taggerStore.deleteTag(tagId);
+async function onDeleteEditTagModal (tagId: TagId) {
+  await taggerStore.deleteTag(tagId)
 
-  onFetchTags();
-  hideEditTagModal();
+  onFetchTags()
+  hideEditTagModal()
 }
 
-async function onConfirmEditTagModal(tag: Tag) {
-  await (editTagModal.value.add ? taggerStore.addTag(tag) : taggerStore.updateTag(tag));
+async function onConfirmEditTagModal (tagData: TagData) {
+  await (editTagModal.value.add
+    ? taggerStore.addTag(tagData)
+    : taggerStore.updateTag(tagData))
 
-  onFetchTags();
-  hideEditTagModal();
+  onFetchTags()
+  hideEditTagModal()
 }
 
-function onCancelEditTagModal() {
-  hideEditTagModal();
+function onCancelEditTagModal () {
+  hideEditTagModal()
 }
 
-function showAddTagModal() {
-  removeKeyboardShortcuts();
-  editTagModal.value.add = true;
-  editTagModal.value.tagId = undefined;
-  editTagModal.value.show = true;
+function showAddTagModal () {
+  removeKeyboardShortcuts()
+  editTagModal.value.add = true
+  editTagModal.value.tagId = undefined
+  editTagModal.value.show = true
 }
 
-function showEditTagModal(tagId: TagId) {
-  removeKeyboardShortcuts();
-  editTagModal.value.add = false;
-  editTagModal.value.tagId = tagId;
-  editTagModal.value.show = true;
+function showEditTagModal (tagId: TagId) {
+  removeKeyboardShortcuts()
+  editTagModal.value.add = false
+  editTagModal.value.tagId = tagId
+  editTagModal.value.show = true
 }
 
-function hideEditTagModal() {
-  editTagModal.value.show = false;
-  attachKeyboardShortcuts();
+function hideEditTagModal () {
+  editTagModal.value.show = false
+  attachKeyboardShortcuts()
 }
 
-async function onDeleteEditCategoryModal(catId: TagCategoryId) {
-  await taggerStore.deleteCategory(catId);
+async function onDeleteEditCategoryModal (catId: TagCategoryId) {
+  await taggerStore.deleteCategory(catId)
 
-  hideEditCategoryModal();
+  hideEditCategoryModal()
 }
 
-async function onConfirmEditCategoryModal(category: TagCategory) {
+async function onConfirmEditCategoryModal (categoryData: TagCategoryData) {
   await (editCategoryModal.value.add
-    ? taggerStore.addCategory(category)
-    : taggerStore.updateCategory(category));
+    ? taggerStore.addCategory(categoryData)
+    : taggerStore.updateCategory(categoryData))
 
-  hideEditCategoryModal();
+  hideEditCategoryModal()
 }
 
-function onCancelEditCategoryModal() {
-  hideEditCategoryModal();
+function onCancelEditCategoryModal () {
+  hideEditCategoryModal()
 }
 
-function showAddCategoryModal() {
-  removeKeyboardShortcuts();
-  editCategoryModal.value.add = true;
-  editCategoryModal.value.categoryId = undefined;
-  editCategoryModal.value.show = true;
+function showAddCategoryModal () {
+  removeKeyboardShortcuts()
+  editCategoryModal.value.add = true
+  editCategoryModal.value.categoryId = undefined
+  editCategoryModal.value.show = true
 }
 
-function showEditCategoryModal(catId: TagCategoryId) {
-  removeKeyboardShortcuts();
-  editCategoryModal.value.add = false;
-  editCategoryModal.value.categoryId = catId;
-  editCategoryModal.value.show = true;
+function showEditCategoryModal (catId: TagCategoryId) {
+  removeKeyboardShortcuts()
+  editCategoryModal.value.add = false
+  editCategoryModal.value.categoryId = catId
+  editCategoryModal.value.show = true
 }
 
-function hideEditCategoryModal() {
-  editCategoryModal.value.show = false;
-  attachKeyboardShortcuts();
+function hideEditCategoryModal () {
+  editCategoryModal.value.show = false
+  attachKeyboardShortcuts()
 }
 
-function clearFilterText() {
-  filters.value.text = '';
+function clearFilterText () {
+  filters.value.text = ''
 }
 
-function setFilterTextFocus() {
-  filterTextCmp.value?.focus();
+function setFilterTextFocus () {
+  filterTextCmp.value?.focus()
 }
 
-function selectRandom() {
-  const randomdTagId = getRandomElement(unselectedTagIds.value);
+function selectRandom () {
+  const randomdTagId = getRandomElement(unselectedTagIds.value)
 
   if (randomdTagId) {
-    onTagClick(randomdTagId);
+    onTagClick(randomdTagId)
   }
 
-  setFilterTextFocus();
+  setFilterTextFocus()
 }
 
-function addLastUsedTagId(tagId: TagId) {
-  taggerStore.addLastUsedTagId(tagId);
+function addLastUsedTagId (tagId: TagId) {
+  taggerStore.addLastUsedTagId(tagId)
 }
 
-function applyCategoriesFilter(tags: Array<Tag>) {
-  return tags.filter((tag) => !!filters.value.categories.get(tag.categoryId));
+function applyCategoriesFilter (tags: Array<Tag>) {
+  return tags.filter((tag) => !!filters.value.categories.get(tag.categoryId))
 }
 
-function applyTextFilter<T>(array: Array<T>, keys: Array<string> = ['name']) {
+function applyTextFilter<T> (array: Array<T>, keys: Array<string> = [ 'name' ]) {
   const options = {
     includeScore: true,
     includeMatches: true,
     keys,
-  };
+  }
 
-  const fuse = new Fuse(array, options);
-  return fuse.search(filters.value.text);
+  const fuse = new Fuse(array, options)
+  return fuse.search(filters.value.text)
 }
 
-function fetchTagsAndCategories() {
-  return Promise.all([taggerStore.fetchTags(), taggerStore.fetchCategories()]);
+function updateSelectedTagIdsMap () {
+  selectedTagIdsMap.value = new Set(props.selected)
 }
 
-function updateSelectedTagIdsMap() {
-  selectedTagIdsMap.value = new Map(props.selected.map((tagId) => [tagId, true]));
-}
-
-function resetFocus() {
-  const sectionName = focused.value.section;
+function resetFocus () {
+  const sectionName = focused.value.section
   const sectionTagIds = getTagIdsFromSectionName(sectionName);
-  [focused.value.id] = sectionTagIds;
-  focused.value.pos = 0;
+  [ focused.value.id ] = sectionTagIds
+  focused.value.pos = 0
 }
 
-function resetFilters() {
-  filters.value = { ...DEFAULT_FILTERS };
+function resetFilters () {
+  filters.value = { ...DEFAULT_FILTERS }
 }
 
-function checkSectionName(name: string) {
-  shake.value.set(name, true);
+function checkSectionName (name: string) {
+  shake.value.set(name, true)
   setTimeout(() => {
-    shake.value.set(name, false);
-  }, SHAKE_ANIMATION_TIME);
+    shake.value.set(name, false)
+  }, SHAKE_ANIMATION_TIME)
 }
 
-function getTagIdsFromSectionName(name: string) {
-  let tagsIds: Array<string> = [];
+function getTagIdsFromSectionName (name: string) {
+  let tagsIds: Array<string> = []
 
   if (name === UNSELECTED_FOCUSED_SECTION_NAME) {
-    tagsIds = unselectedTagIds.value;
+    tagsIds = unselectedTagIds.value
   } else if (name === SELECTED_FOCUSED_SECTION_NAME) {
-    tagsIds = selectedTagIds.value;
+    tagsIds = selectedTagIds.value
   } else if (name === LAST_USED_FOCUSED_SECTION_NAME) {
-    tagsIds = lastUsedTagIds.value;
+    tagsIds = lastUsedTagIds.value
   }
-  return tagsIds;
+  return tagsIds
 }
 
-function getUpperSectionFrom(name: string) {
-  let upperSectionName = '';
-  let sectionTagIds;
-  let index = 0;
-  const indexSectionFrom = sectionsNames.indexOf(name);
+function getUpperSectionFrom (name: string) {
+  let upperSectionName = ''
+  let sectionTagIds
+  let index = 0
+  const indexSectionFrom = sectionsNames.indexOf(name)
 
   for (let i = 1; i <= sectionsNames.length; i += 1) {
-    index = indexSectionFrom - i;
+    index = indexSectionFrom - i
     if (index < 0) {
-      index = sectionsNames.length + indexSectionFrom - i;
+      index = sectionsNames.length + indexSectionFrom - i
     }
-    upperSectionName = sectionsNames[index];
-    sectionTagIds = getTagIdsFromSectionName(upperSectionName);
+    upperSectionName = sectionsNames[ index ]
+    sectionTagIds = getTagIdsFromSectionName(upperSectionName)
     if (sectionTagIds.length) {
-      break;
+      break
     }
   }
 
-  return upperSectionName;
+  return upperSectionName
 }
 
-function getDownerSectionFrom(name: string) {
-  let downerSectionName = '';
-  let sectionTagIds;
-  let index = 0;
-  const indexSectionFrom = sectionsNames.indexOf(name);
+function getDownerSectionFrom (name: string) {
+  let downerSectionName = ''
+  let sectionTagIds
+  let index = 0
+  const indexSectionFrom = sectionsNames.indexOf(name)
 
   for (let i = 1; i <= sectionsNames.length; i += 1) {
-    index = indexSectionFrom + i;
+    index = indexSectionFrom + i
     if (index >= sectionsNames.length) {
-      index = indexSectionFrom + i - sectionsNames.length;
+      index = indexSectionFrom + i - sectionsNames.length
     }
-    downerSectionName = sectionsNames[index];
-    sectionTagIds = getTagIdsFromSectionName(downerSectionName);
+    downerSectionName = sectionsNames[ index ]
+    sectionTagIds = getTagIdsFromSectionName(downerSectionName)
     if (sectionTagIds.length) {
-      break;
+      break
     }
   }
 
-  return downerSectionName;
+  return downerSectionName
 }
 
-function setFocusRight() {
-  const sectionName = focused.value.section;
-  const sectionTagIds = getTagIdsFromSectionName(sectionName);
+function setFocusRight () {
+  const sectionName = focused.value.section
+  const sectionTagIds = getTagIdsFromSectionName(sectionName)
 
-  focused.value.pos += 1;
+  focused.value.pos += 1
   if (focused.value.pos >= sectionTagIds.length) {
-    focused.value.pos = 0;
+    focused.value.pos = 0
   }
-  focused.value.id = sectionTagIds[focused.value.pos];
+  focused.value.id = sectionTagIds[ focused.value.pos ]
 }
 
-function setFocusLeft() {
-  const sectionName = focused.value.section;
-  const sectionTagIds = getTagIdsFromSectionName(sectionName);
+function setFocusLeft () {
+  const sectionName = focused.value.section
+  const sectionTagIds = getTagIdsFromSectionName(sectionName)
 
-  focused.value.pos -= 1;
+  focused.value.pos -= 1
   if (focused.value.pos < 0) {
-    focused.value.pos = sectionTagIds.length - 1;
+    focused.value.pos = sectionTagIds.length - 1
   }
-  focused.value.id = sectionTagIds[focused.value.pos];
+  focused.value.id = sectionTagIds[ focused.value.pos ]
 }
 
-function setFocusUp() {
-  const sectionName = focused.value.section;
-  let upperSectionName = getUpperSectionFrom(sectionName);
+function setFocusUp () {
+  const sectionName = focused.value.section
+  let upperSectionName = getUpperSectionFrom(sectionName)
 
   if (!upperSectionName) {
-    upperSectionName = UNSELECTED_FOCUSED_SECTION_NAME;
+    upperSectionName = UNSELECTED_FOCUSED_SECTION_NAME
   }
 
   if (sectionName !== upperSectionName) {
-    focused.value.section = upperSectionName;
-    resetFocus();
+    focused.value.section = upperSectionName
+    resetFocus()
   } else {
-    checkSectionName(sectionName);
+    checkSectionName(sectionName)
   }
 }
 
-function setFocusDown() {
-  const sectionName = focused.value.section;
-  let downerSectionName = getDownerSectionFrom(sectionName);
+function setFocusDown () {
+  const sectionName = focused.value.section
+  let downerSectionName = getDownerSectionFrom(sectionName)
 
   if (!downerSectionName) {
-    downerSectionName = UNSELECTED_FOCUSED_SECTION_NAME;
+    downerSectionName = UNSELECTED_FOCUSED_SECTION_NAME
   }
 
   if (sectionName !== downerSectionName) {
-    focused.value.section = downerSectionName;
-    resetFocus();
+    focused.value.section = downerSectionName
+    resetFocus()
   } else {
-    checkSectionName(sectionName);
+    checkSectionName(sectionName)
   }
 }
 
-function keyboardShortcuts(e: KeyboardEvent) {
-  let preventDefault = false;
-  const stopPropagation = false;
-  const key = getKey(e);
+function keyboardShortcuts (e: KeyboardEvent) {
+  let preventDefault = false
+  const stopPropagation = false
+  const key = getKey(e)
 
   if (e.shiftKey && key !== 'Shift') {
     switch (key) {
-      case 'Enter':
-        onTagClick(focused.value.id);
-        break;
+    case 'Enter':
+      onTagClick(focused.value.id)
+      break
 
-      default:
+    default:
     }
   } else if (e.altKey && key !== 'Alt') {
     switch (key) {
-      // On windows, Meta + Enter does not trigger a keydown event,
-      // So, set Alt + Enter to validate.
-      case 'Enter':
-        emit('save');
-        preventDefault = true;
-        break;
+    // On windows, Meta + Enter does not trigger a keydown event,
+    // So, set Alt + Enter to validate.
+    case 'Enter':
+      emit('save')
+      preventDefault = true
+      break
 
-      default:
+    default:
     }
   } else if (e.metaKey && key !== 'Meta') {
     // On windows, Alt + Escape does not trigger a keydown event,
     // So, set Meta + Escape to cancel.
     switch (key) {
-      case 'Escape':
-        emit('cancel');
-        preventDefault = true;
-        break;
+    case 'Escape':
+      emit('cancel')
+      preventDefault = true
+      break
 
-      default:
+    default:
     }
   } else {
     switch (key) {
-      case 'ArrowRight':
-        setFocusRight();
-        break;
+    case 'ArrowRight':
+      setFocusRight()
+      break
 
-      case 'ArrowLeft':
-        setFocusLeft();
-        break;
+    case 'ArrowLeft':
+      setFocusLeft()
+      break
 
-      case 'ArrowUp':
-        setFocusUp();
-        preventDefault = true;
-        break;
+    case 'ArrowUp':
+      setFocusUp()
+      preventDefault = true
+      break
 
-      case 'ArrowDown':
-        setFocusDown();
-        preventDefault = true;
-        break;
+    case 'ArrowDown':
+      setFocusDown()
+      preventDefault = true
+      break
 
-      case 'Control':
-        emit('toggleOpacity');
-        preventDefault = true;
-        break;
+    case 'Control':
+      emit('toggleOpacity')
+      preventDefault = true
+      break
 
-      case 'Enter':
-        onTagClick(focused.value.id);
-        clearFilterText();
-        break;
+    case 'Enter':
+      onTagClick(focused.value.id)
+      clearFilterText()
+      break
 
-      case 'Escape':
-        clearFilterText();
-        break;
+    case 'Escape':
+      clearFilterText()
+      break
 
-      default:
-        // Start filtering only if the pressed key is a letter.
-        // Do not focus if pressed key is a control one.
-        if (!isFilterTextHasFocus.value && key.length === 1) {
-          setFilterTextFocus();
-          filters.value.text += key;
-        }
+    default:
+      // Start filtering only if the pressed key is a letter.
+      // Do not focus if pressed key is a control one.
+      if (!isFilterTextHasFocus.value && key.length === 1) {
+        setFilterTextFocus()
+        filters.value.text += key
+      }
     }
   }
 
   if (preventDefault) {
-    e.preventDefault();
+    e.preventDefault()
   }
   if (stopPropagation) {
-    e.stopPropagation();
+    e.stopPropagation()
   }
 }
 
-function attachKeyboardShortcuts() {
+function attachKeyboardShortcuts () {
   if (stopKeyboardShortcuts) {
-    return;
+    return
   }
-  stopKeyboardShortcuts = useEventListener(document, 'keydown', keyboardShortcuts);
+  stopKeyboardShortcuts = useEventListener(document, 'keydown', keyboardShortcuts)
 }
 
-function removeKeyboardShortcuts() {
-  stopKeyboardShortcuts && stopKeyboardShortcuts();
-  stopKeyboardShortcuts = null;
+function removeKeyboardShortcuts () {
+  stopKeyboardShortcuts && stopKeyboardShortcuts()
+  stopKeyboardShortcuts = null
 }
 
 // Watchers
 watch(unselectedTagIds, () => {
   if (!focused.value.id) {
-    resetFocus();
+    resetFocus()
   }
-});
+})
 watch(isFiltering, () => {
-  resetFocus();
-});
+  resetFocus()
+})
 
 onMounted(() => {
   // TODO: TEMP: only for testing purpose
   setTimeout(() => {
     if (isLoading.value) {
-      onShow();
+      onShow()
     }
-  }, 2000);
-  emit('mounted');
-});
+  }, 2000)
+  emit('mounted')
+})
 </script>
 
 <template>
@@ -890,7 +891,7 @@ onMounted(() => {
     <div class="categories-list">
       <CategoriesList
         :category-ids="categoryIds"
-        :selected-ids="selectedCategoryIdsMap"
+        :selected="selectedCategoryIdsMap"
         :nb-tags="nbTagsMap"
         :masked="notFilteredCategoryIdsMap"
         :edit-mode="props.editMode"

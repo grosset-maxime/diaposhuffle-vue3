@@ -1,37 +1,33 @@
 <script setup lang="ts">
-import type { IRoute } from '../interfaces/route';
+import type { IRoute } from '../interfaces/route'
 
-import { useGlobalState } from '@/stores';
+import { useGlobalState } from '@/stores'
 
 const props = defineProps<{
   show: boolean;
   items: Map<string, IRoute>;
-}>();
+}>()
 
 const {
-  // Getters
-  getRailMenu,
+  railMenu,
+} = useGlobalState()
 
-  // Actions
-  setRailMenu,
-} = useGlobalState();
-
-const toggleRailMenu = () => setRailMenu(!getRailMenu());
+const toggleRailMenu = () => railMenu.value = !railMenu.value
 </script>
 
 <template>
   <v-navigation-drawer
     :class="{
-      'is-rail': getRailMenu(),
+      'is-rail': railMenu,
     }"
     :model-value="props.show"
-    :rail="getRailMenu()"
+    :rail="railMenu"
     permanent
     rail-width="60"
   >
     <v-btn height="44" block @click="toggleRailMenu()">
-      <v-icon>
-        {{ getRailMenu() ? 'mdi-chevron-right' : 'mdi-chevron-left' }}
+      <v-icon size="large">
+        {{ railMenu ? 'mdi-chevron-right' : 'mdi-chevron-left' }}
       </v-icon>
     </v-btn>
 

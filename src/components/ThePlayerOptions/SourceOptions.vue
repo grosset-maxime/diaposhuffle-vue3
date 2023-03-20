@@ -105,8 +105,8 @@ function onCloseTaggerModal () {
   taggerModal.show.value = false
 }
 
-function onSaveTaggerModal (selectedTagIds: Array<TagId>) {
-  taggerModal.selected.value = new Set(selectedTagIds)
+function onSaveTaggerModal (selectedTagIds: Set<TagId>) {
+  taggerModal.selected.value = selectedTagIds
 }
 
 function onUnselectAllTags () {
@@ -204,8 +204,8 @@ function clearPineds () {
 
     <v-row align="center">
       <v-col class="d-flex">
-        <div class="v-label types-label"> Type(s) : </div>
-        <div class="types-chips-ctn">
+        <div class="v-label"> Type(s) : </div>
+        <div>
           <v-chip-group v-model="filterFileTypes" multiple>
             <v-chip
               v-for="(type, i) in sourceOptsStore.availableFileTypes.value"
@@ -258,7 +258,7 @@ function clearPineds () {
 
     <TaggerModal
       :show="taggerModal.show.value"
-      :selected-tag-ids="taggerModal.selected.value"
+      :selected="taggerModal.selected.value"
       @close="onCloseTaggerModal"
       @save="onSaveTaggerModal"
     />

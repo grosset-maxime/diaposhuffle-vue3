@@ -1,111 +1,117 @@
 <script setup lang="ts">
 // Types
-import type { TagId } from '@/models/tag';
+import type { TagId } from '@/models/tag'
 
 // Vendors Libs
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch } from 'vue'
 
 // Components
-import Tagger from '@/components/Tagger/TheTagger.vue';
+import TheTagger from '@/components/Tagger/TheTagger.vue'
 
 // Props
 interface Props {
   show?: boolean;
-  selectedTagIds?: Array<TagId>;
+  selected?: Set<TagId>;
 }
 const props = withDefaults(defineProps<Props>(), {
   show: false,
-  selectedTagIds: (): Array<TagId> => [],
-});
+  selected: (): Set<TagId> => new Set(),
+})
 
 // Emits
 const emit = defineEmits<{
   (e: 'close'): void;
-  (e: 'save', tagIds: Array<TagId>): void;
-}>();
+  (e: 'save', tagIds: Set<TagId>): void;
+}>()
 
 // Refs
-const selectedTagsIdsMap = ref<Map<TagId, boolean>>(new Map());
-const editMode = ref(false);
-const hasOpacity = ref(false);
-const isTaggerMounted = ref(false);
+const selected = ref<Set<TagId>>(new Set(props.selected))
+const editMode = ref(false)
+const hasOpacity = ref(false)
+const isTaggerMounted = ref(false)
 
-const TaggerCmp = ref<{
-  onShow: Function;
-  onHide: Function;
-  selectRandom: Function;
-} | null>(null);
+// const TaggerCmp = ref<{
+//   onShow: Function;
+//   onHide: Function;
+//   selectRandom: Function;
+// } | null>(null)
 
 // Computeds
 const modalClasses = computed(() => {
-  return `tagger-modal ${hasOpacity.value ? 'has-opacity' : ''}`;
-});
+  return `tagger-modal ${hasOpacity.value
+    ? 'has-opacity'
+    : ''}`
+})
 
-function onShow() {
-  editMode.value = false;
-  hasOpacity.value = false;
+function onShow () {
+  editMode.value = false
+  hasOpacity.value = false
 
-  selectedTagsIdsMap.value = new Map(props.selectedTagIds.map((tagId) => [tagId, true]));
+  selected.value = new Set(props.selected)
 
   if (isTaggerMounted.value) {
-    TaggerCmp.value?.onShow();
+    // TODO
+    // TaggerCmp.value?.onShow()
   }
 }
 
-function onHide() {
-  TaggerCmp.value?.onHide();
+function onHide () {
+  // TODO
+  // TaggerCmp.value?.onHide()
 }
 
-function onSave() {
-  emit('save', Array.from(selectedTagsIdsMap.value.keys()));
-  onClose();
+function onSave () {
+  emit('save', new Set(selected.value))
+  onClose()
 }
 
-function onCancel() {
-  onClose();
+function onCancel () {
+  onClose()
 }
 
-function onClose() {
-  onHide();
-  emit('close');
-  selectedTagsIdsMap.value = new Map();
+function onClose () {
+  onHide()
+  emit('close')
+  selected.value = new Set()
 }
 
-function onSelect(tagId: TagId) {
-  selectedTagsIdsMap.value.set(tagId, true);
+function onSelect (tagId: TagId) {
+  selected.value.add(tagId)
 }
 
-function onUnselect(tagId: TagId) {
-  selectedTagsIdsMap.value.delete(tagId);
+function onUnselect (tagId: TagId) {
+  selected.value.delete(tagId)
 }
 
-function onUnselectAll() {
-  selectedTagsIdsMap.value = new Map();
+function onUnselectAll () {
+  selected.value.clear()
 }
 
-function onToggleOpacity() {
-  hasOpacity.value = !hasOpacity.value;
+function onToggleOpacity () {
+  hasOpacity.value = !hasOpacity.value
 }
 
-function onTaggerMounted() {
-  TaggerCmp.value?.onShow();
-  isTaggerMounted.value = true;
+function onTaggerMounted () {
+  // TODO
+  // TaggerCmp.value?.onShow()
+  isTaggerMounted.value = true
 }
 
 watch(
   () => props.show,
   (isShow) => {
-    isShow ? onShow() : onHide();
-  }
-);
+    isShow
+      ? onShow()
+      : onHide()
+  },
+)
 </script>
 
 <template>
   <v-dialog
     :content-class="modalClasses"
-    :value="show"
+    :model-value="show"
     fullscreen
-    hide-overlay
     transition="dialog-bottom-transition"
     persistent
     no-click-animation
@@ -142,7 +148,6 @@ watch(
               small
               v-bind="attrs"
               v-on="on"
-              @click="TaggerCmp?.selectRandom()"
             >
               <v-icon class="select-random-icon" dense> mdi-shuffle-variant </v-icon>
             </v-btn>
@@ -158,10 +163,10 @@ watch(
         </v-toolbar-items>
       </v-toolbar>
 
-      <Tagger
+      <TheTagger
         class="tagger-ctn"
         ref="TaggerCmp"
-        :selected="selectedTagIds"
+        :selected="selected"
         :edit-mode="editMode"
         @select="onSelect"
         @unselect="onUnselect"

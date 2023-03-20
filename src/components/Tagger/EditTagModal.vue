@@ -1,28 +1,27 @@
 <script setup lang="ts">
 // Types
-import type { Fn } from '@vueuse/core';
+import type { TagId, TagData, TagCategory } from '@/models/tag'
 
 // Vendors Libs
-import { ref, computed, watch, onMounted } from 'vue';
-import { useEventListener } from '@vueuse/core';
+import { ref, computed, watch, onMounted } from 'vue'
 
-import { getKey } from '../../utils/utils';
-import DeleteModal from '../DeleteModal.vue';
-import CircularLoading from '../CircularLoading.vue';
-import { type Tag, type TagId, createTag, TagCategory } from '@/models/tag';
+import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
+
+// Components
+import DeleteModal from '../DeleteModal.vue'
+import CircularLoading from '../CircularLoading.vue'
 
 // Stores
-import { useTaggerStore } from '@/stores/tagger';
+import { useTaggerStore } from '@/stores/tagger'
 
-const EMPTY_TAG_DATA = {
+const EMPTY_TAG_DATA: TagData = {
   id: '',
   name: '',
   categoryId: '',
-};
-const EMPTY_TAG = createTag(EMPTY_TAG_DATA);
+}
 
-const taggerStore = useTaggerStore();
-let stopKeyboardShortcuts: Fn | null;
+const taggerStore = useTaggerStore()
+const { startListener, stopListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
 // Props
 interface Props {
@@ -32,167 +31,159 @@ interface Props {
 }
 const props = withDefaults(defineProps<Props>(), {
   show: false,
-  tagId: '0',
+  tagId: undefined,
   add: false,
-});
+})
 
 // Emits
 const emit = defineEmits<{
-  (e: 'confirm', tag: Tag): void;
+  (e: 'confirm', tag: TagData): void;
   (e: 'cancel'): void;
   (e: 'delete', id: TagId): void;
-}>();
+}>()
 
 // Refs
-const model = ref<Tag>(EMPTY_TAG);
-const nameWarningMsg = ref('');
+const tagData = ref<TagData>({ ...EMPTY_TAG_DATA })
+const nameWarningMsg = ref('')
 const rules = ref({
   required: (value: string) => !!value || 'Required.',
-});
-const isFormValid = ref(false);
-const showDeleteModal = ref(false);
-const loading = ref(false);
+})
+const isFormValid = ref(false)
+const showDeleteModal = ref(false)
+const loading = ref(false)
 
+// TODO
 const formCmp = ref<{
   reset: Function;
   resetValidation: Function;
   validate: Function;
-} | null>(null);
+} | null>(null)
 
 // Computeds
-const titleModal = computed(() => (props.add ? 'Add new tag' : 'Edit tag'));
+const tagModel = computed(
+  () => props.tagId
+    ? taggerStore.getTag(props.tagId)
+    : undefined,
+)
+const titleModal = computed(() => (props.add
+  ? 'Add new tag'
+  : 'Edit tag'))
 
-const confirmBtnText = computed(() => (props.add ? 'Add' : 'Edit'));
+const confirmBtnText = computed(() => (props.add
+  ? 'Add'
+  : 'Edit'))
 
-const tagsMap = computed(() => taggerStore.getTags());
+const tagsList = taggerStore.tagsList
+const categoriesList = taggerStore.categoriesList
 
-const tagsList = computed(() => taggerStore.getTagsList());
-const categoriesList = computed(() => taggerStore.getCategoriesList());
-
-const modelName = computed(() => model.value.name);
+const modelName = computed(() => tagData.value?.name || '')
 
 // Methods
-function getCategoryColor(category: TagCategory) {
-  return `#${category.color}`;
-}
-
-function setModel(tagId: TagId) {
-  if (!tagId) {
-    resetForm();
-    return;
-  }
-
-  // TODO: create a copy of the original tag to be able to cancel.
-  model.value = tagsMap.value.get(tagId)!;
-}
-
-function resetForm() {
-  model.value = createTag(EMPTY_TAG_DATA);
-  formCmp.value?.reset();
-}
-
-function resetFormValidation() {
-  formCmp.value?.resetValidation();
-}
-
-function isIdNotExists(value: TagId) {
-  return (
-    !value ||
-    !props.add ||
-    !tagsList.value.some((tag) => tag.id.toLowerCase() === value.trim().toLowerCase()) ||
-    'Id already exists.'
-  );
-}
-
-function isNameExists(value: string) {
-  return tagsList.value.some(
-    (tag) => tag.id !== model.value.id && tag.name.toLowerCase() === value?.trim().toLowerCase()
-  );
-}
-
 // TODO
-function updateModel(key: string, value: any) {
-  // $set(model, key, value);
+function getCategoryColor (category: TagCategory) {
+  return `#${category.color}`
 }
 
-function onConfirm() {
-  const isFormValid = formCmp.value?.validate();
-  if (isFormValid) {
-    loading.value = true;
-    // TODO: create a clone
-    emit('confirm', { ...model.value });
+function setModel () {
+  resetForm()
+
+  tagData.value = tagModel.value
+    ? tagModel.value.getData()
+    : { ...EMPTY_TAG_DATA }
+}
+
+function resetForm () {
+  // TODO
+  // formCmp.value?.reset()
+}
+
+function resetFormValidation () {
+  // TODO
+  // formCmp.value?.resetValidation()
+}
+
+function isIdNotExists (value: TagId) {
+  return (
+    !value
+    || !props.add
+    || !tagsList.value.some((tag) => tag.id.toLowerCase() === value.trim().toLowerCase())
+    || 'Id already exists.'
+  )
+}
+
+function isNameExists (value: string = '') {
+  return tagsList.value.some(
+    (tag) => tag.id !== tagData.value.id
+      && tag.name.toLowerCase() === value.trim().toLowerCase(),
+  )
+}
+
+function onConfirm () {
+  // TODO
+  // const isFormValid = formCmp.value?.validate()
+
+  if (isFormValid.value) {
+    loading.value = true
+    emit('confirm', { ...tagData.value })
   }
 }
 
-function onCancel() {
-  emit('cancel');
+function onCancel () {
+  emit('cancel')
 }
 
-function onDelete() {
-  loading.value = true;
-  emit('delete', props.tagId);
-  onCancel();
+function onDelete () {
+  loading.value = true
+  props.tagId && emit('delete', props.tagId)
+  onCancel()
 }
 
-function onDeleteBtnClick() {
-  showDeleteModal.value = true;
+function onDeleteBtnClick () {
+  showDeleteModal.value = true
 }
 
-function closeConfirmDelete({ deleteTag }: { deleteTag?: boolean } = {}) {
-  showDeleteModal.value = false;
+function closeConfirmDelete ({ deleteTag }: { deleteTag?: boolean } = {}) {
+  showDeleteModal.value = false
 
   if (deleteTag) {
-    onDelete();
+    onDelete()
   }
 }
 
-function keyboardShortcuts(e: KeyboardEvent) {
-  const key = getKey(e);
-  let preventDefault = false;
-  const stopPropagation = false;
+function keyboardShortcuts (key: string, e: KeyboardEvent) {
+  let preventDefault = false
+  const stopPropagation = false
 
   if (e.altKey) {
     switch (key) {
-      // On windows, Meta + Enter does not trigger a keydown event,
-      // So, set Alt + Enter to validate.
-      case 'Enter':
-        onConfirm();
-        preventDefault = true;
-        break;
+    // On windows, Meta + Enter does not trigger a keydown event,
+    // So, set Alt + Enter to validate.
+    case 'Enter':
+      onConfirm()
+      preventDefault = true
+      break
 
-      default:
+    default:
     }
   } else if (e.metaKey) {
     // On windows, Alt + Escape does not trigger a keydown event,
     // So, set Meta + Escape to cancel.
     switch (key) {
-      case 'Escape':
-        onCancel();
-        preventDefault = true;
-        break;
+    case 'Escape':
+      onCancel()
+      preventDefault = true
+      break
 
-      default:
+    default:
     }
   }
 
   if (preventDefault) {
-    e.preventDefault();
+    e.preventDefault()
   }
   if (stopPropagation) {
-    e.stopPropagation();
+    e.stopPropagation()
   }
-}
-
-function attachKeyboardShortcuts() {
-  if (stopKeyboardShortcuts) {
-    return;
-  }
-  stopKeyboardShortcuts = useEventListener(document, 'keydown', keyboardShortcuts);
-}
-
-function removeKeyboardShortcuts() {
-  stopKeyboardShortcuts && stopKeyboardShortcuts();
-  stopKeyboardShortcuts = null;
 }
 
 // Watchers
@@ -200,43 +191,38 @@ watch(
   () => props.show,
   (isShow) => {
     if (isShow) {
-      loading.value = false;
-      attachKeyboardShortcuts();
+      loading.value = false
+      startListener()
 
       if (props.add) {
-        resetForm();
+        resetForm()
       } else {
-        resetFormValidation();
+        resetFormValidation()
       }
     } else {
-      removeKeyboardShortcuts();
+      stopListener()
     }
-  }
-);
-
-watch(
-  () => props.tagId,
-  (tagId) => {
-    setModel(tagId);
-  }
-);
+  },
+)
 
 watch(modelName, (name) => {
-  nameWarningMsg.value = name?.trim() && isNameExists(name) ? 'Name already exists.' : '';
-});
+  nameWarningMsg.value = name?.trim() && isNameExists(name)
+    ? 'Name already exists.'
+    : ''
+})
 
 watch(showDeleteModal, (shouldShow) => {
   if (shouldShow) {
-    removeKeyboardShortcuts();
+    stopListener()
   } else {
-    attachKeyboardShortcuts();
+    startListener()
   }
-});
+})
 
 onMounted(() => {
-  loading.value = false;
-  setModel(props.tagId);
-});
+  loading.value = false
+  setModel()
+})
 </script>
 
 <template>
@@ -252,31 +238,31 @@ onMounted(() => {
             <v-row>
               <v-col cols="12">
                 <v-text-field
-                  :value="model.id"
+                  :value="tagData.id"
                   :disabled="!add"
                   :autofocus="add"
                   :rules="[rules.required, isIdNotExists]"
                   label="Id"
                   required
-                  @input="model.id = $event"
+                  @input="tagData.id = $event"
                 />
               </v-col>
 
               <v-col cols="12">
                 <v-text-field
-                  :value="model.name"
+                  :value="tagData.name"
                   :autofocus="!add"
                   :rules="[rules.required]"
                   :hint="nameWarningMsg"
                   label="Name"
                   required
-                  @input="model.name = $event"
+                  @input="tagData.name = $event"
                 />
               </v-col>
 
               <v-col cols="12">
                 <v-autocomplete
-                  :value="model.categoryId"
+                  :value="tagData.categoryId"
                   :items="categoriesList"
                   item-text="name"
                   item-value="id"
@@ -284,7 +270,7 @@ onMounted(() => {
                   chips
                   deletable-chips
                   hide-selected
-                  @input="model.categoryId = $event"
+                  @input="tagData.categoryId = $event"
                 >
                   <template v-slot:selection="data">
                     <v-chip
@@ -293,7 +279,7 @@ onMounted(() => {
                       text-color="white"
                       close
                       outlined
-                      @click:close="model.categoryId = ''"
+                      @click:close="tagData.categoryId = ''"
                     >
                       <v-avatar left :color="getCategoryColor(data.item)" />
                       {{ data.item.name }}
@@ -304,7 +290,7 @@ onMounted(() => {
                     <v-list-item-avatar :color="getCategoryColor(data.item)" size="30" />
                     <v-list-item-content>
                       <!-- TODO: why v-html ?? -->
-                      <v-list-item-title v-html="data.item.name" />
+                      <!-- <v-list-item-title v-html="data.item.name" /> -->
                     </v-list-item-content>
                   </template>
                 </v-autocomplete>

@@ -2,27 +2,28 @@
 // TODO: Enh: display beautifull scroll when a lot of tags (instead of the native scroll bar)
 
 // Types
-import type { Tag, TagId } from '@/models/tag';
+import { createTag, type Tag, type TagId } from '@/models/tag'
 
 // Vendors Libs
-import { ref, computed } from 'vue';
+import { ref, computed } from 'vue'
 
-import { useTaggerStore } from '@/stores/tagger';
+import { useTaggerStore } from '@/stores/tagger'
+import { eagerComputed } from '@vueuse/shared'
 
 // Props
 interface Props {
-  tagsIds?: Array<TagId>;
+  tagsIds?: Set<TagId>;
 }
 const props = withDefaults(defineProps<Props>(), {
-  tagsIds: (): Array<TagId> => [],
-});
+  tagsIds: (): Set<TagId> => new Set(),
+})
 
 // Emits
 const emit = defineEmits<{
   (e: 'click'): void;
-}>();
+}>()
 
-const taggerStore = useTaggerStore();
+const taggerStore = useTaggerStore()
 
 // Refs
 const sorts = ref({
@@ -38,58 +39,63 @@ const sorts = ref({
     { text: 'A - Z', value: 'asc' },
     { text: 'Z - A', value: 'desc' },
   ],
-});
+})
 
 // Computeds
-const tagsIdsMap = computed(() => {
-  return Object.fromEntries(props.tagsIds.map((id) => [id, true]));
-});
-const tagsMap = computed(() => {
-  return taggerStore.getTags();
-});
-const tagsList = computed(() => {
-  return taggerStore.getTagsList();
-});
+const hasTags = eagerComputed(() => !!props.tagsIds.size)
+
+const tagsMap = taggerStore.tagsMap
+
 const tags = computed(() => {
-  return tagsList.value
-    .filter((tag: Tag) => tagsIdsMap.value[tag.id])
+  return Array.from(props.tagsIds)
+    .map(
+      (tagId) => tagsMap.value.get(tagId) || createTag({
+        id: '-1',
+        name: tagId,
+        categoryId: '-1',
+      }),
+    )
     .sort((tagA: Tag, tagB: Tag) => {
-      let sort = 0;
-      const direction = sorts.value.direction === 'asc' ? 1 : -1;
-      const field = sorts.value.field || 'name';
+      let sort = 0
+      const direction = sorts.value.direction === 'asc'
+        ? 1
+        : -1
+      const field = sorts.value.field || 'name'
 
       if (field === 'name') {
-        sort = tagA.name.localeCompare(tagB.name);
+        sort = tagA.name.localeCompare(tagB.name)
       }
-      if (field === 'category') {
-        sort = tagA.categoryId.localeCompare(tagB.categoryId);
+      else if (field === 'category') {
+        sort = tagA.categoryId.localeCompare(tagB.categoryId)
         // sort = tagA.categoryId - tagB.categoryId;
       }
 
-      return direction * sort;
-    });
-});
-const hasTags = computed(() => tags.value.length);
+      return direction * sort
+    })
+})
 
-function getTagStyles(tagId: TagId) {
-  const hasCategory = !!tagsMap.value.get(tagId)?.hasCategory();
+function getTagStyles (tag?: Tag) {
+  const hasCategory = !!tag?.hasCategory()
 
   return {
-    'border-color': getTagCategoryColor(tagId),
-    'border-style': !hasCategory ? 'dashed' : 'solid',
-  };
+    'border-color': getTagCategoryColor(tag),
+    'border-style': !hasCategory
+      ? 'dashed'
+      : 'solid',
+  }
 }
 
-function getTagCategoryColor(tagId: TagId) {
-  const DEFAULT_COLOR = 'FFF';
-  const computeColor = (color: string) => `#${color || 'FFF'}`;
+function getTagCategoryColor (tag?: Tag) {
+  const DEFAULT_COLOR = 'FFF'
+  const computeColor = (color: string) => `#${color || 'FFF'}`
 
-  const tag = tagsMap.value.get(tagId);
   if (!tag) {
-    return computeColor(DEFAULT_COLOR);
+    return computeColor(DEFAULT_COLOR)
   }
 
-  return computeColor(taggerStore.getCategoryColor(tag.categoryId) || DEFAULT_COLOR);
+  return computeColor(
+    taggerStore.getCategoryColor(tag.categoryId) || DEFAULT_COLOR,
+  )
 }
 </script>
 
@@ -104,7 +110,7 @@ function getTagCategoryColor(tagId: TagId) {
     @click="emit('click')"
   >
     <template v-if="hasTags">
-      <div v-for="tag in tags" :key="tag.id" class="tag" :style="getTagStyles(tag.id)">
+      <div v-for="tag in tags" :key="tag.id" class="tag" :style="getTagStyles(tag)">
         {{ tag.name }}
       </div>
     </template>

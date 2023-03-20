@@ -1,24 +1,24 @@
 <script setup lang="ts">
 // Types
-import type { TagCategoryId } from '@/models/tag';
+import type { TagCategoryId } from '@/models/tag'
 
-import CategoryChip from './CategoryChip.vue';
+import CategoryChip from './CategoryChip.vue'
 
 // Props
 interface Props {
   categoryIds?: Array<TagCategoryId>;
-  selectedIds?: Map<TagCategoryId, boolean>;
+  selected?: Set<TagCategoryId>;
   nbTags?: Map<TagCategoryId, number>;
   masked?: Map<TagCategoryId, boolean>;
   editMode: boolean;
 }
 const props = withDefaults(defineProps<Props>(), {
   categoryIds: (): Array<TagCategoryId> => [],
-  selectedIds: (): Map<TagCategoryId, boolean> => new Map(),
+  selected: (): Set<TagCategoryId> => new Set(),
   nbTags: (): Map<TagCategoryId, number> => new Map(),
   masked: (): Map<TagCategoryId, boolean> => new Map(),
   editMode: false,
-});
+})
 
 // Emits
 const emit = defineEmits<{
@@ -26,13 +26,13 @@ const emit = defineEmits<{
   (e: 'unselect', id: TagCategoryId): void;
   (e: 'addCategory'): void;
   (e: 'editCategory', id: TagCategoryId): void;
-}>();
+}>()
 
-function onCategoryClick(catId: TagCategoryId) {
-  if (props.selectedIds.get(catId)) {
-    emit('unselect', catId);
+function onCategoryClick (catId: TagCategoryId) {
+  if (props.selected.has(catId)) {
+    emit('unselect', catId)
   } else {
-    emit('select', catId);
+    emit('select', catId)
   }
 }
 </script>
@@ -63,7 +63,7 @@ function onCategoryClick(catId: TagCategoryId) {
       v-for="catId in categoryIds"
       :key="`cat-${catId}`"
       :category-id="catId"
-      :selected="selectedIds.get(catId)"
+      :selected="selected.has(catId)"
       :nb-tags="nbTags.get(catId)"
       :masked="!!masked.get(catId)"
       :edit="editMode"
@@ -74,7 +74,7 @@ function onCategoryClick(catId: TagCategoryId) {
     <CategoryChip
       key="cat-0"
       category-id="0"
-      :selected="selectedIds.get('0')"
+      :selected="selected.has('0')"
       :nb-tags="nbTags.get('0')"
       :masked="!!masked.get('0')"
       @click="onCategoryClick"

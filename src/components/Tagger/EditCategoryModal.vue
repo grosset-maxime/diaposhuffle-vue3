@@ -1,30 +1,26 @@
 <script setup lang="ts">
 // Types
-import type { Fn } from '@vueuse/core';
-import { createTagCategory, type TagCategoryId, type TagCategory } from '@/models/tag';
+import type { TagCategoryId, TagCategoryData } from '@/models/tag'
 
 // Vendors Libs
-import { ref, computed, watch, onMounted } from 'vue';
-import { useEventListener } from '@vueuse/core';
+import { ref, computed, watch, onMounted } from 'vue'
 
-import { getKey } from '@/utils/utils';
+import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
 
 // Stores
-import { useTaggerStore } from '@/stores/tagger';
+import { useTaggerStore } from '@/stores/tagger'
 
 // Components
-import DeleteModal from '@/components/DeleteModal.vue';
-import CircularLoading from '../CircularLoading.vue';
+import DeleteModal from '@/components/DeleteModal.vue'
+import CircularLoading from '../CircularLoading.vue'
 
-const EMPTY_CATEGORY_DATA = {
+const EMPTY_CATEGORY_DATA: TagCategoryData = {
   id: '',
   name: '',
   color: '',
-};
-const EMPTY_CATEGORY = createTagCategory(EMPTY_CATEGORY_DATA);
-
-const taggerStore = useTaggerStore();
-let stopKeyboardShortcuts: Fn | null;
+}
+const taggerStore = useTaggerStore()
+const { startListener, stopListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
 // Props
 interface Props {
@@ -34,222 +30,226 @@ interface Props {
 }
 const props = withDefaults(defineProps<Props>(), {
   show: false,
-  categoryId: '0',
+  categoryId: undefined,
   add: false,
-});
+})
 
 // Emits
 const emit = defineEmits<{
-  (e: 'confirm', cat: TagCategory): void;
+  (e: 'confirm', catData: TagCategoryData): void;
   (e: 'cancel'): void;
   (e: 'delete', id: TagCategoryId): void;
-}>();
+}>()
 
 // Refs
-const model = ref<TagCategory>(EMPTY_CATEGORY);
-const color = ref('');
-const nameWarningMsg = ref('');
-const colorWarningMsg = ref('');
+const categoryData = ref<TagCategoryData>({ ...EMPTY_CATEGORY_DATA })
+const color = ref('')
+const nameWarningMsg = ref('')
+const colorWarningMsg = ref('')
 const rules = ref({
   required: (value: string) => !!value || 'Required.',
-});
-const isFormValid = ref(false);
-const showDeleteModal = ref(false);
-const loading = ref(false);
+})
+const isFormValid = ref(false)
+const showDeleteModal = ref(false)
+const loading = ref(false)
 
+// TODO
 const formCmp = ref<{
   reset: Function;
   resetValidation: Function;
   validate: Function;
-} | null>(null);
+} | null>(null)
 
 // Computeds
-const titleModal = computed(() => (props.add ? 'Add new category' : 'Edit category'));
+const categoryModel = computed(
+  () => props.categoryId
+    ? taggerStore.getCategory(props.categoryId)
+    : undefined,
+)
+const titleModal = computed(() => (props.add
+  ? 'Add new category'
+  : 'Edit category'))
 
-const confirmBtnText = computed(() => (props.add ? 'Add' : 'Edit'));
+const confirmBtnText = computed(() => (props.add
+  ? 'Add'
+  : 'Edit'))
 
-const categoriesMap = computed(() => taggerStore.getCategories());
+const categoriesMap = taggerStore.categoriesMap
 
-const categoriesList = computed(() => taggerStore.getCategoriesList());
+const categoriesList = taggerStore.categoriesList
 
-const modelName = computed(() => model.value.name);
+const modelName = computed(() => categoryData.value.name)
 
 // Methods
-function setModel(categoryId: TagCategoryId) {
-  if (!categoryId) {
-    resetForm();
-    return;
-  }
+function setModel () {
+  resetForm()
+
+  categoryData.value = categoryModel.value
+    ? categoryModel.value.getData()
+    : { ...EMPTY_CATEGORY_DATA }
 
   // TODO: do not use category directly.
-  model.value = categoriesMap.value.get(categoryId) as TagCategory;
-  color.value = `#${model.value.color}`;
+  color.value = categoryData.value.color
+    ? `#${categoryData.value.color}`
+    : ''
 }
 
-function resetForm() {
-  model.value = createTagCategory(EMPTY_CATEGORY_DATA);
-  color.value = '';
+function resetForm () {
+  color.value = ''
 
-  formCmp.value?.reset();
+  // TODO
+  // formCmp.value?.reset()
 }
 
-function resetFormValidation() {
-  formCmp.value?.resetValidation();
+function resetFormValidation () {
+  formCmp.value?.resetValidation()
 }
 
-function isNameExists(value: string) {
+function isNameExists (value: string) {
   return categoriesList.value.some(
-    (cat) => cat.id !== model.value.id && cat.name.toLowerCase() === value?.trim().toLowerCase()
-  );
+    (cat) => cat.id !== categoryData.value.id
+      && cat.name.toLowerCase() === value?.trim().toLowerCase(),
+  )
 }
 
-function onConfirm() {
-  const isFormValid = formCmp.value?.validate();
-  if (isFormValid) {
-    loading.value = true;
-    // TODO: create a TagCategory class.
-    emit('confirm', { ...model.value });
+function onConfirm () {
+  // TODO
+  // const isFormValid = formCmp.value?.validate()
+
+  if (isFormValid.value) {
+    loading.value = true
+    emit('confirm', { ...categoryData.value })
   }
 }
 
-function onCancel() {
-  emit('cancel');
+function onCancel () {
+  emit('cancel')
 }
 
-function onDelete() {
-  loading.value = true;
-  emit('delete', props.categoryId);
-  onCancel();
+function onDelete () {
+  loading.value = true
+  props.categoryId && emit('delete', props.categoryId)
+  onCancel()
 }
 
-function onDeleteBtnClick() {
-  showDeleteModal.value = true;
+function onDeleteBtnClick () {
+  showDeleteModal.value = true
 }
 
-function closeConfirmDelete({ deleteCat }: { deleteCat?: boolean } = {}) {
-  showDeleteModal.value = false;
+function closeConfirmDelete ({ deleteCat }: { deleteCat?: boolean } = {}) {
+  showDeleteModal.value = false
 
   if (deleteCat) {
-    onDelete();
+    onDelete()
   }
 }
 
-function keyboardShortcuts(e: KeyboardEvent) {
-  const key = getKey(e);
-  let preventDefault = false;
-  const stopPropagation = false;
+function keyboardShortcuts (key: string, e: KeyboardEvent) {
+  let preventDefault = false
+  const stopPropagation = false
 
   if (e.altKey) {
     switch (key) {
-      // On windows, Meta + Enter does not trigger a keydown event,
-      // So, set Alt + Enter to validate.
-      case 'Enter':
-        onConfirm();
-        preventDefault = true;
-        break;
+    // On windows, Meta + Enter does not trigger a keydown event,
+    // So, set Alt + Enter to validate.
+    case 'Enter':
+      onConfirm()
+      preventDefault = true
+      break
 
-      default:
+    default:
     }
   } else if (e.metaKey) {
     // On windows, Alt + Escape does not trigger a keydown event,
     // So, set Meta + Escape to cancel.
     switch (key) {
-      case 'Escape':
-        onCancel();
-        preventDefault = true;
-        break;
+    case 'Escape':
+      onCancel()
+      preventDefault = true
+      break
 
-      default:
+    default:
     }
   }
 
   if (preventDefault) {
-    e.preventDefault();
+    e.preventDefault()
   }
   if (stopPropagation) {
-    e.stopPropagation();
+    e.stopPropagation()
   }
-}
-
-function attachKeyboardShortcuts() {
-  if (stopKeyboardShortcuts) {
-    return;
-  }
-  stopKeyboardShortcuts = useEventListener(document, 'keydown', keyboardShortcuts);
-}
-
-function removeKeyboardShortcuts() {
-  stopKeyboardShortcuts && stopKeyboardShortcuts();
-  stopKeyboardShortcuts = null;
 }
 
 watch(
   () => props.show,
   (isShow) => {
     if (isShow) {
-      loading.value = false;
-      attachKeyboardShortcuts();
+      loading.value = false
+      startListener()
 
       if (props.add) {
-        resetForm();
+        resetForm()
       } else {
-        resetFormValidation();
+        resetFormValidation()
       }
     } else {
-      removeKeyboardShortcuts();
+      stopListener()
     }
-  }
-);
+  },
+)
 
 watch(
   () => props.categoryId,
-  (categoryId) => {
-    setModel(categoryId);
-  }
-);
+  () => { setModel() },
+)
 
 watch(color, (value) => {
   if (!value) {
-    return;
+    return
   }
 
   // temporary fix while there is no way to disable the alpha channel in the
   // colorpicker component: https://github.com/vuetifyjs/vuetify/issues/9590
   if (value.toString().match(/#[a-zA-Z0-9]{8}/)) {
-    color.value = value.substring(0, 7);
+    color.value = value.substring(0, 7)
   }
 
-  if (model.value.color && color.value.includes(model.value.color)) {
-    return;
+  if (categoryData.value.color && color.value.includes(categoryData.value.color)) {
+    return
   }
 
   // TODO: reactivity?
-  model.value.color = color.value.substring(1);
+  categoryData.value.color = color.value.substring(1)
 
   const isColorAlreadyAssigned = categoriesList.value.some(
     (cat) =>
-      color.value.toLowerCase().includes(cat.color.toLowerCase()) && cat.id !== model.value.id
-  );
+      color.value.toLowerCase().includes(cat.color.toLowerCase())
+        && cat.id !== categoryData.value.id,
+  )
 
-  colorWarningMsg.value = isColorAlreadyAssigned ? 'Color already assinged.' : '';
-});
+  colorWarningMsg.value = isColorAlreadyAssigned
+    ? 'Color already assinged.'
+    : ''
+})
 
 watch(modelName, (name) => {
-  nameWarningMsg.value = name?.trim() && isNameExists(name) ? 'Name already exists.' : '';
-});
+  nameWarningMsg.value = name?.trim() && isNameExists(name)
+    ? 'Name already exists.'
+    : ''
+})
 
 watch(showDeleteModal, (shouldShow) => {
   if (shouldShow) {
-    removeKeyboardShortcuts();
+    stopListener()
   } else {
-    attachKeyboardShortcuts();
+    startListener()
   }
-});
+})
 
 onMounted(() => {
-  loading.value = false;
-  setModel(props.categoryId);
-});
+  loading.value = false
+  setModel()
+})
 </script>
 
 <template>
@@ -264,18 +264,18 @@ onMounted(() => {
           <v-form v-model="isFormValid" ref="formCmp">
             <v-row>
               <v-col v-if="!add" class="pt-0" cols="12">
-                <v-text-field :value="model.id" label="Id" hide-details disabled />
+                <v-text-field :value="categoryData.id" label="Id" hide-details disabled />
               </v-col>
 
               <v-col class="pt-0" cols="12">
                 <v-text-field
-                  :value="model.name"
+                  :value="categoryData.name"
                   autofocus
                   :rules="[rules.required]"
                   :hint="nameWarningMsg"
                   label="Name"
                   required
-                  @input="model.name = $event"
+                  @input="categoryData.name = $event"
                 />
               </v-col>
 

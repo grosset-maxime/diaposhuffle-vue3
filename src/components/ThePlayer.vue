@@ -182,7 +182,7 @@ const playingItemRandomPath = computed(() => {
 })
 
 const playingItemTags = computed(() => {
-  return playingItemData.value?.tags || []
+  return playingItemData.value?.tags || new Set<TagId>()
 })
 
 const isPinedPlayingItem = computed(() => {
@@ -231,8 +231,6 @@ onMounted(async () => {
   itemsInfoChip.pined.value = pinListIndex.value
   loop.pined.value = pinLoop.value
 
-  const fetchTagsAndCategoriesPromise = fetchTagsAndCategories()
-
   if (isFromPinedsSource.value) {
     await playerStore.fetchItemsFromPineds()
   } else if (hasTagsSource.value || hasFileTypesSource) {
@@ -256,7 +254,7 @@ onMounted(async () => {
     await playerStore.fetchItemsFromFS()
   }
 
-  await fetchTagsAndCategoriesPromise
+  await taggerStore.taggerReadyPromise
 
   goToNextItem()
 
@@ -735,7 +733,7 @@ function hideTaggerModal () {
   showUIDuring(3000)
 }
 
-async function onSaveTaggerModal (selectedTagIds: Array<TagId>) {
+async function onSaveTaggerModal (selectedTagIds: Set<TagId>) {
   const tags = selectedTagIds
   const item = playingItemData.value!
 
@@ -970,10 +968,6 @@ function togglePinUI (uiName: string) {
   } else if (uiName === 'itemPathChip') {
     itemPathChip.pined.value = !itemPathChip.pined.value
   }
-}
-
-function fetchTagsAndCategories () {
-  return Promise.all([ taggerStore.fetchTags(), taggerStore.fetchCategories() ])
 }
 
 watch(showTheHelp, (isShow) => {

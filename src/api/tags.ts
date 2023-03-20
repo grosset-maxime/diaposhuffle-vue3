@@ -1,53 +1,60 @@
 // Types
-import type { TagCategory, Tag, TagCategoryId } from '@/models/tag';
+import type { TagCategory, Tag, TagCategoryId, TagData, TagCategoryData } from '@/models/tag'
 
-import { createTag, createTagCategory } from '@/models/tag';
-import { BASE_URL, buildError, fetchJson } from '@/api/api';
+// Models
+import {
+  createTag,
+  createTagCategory,
+  Tag as TagClass,
+  TagCategory as TagCategoryClass,
+} from '@/models/tag'
+import { BASE_URL, buildError, fetchJson } from '@/api/api'
 
 /**
  * Fetch the entire tags list.
  * @returns All tags list.
  */
 export const fetchTags = async () => {
-  let tags = [] as Array<Tag>;
+  let tags = [] as Array<Tag>
 
   try {
-    const url = `${BASE_URL}/api/getAllTags`;
+    const url = `${BASE_URL}/api/getAllTags`
 
     const opts = {
       method: 'POST', // TODO: should be a GET ?
-    };
+    }
 
-    const json = await fetchJson(url, opts);
-    tags = (json.tags || []).map((t: Tag) => createTag(t));
+    const json = await fetchJson(url, opts)
+    tags = (json.tags || []).map((t: TagData) => createTag(t))
   } catch (error) {
-    throw buildError(error);
+    throw buildError(error)
   }
 
-  return tags;
-};
+  return tags
+}
 
 /**
  * Fetch list of categories (tags categories).
+ * @returns Promise with
  */
 export const fetchCategories = async () => {
-  let categories = [] as Array<TagCategory>;
+  let categories = [] as Array<TagCategory>
 
   try {
-    const url = `${BASE_URL}/api/getAllTagCategories`;
+    const url = `${BASE_URL}/api/getAllTagCategories`
 
     const opts = {
       method: 'POST', // TODO: should be a GET ?
-    };
+    }
 
-    const json = await fetchJson(url, opts);
-    categories = (json.tagCategories || []).map((c: TagCategory) => createTagCategory(c));
+    const json = await fetchJson(url, opts)
+    categories = (json.tagCategories || []).map((c: TagCategory) => createTagCategory(c))
   } catch (error) {
-    throw buildError(error);
+    throw buildError(error)
   }
 
-  return categories;
-};
+  return categories
+}
 
 /**
  * Edit a tag.
@@ -55,7 +62,7 @@ export const fetchCategories = async () => {
  * @param options - Options.
  * @param options.isNew - Is a new tag.
  * @param options.isDelete - Should delete tag.
- * @param options.tag - Tag.
+ * @param options.tag - Tag data or Tag.
  * @returns - Promise with Success or failure.
  */
 const editTag = async ({
@@ -65,16 +72,16 @@ const editTag = async ({
 }: {
   isNew?: boolean;
   isDelete?: boolean;
-  tag: Tag;
+  tag: Tag | TagData;
 }) => {
   if (!tag) {
-    throw buildError('Missing tag option to edit tag.');
+    throw buildError('Missing tag option to edit tag.')
   }
 
-  let success = false;
+  let success = false
 
   try {
-    const url = `${BASE_URL}/api/editTag`;
+    const url = `${BASE_URL}/api/editTag`
 
     const opts = {
       method: 'POST', // TODO: should be a PUT for update and DELETE for a delete ?
@@ -85,85 +92,86 @@ const editTag = async ({
         name: tag.name,
         category: tag.categoryId,
       }),
-    };
+    }
 
-    const json = await fetchJson(url, opts);
-    success = !!json.success;
+    const json = await fetchJson(url, opts)
+    success = !!json.success
   } catch (error) {
-    throw buildError(error);
+    throw buildError(error)
   }
 
-  return success;
-};
+  return success
+}
 
 /**
  * Add a new tag.
- * @param options - Options.
- * @param options.tag - Tag.
- * @returns - Promise with Success or failure.
+ * @param tagData - Tag data.
+ * @returns - Promise with new Tag.
  */
-export const addTag = async ({ tag }: { tag: Tag }) => {
-  if (!tag) {
-    throw buildError('Missing tag option to add tag.');
+export const addTag = async (tagData: TagData) => {
+  if (!tagData) {
+    throw buildError('Missing tagData option to add tag.')
   }
 
-  let success = false;
+  let success = false
 
   try {
     success = await editTag({
       isNew: true,
-      tag,
-    });
+      tag: tagData,
+    })
+    if (!success) { throw buildError('Add tag not successful.')}
   } catch (error) {
-    throw buildError(error);
+    throw buildError(error)
   }
 
-  return success;
-};
+  return createTag(tagData)
+}
 
 /**
  * Edit an existing tag.
- * @param options - Options.
- * @param options.tag - Tag.
- * @returns - Promise with Success or failure.
+ * @param tagData - Tag data or Tag.
+ * @returns - Promise with updated Tag.
  */
-export const updateTag = async ({ tag }: { tag: Tag }) => {
-  if (!tag) {
-    throw buildError('Missing tag option to edit a tag.');
+export const updateTag = async (tagData: TagData | Tag) => {
+  if (!tagData) {
+    throw buildError('Missing tag option to edit a tag.')
   }
 
-  let success = false;
+  let success = false
 
   try {
-    success = await editTag({ tag });
+    success = await editTag({ tag: tagData })
+    if (!success) { throw buildError('Update tag not successful.')}
   } catch (error) {
-    throw buildError(error);
+    throw buildError(error)
   }
 
-  return success;
-};
+  return tagData instanceof TagClass
+    ? tagData
+    : createTag(tagData)
+}
 
 /**
  * Delete a tag.
- * @param options - Options.
- * @param options.tag - Tag.
+ * @param tag - Tag data or Tag.
  * @returns - Promise with Success or failure.
  */
-export const deleteTag = async ({ tag }: { tag: Tag }) => {
+export const deleteTag = async (tag: TagData | Tag) => {
   if (!tag) {
-    throw buildError('Missing tag option to delete tag.');
+    throw buildError('Missing tag option to delete tag.')
   }
 
-  let success = false;
+  let success = false
 
   try {
-    success = await editTag({ tag, isDelete: true });
+    success = await editTag({ tag, isDelete: true })
   } catch (error) {
-    throw buildError(error);
+    throw buildError(error)
   }
 
-  return success;
-};
+  return success
+}
 
 /**
  * Edit a category.
@@ -171,7 +179,7 @@ export const deleteTag = async ({ tag }: { tag: Tag }) => {
  * @param options - Options.
  * @param options.isNew - Is a new category.
  * @param options.isDelete - Should delete category.
- * @param options.category - Category.
+ * @param options.category - Category data or Category.
  * @returns - Promise with Response object.
  */
 const editCategory = async ({
@@ -181,15 +189,15 @@ const editCategory = async ({
 }: {
   isNew?: boolean;
   isDelete?: boolean;
-  category: TagCategory;
+  category: TagCategory | TagCategoryData;
 }): Promise<{
   success: boolean;
   tagCategoryId: TagCategoryId;
 }> => {
-  let json;
+  let json
 
   try {
-    const url = `${BASE_URL}/api/editTagCategory`;
+    const url = `${BASE_URL}/api/editTagCategory`
 
     const opts = {
       method: 'POST', // TODO: should be a PUT for update and DELETE for a delete ?
@@ -200,84 +208,84 @@ const editCategory = async ({
         name: category.name,
         color: category.color,
       }),
-    };
+    }
 
-    json = await fetchJson(url, opts);
+    json = await fetchJson(url, opts)
   } catch (error) {
-    throw buildError(error);
+    throw buildError(error)
   }
 
-  return json;
-};
+  return json
+}
 
 /**
  * Add a new category.
- * @param options - Options.
- * @param options.category - Category.
- * @returns - Promise with Category id.
+ * @param categoryData - Category data.
+ * @returns - Promise with new Category.
  */
-export const addCategory = async ({ category }: { category: TagCategory }) => {
-  if (!category) {
-    throw buildError('Missing category option to add a new category.');
+export const addCategory = async (categoryData: TagCategoryData) => {
+  if (!categoryData) {
+    throw buildError('Missing categoryData option to add a new category.')
   }
-
-  let categoryId = '';
 
   try {
     const response = await editCategory({
       isNew: true,
-      category,
-    });
-    categoryId = response.tagCategoryId;
+      category: categoryData,
+    })
+    categoryData.id = response.tagCategoryId
+
+    if (!response.success) { throw buildError('Add category not successful.')}
   } catch (error) {
-    throw buildError(error);
+    throw buildError(error)
   }
 
-  return categoryId;
-};
+  return createTagCategory(categoryData)
+}
 
 /**
  * Edit an existing category.
- * @param options - Options.
- * @param options.category - Category.
- * @returns - Promise with Success or failure.
+ * @param category - Category data or Category.
+ * @returns - Promise with updated Category.
  */
-export const updateCategory = async ({ category }: { category: TagCategory }) => {
-  if (!category) {
-    throw buildError('Missing category option to edit a category.');
+export const updateCategory = async (categoryData: TagCategoryData | TagCategory) => {
+  if (!categoryData) {
+    throw buildError('Missing category option to edit a category.')
   }
 
-  let success = false;
+  let success = false
 
   try {
-    const response = await editCategory({ category });
-    success = response.success;
+    const response = await editCategory({ category: categoryData })
+    success = response.success
+    if (!success) { throw buildError('Update category not successful.') }
   } catch (error) {
-    throw buildError(error);
+    throw buildError(error)
   }
 
-  return success;
-};
+  return categoryData instanceof TagCategoryClass
+    ? categoryData
+    : createTagCategory(categoryData)
+}
 
 /**
  * Delete a category.
- * @param options - Options.
- * @param options.category - Category.
+ * @param category - Category data or Category.
  * @returns - Promise with Success or failure.
  */
-export const deleteCategory = async ({ category }: { category: TagCategory }) => {
+export const deleteCategory = async (category: TagCategoryData | TagCategory) => {
   if (!category) {
-    throw buildError('Missing category option to delete category.');
+    throw buildError('Missing category option to delete category.')
   }
 
-  let success = false;
+  let success = false
 
   try {
-    const response = await editCategory({ category, isDelete: true });
-    success = response.success;
+    const response = await editCategory({ category, isDelete: true })
+    success = response.success
   } catch (error) {
-    throw buildError(error);
+    throw buildError(error)
   }
 
-  return success;
-};
+  return success
+}

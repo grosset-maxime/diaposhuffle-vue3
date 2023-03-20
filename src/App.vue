@@ -19,16 +19,10 @@ const route = useRoute()
 
 // Stores
 const {
+  showMenu,
+  theme,
+  lastVisitedRoute,
   showTheHelp,
-
-  // Getters
-  getShowMenu,
-  getLastVisitedRoute,
-  getTheme,
-
-  // Actions
-  setShowMenu,
-  setLastVisitedRoute,
 } = useGlobalState()
 const { showThePlayer } = useDiapoShuffleStore()
 
@@ -38,28 +32,28 @@ const title = computed((): string => routesMap.get(routePath.value)?.title || ''
 
 // Actions
 function onToggleMenu () {
-  setShowMenu(!getShowMenu())
+  showMenu.value = !showMenu.value
 }
 
 let isFirstLoad = true
 router.beforeEach((to, from, next) => {
-  let lastVisitedRoute = getLastVisitedRoute()
+  let lastVisitedRouteVal = lastVisitedRoute.value
 
   if (isFirstLoad) {
     isFirstLoad = false
 
-    if (!lastVisitedRoute) {
+    if (!lastVisitedRouteVal) {
       next(router.getRoutes()[ 0 ])
       return
     }
-    if (to.path === '/' && lastVisitedRoute) {
-      next(lastVisitedRoute)
+    if (to.path === '/' && lastVisitedRouteVal) {
+      next(lastVisitedRouteVal)
       return
     }
   }
 
-  if (lastVisitedRoute !== to.path) {
-    setLastVisitedRoute(to.path)
+  if (lastVisitedRouteVal !== to.path) {
+    lastVisitedRoute.value = to.path
   }
 
   next()
@@ -68,13 +62,13 @@ router.beforeEach((to, from, next) => {
 
 <template>
   <v-app
-    :theme="getTheme()"
+    :theme="theme"
     :class="{
       app: true,
       'dark-theme': true,
     }"
   >
-    <NavigationMenu :show="getShowMenu()" :items="routesMap" />
+    <NavigationMenu :show="showMenu" :items="routesMap" />
 
     <AppBar :title="title" @toggle-menu="onToggleMenu" />
 
