@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// TODO: Fix: select random tag button
+
 // Types
 import type { TagId } from '@/models/tag'
 
@@ -28,37 +30,25 @@ const emit = defineEmits<{
 const selected = ref<Set<TagId>>(new Set(props.selected))
 const editMode = ref(false)
 const hasOpacity = ref(false)
-const isTaggerMounted = ref(false)
-
-// const TaggerCmp = ref<{
-//   onShow: Function;
-//   onHide: Function;
-//   selectRandom: Function;
-// } | null>(null)
 
 // Computeds
 const modalClasses = computed(() => {
-  return `tagger-modal ${hasOpacity.value
-    ? 'has-opacity'
-    : ''}`
+  return `tagger-modal ${
+    hasOpacity.value
+      ? 'has-opacity'
+      : ''
+  }`
 })
 
+//#region Methods
 function onShow () {
   editMode.value = false
   hasOpacity.value = false
 
   selected.value = new Set(props.selected)
-
-  if (isTaggerMounted.value) {
-    // TODO
-    // TaggerCmp.value?.onShow()
-  }
 }
 
-function onHide () {
-  // TODO
-  // TaggerCmp.value?.onHide()
-}
+function onHide () {}
 
 function onSave () {
   emit('save', new Set(selected.value))
@@ -83,19 +73,14 @@ function onUnselect (tagId: TagId) {
   selected.value.delete(tagId)
 }
 
-function onUnselectAll () {
-  selected.value.clear()
-}
+// function onUnselectAll () {
+//   selected.value.clear()
+// }
 
 function onToggleOpacity () {
   hasOpacity.value = !hasOpacity.value
 }
-
-function onTaggerMounted () {
-  // TODO
-  // TaggerCmp.value?.onShow()
-  isTaggerMounted.value = true
-}
+//#endregion Methods
 
 watch(
   () => props.show,
@@ -117,21 +102,20 @@ watch(
     no-click-animation
   >
     <v-card style="height: 100%">
-      <v-toolbar class="tagger-modal-toolbar" dense>
+      <v-toolbar class="tagger-modal-toolbar" density="compact" color="background">
         <v-btn icon @click="onCancel">
           <v-icon>mdi-close</v-icon>
         </v-btn>
 
-        <v-toolbar-title>Tagger</v-toolbar-title>
+        <v-toolbar-title class="title">Tagger</v-toolbar-title>
 
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on, attrs }">
+        <v-tooltip location="bottom">
+          <template v-slot:activator="{ props }">
             <v-btn
-              class="edit-btn ml-3"
+              class="edit-btn"
               icon
               small
-              v-bind="attrs"
-              v-on="on"
+              v-bind="props"
               @click="editMode = !editMode"
             >
               <v-icon class="edit-icon" dense> mdi-pencil </v-icon>
@@ -140,14 +124,13 @@ watch(
           <span>Edit Mode</span>
         </v-tooltip>
 
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on, attrs }">
+        <v-tooltip location="bottom">
+          <template v-slot:activator="{ props }">
             <v-btn
-              class="select-random-btn ml-3"
+              class="select-random-btn"
               icon
               small
-              v-bind="attrs"
-              v-on="on"
+              v-bind="props"
             >
               <v-icon class="select-random-icon" dense> mdi-shuffle-variant </v-icon>
             </v-btn>
@@ -173,7 +156,6 @@ watch(
         @cancel="onCancel"
         @save="onSave"
         @toggleOpacity="onToggleOpacity"
-        @mounted="onTaggerMounted"
       />
     </v-card>
   </v-dialog>
@@ -211,5 +193,8 @@ $v-toolbar-height: 48px;
       font-size: 18px;
     }
   }
+}
+.title {
+  max-width: 70px;
 }
 </style>
