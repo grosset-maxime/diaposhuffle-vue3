@@ -24,8 +24,20 @@ export const fetchTags = async () => {
       method: 'POST', // TODO: should be a GET ?
     }
 
-    const json = await fetchJson(url, opts)
-    tags = (json.tags || []).map((t: TagData) => createTag(t))
+    const json: {
+      tags: Array<{
+        id: string
+        name: string
+        category: string // CategoryId
+      }>
+    } = await fetchJson(url, opts)
+
+    tags = (json.tags || [])
+      .map((t) => createTag({
+        id: t.id,
+        name: t.name,
+        categoryId: t.category,
+      }))
   } catch (error) {
     throw buildError(error)
   }
@@ -47,8 +59,20 @@ export const fetchCategories = async () => {
       method: 'POST', // TODO: should be a GET ?
     }
 
-    const json = await fetchJson(url, opts)
-    categories = (json.tagCategories || []).map((c: TagCategory) => createTagCategory(c))
+    const json: {
+      tagCategories: Array<{
+        id: string
+        name: string
+        color: string // HEXA without the "#"
+      }>
+    } = await fetchJson(url, opts)
+
+    categories = (json.tagCategories || [])
+      .map((c) => createTagCategory({
+        id: c.id,
+        name: c.name,
+        color: c.color,
+      }))
   } catch (error) {
     throw buildError(error)
   }

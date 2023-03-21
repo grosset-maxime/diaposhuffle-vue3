@@ -1,6 +1,11 @@
 <script setup lang="ts">
 // Components
-import ThePlayerOptions from '@/components/ThePlayerOptions.vue';
+import ThePlayerOptions from '@/components/ThePlayerOptions.vue'
+
+import { useTaggerStore } from '@/stores/tagger'
+
+// To pre-fetch tags and categories list.
+useTaggerStore()
 </script>
 
 <template>

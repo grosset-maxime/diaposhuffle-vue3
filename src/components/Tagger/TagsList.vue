@@ -1,12 +1,12 @@
 <script setup lang="ts">
 // Types
-import type { TagId } from '@/models/tag';
+import type { TagId } from '@/models/tag'
 
 // Vendors Libs
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 // Components
-import TagChip from '../TagChip.vue';
+import TagChip from '../TagChip.vue'
 
 // Props
 interface Props {
@@ -28,7 +28,7 @@ const props = withDefaults(defineProps<Props>(), {
   closableTags: false,
   noTagsText: 'No tags',
   editMode: false,
-});
+})
 
 // Emits
 const emit = defineEmits<{
@@ -36,11 +36,11 @@ const emit = defineEmits<{
   (e: 'closeTag', tagId: TagId): void;
   (e: 'editTag', tagId: TagId): void;
   (e: 'addTag'): void;
-}>();
+}>()
 
 const hasTags = computed(() => {
-  return (props.tagIds?.length || 0) > 0;
-});
+  return (props.tagIds?.length || 0) > 0
+})
 </script>
 
 <template>

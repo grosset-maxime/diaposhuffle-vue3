@@ -44,7 +44,7 @@ const sorts = ref({
 // Computeds
 const hasTags = eagerComputed(() => !!props.tagsIds.size)
 
-const tagsMap = taggerStore.tagsMap
+const tagsMap = taggerStore.tags
 
 const tags = computed(() => {
   return Array.from(props.tagsIds)

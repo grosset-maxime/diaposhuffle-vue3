@@ -80,6 +80,9 @@ function onUnselect (tagId: TagId) {
 function onToggleOpacity () {
   hasOpacity.value = !hasOpacity.value
 }
+
+// TODO
+function onRandom () {}
 //#endregion Methods
 
 watch(
@@ -131,6 +134,7 @@ watch(
               icon
               small
               v-bind="props"
+              @click="onRandom"
             >
               <v-icon class="select-random-icon" dense> mdi-shuffle-variant </v-icon>
             </v-btn>
@@ -160,8 +164,6 @@ watch(
     </v-card>
   </v-dialog>
 </template>
-
-<style lang="scss" scoped></style>
 
 <style lang="scss">
 $v-toolbar-height: 48px;

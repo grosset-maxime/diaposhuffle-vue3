@@ -1,29 +1,29 @@
 <script setup lang="ts">
 // Types
-import { createTagCategory, type TagCategoryId } from '@/models/tag';
+import { createTagCategory, type TagCategoryId } from '@/models/tag'
 
 // Vendors Libs
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 // Stores
-import { useTaggerStore } from '@/stores/tagger';
+import { useTaggerStore } from '@/stores/tagger'
 
-const taggerStore = useTaggerStore();
+const taggerStore = useTaggerStore()
 
-const DEFAULT_COLOR = 'FFFFFF';
+const DEFAULT_COLOR = 'FFFFFF'
 const NONE_CATEGORY = createTagCategory({
   id: '0',
   name: 'None',
   color: DEFAULT_COLOR,
-});
+})
 
 // Props
 interface Props {
   categoryId?: TagCategoryId;
   selected?: boolean;
   nbTags?: number;
-  masked: boolean;
-  edit: boolean;
+  masked?: boolean;
+  edit?: boolean;
 }
 const props = withDefaults(defineProps<Props>(), {
   categoryId: '',
@@ -31,39 +31,45 @@ const props = withDefaults(defineProps<Props>(), {
   nbTags: 0,
   masked: false,
   edit: false,
-});
+})
 
 // Emits
 const emit = defineEmits<{
   (e: 'click', categoryId: TagCategoryId): void;
   (e: 'click:edit', categoryId: TagCategoryId): void;
-}>();
+}>()
 
 // Computeds
-const isNoneCategory = computed(() => props.categoryId === '0');
+const isNoneCategory = computed(() => props.categoryId === '0')
 const category = computed(() => {
-  return isNoneCategory.value ? NONE_CATEGORY : taggerStore.getCategory(props.categoryId);
-});
+  return isNoneCategory.value
+    ? NONE_CATEGORY
+    : taggerStore.getCategory(props.categoryId)
+})
 
-const categoryColor = computed(() => `#${category.value?.color || DEFAULT_COLOR}`);
+const categoryColor = computed(() => `#${category.value?.color || DEFAULT_COLOR}`)
 
 const chipColor = computed(() => {
-  return props.selected ? `${categoryColor.value}FF` : `${categoryColor.value}FF`;
-});
+  return props.selected
+    ? `${categoryColor.value}FF`
+    : `${categoryColor.value}FF`
+})
 
 const chipBgColor = computed(() => {
-  return props.selected ? `${categoryColor.value}AA` : `${categoryColor.value}20`;
-});
+  return props.selected
+    ? `${categoryColor.value}AA`
+    : `${categoryColor.value}20`
+})
 
 const chipBoxShadow = computed(() => {
-  let boxShadow;
+  let boxShadow
 
   if (props.selected) {
-    boxShadow = `0 0 7px 0 ${chipColor.value}`;
+    boxShadow = `0 0 7px 0 ${chipColor.value}`
   }
 
-  return boxShadow;
-});
+  return boxShadow
+})
 </script>
 
 <template>

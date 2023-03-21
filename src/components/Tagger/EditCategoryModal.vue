@@ -74,8 +74,6 @@ const confirmBtnText = computed(() => (props.add
   ? 'Add'
   : 'Edit'))
 
-const categoriesMap = taggerStore.categoriesMap
-
 const categoriesList = taggerStore.categoriesList
 
 const modelName = computed(() => categoryData.value.name)

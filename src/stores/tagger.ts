@@ -21,10 +21,10 @@ export const useTaggerStore = createGlobalState(() => {
   // State
   const taggerReady = ref(false)
   const tagsFetched = ref(false)
-  const tags = reactive<Map<TagId, Tag>>(new Map())
+  const tags = ref<Map<TagId, Tag>>(new Map())
 
   const categoriesFetched = ref(false)
-  const categories = reactive<Map<TagCategoryId, TagCategory>>(new Map())
+  const categories = ref<Map<TagCategoryId, TagCategory>>(new Map())
 
   const lastUsedTagIds = reactive<Map<TagId, number>>(new Map())
 
@@ -32,17 +32,15 @@ export const useTaggerStore = createGlobalState(() => {
 
   // Computed
   const isTaggerReady = computed(() => taggerReady.value)
-  const tagsMap = computed(() => tags)
-  const categoriesMap = computed(() => categories)
-  const tagsList = computed(() => Array.from(tags.values()))
-  const categoriesList = computed(() => Array.from(categories.values()))
+  const tagsList = computed(() => Array.from(tags.value.values()))
+  const categoriesList = computed(() => Array.from(categories.value.values()))
   const lastUsedTagIdsMap = computed(() => lastUsedTagIds)
   const lastUsedTagIdsList = computed(() => Array.from(lastUsedTagIds))
 
   // Getters
-  const getTag = (id: TagId) => tags.get(id)
-  const getCategory = (id: TagCategoryId) => categories.get(id)
-  const getCategoryColor = (id: TagCategoryId) => categories.get(id)?.color
+  const getTag = (id: TagId) => tags.value.get(id)
+  const getCategory = (id: TagCategoryId) => categories.value.get(id)
+  const getCategoryColor = (id: TagCategoryId) => categories.value.get(id)?.color
   const getErrors = () => errors
 
   //#region Mutations
@@ -60,16 +58,30 @@ export const useTaggerStore = createGlobalState(() => {
 
   const _setTagsFetched = (val: boolean) => (tagsFetched.value = val)
   const _setCategoriesFetched = (val: boolean) => (categoriesFetched.value = val)
-  const _setTags = (fetchedTags: Array<Tag>) =>
-    (fetchedTags.forEach((tag) => tags.set(tag.id, tag)))
-  const _addTag = (tag: Tag) => tags.set(tag.id, tag)
-  const _updateTag = (tag: Tag) => tags.set(tag.id, tag)
-  const _deleteTag = (tag: Tag) => tags.delete(tag.id)
-  const _setCategories = (cats: Array<TagCategory>) =>
-    (cats.forEach((cat) => categories.set(cat.id, cat)))
-  const _addCategory = (cat: TagCategory) => categories.set(cat.id, cat)
-  const _updateCategory = (cat: TagCategory) => categories.set(cat.id, cat)
-  const _deleteCategory = (cat: TagCategory) => categories.delete(cat.id)
+  const _setTags = (fetchedTags: Array<Tag>) => {
+    tags.value = new Map(fetchedTags.map((tag) => [ tag.id, tag ]))
+  }
+  const _addTag = (tag: Tag) => tags.value = (new Map(tags.value)).set(tag.id, tag)
+  const _updateTag = (tag: Tag) => tags.value = (new Map(tags.value)).set(tag.id, tag)
+  const _deleteTag = (tag: Tag) => {
+    const map = new Map(tags.value)
+    map.delete(tag.id)
+    tags.value = map
+  }
+  const _setCategories = (cats: Array<TagCategory>) => {
+    categories.value = new Map(cats.map((cat) => [ cat.id, cat ]))
+  }
+  const _addCategory = (cat: TagCategory) => {
+    categories.value = (new Map(categories.value)).set(cat.id, cat)
+  }
+  const _updateCategory = (cat: TagCategory) => {
+    categories.value = (new Map(categories.value)).set(cat.id, cat)
+  }
+  const _deleteCategory = (cat: TagCategory) => {
+    const map = new Map(categories.value)
+    map.delete(cat.id)
+    categories.value = map
+  }
   //#endregion Mutations
 
   //#region Actions
@@ -200,7 +212,7 @@ export const useTaggerStore = createGlobalState(() => {
   async function _fetchTags () {
     console.log('### fetchTags')
     if (tagsFetched.value) {
-      return tagsMap.value
+      return tags.value
     }
 
     try {
@@ -216,13 +228,13 @@ export const useTaggerStore = createGlobalState(() => {
 
     _setTagsFetched(true)
 
-    return tagsMap.value
+    return tags.value
   }
 
   async function _fetchCategories () {
     console.log('### fetchCategories')
     if (categoriesFetched.value) {
-      return categoriesMap.value
+      return categories.value
     }
 
     try {
@@ -238,7 +250,7 @@ export const useTaggerStore = createGlobalState(() => {
 
     _setCategoriesFetched(true)
 
-    return categoriesMap.value
+    return categories.value
   }
   //#endregion Actions
 
@@ -249,11 +261,11 @@ export const useTaggerStore = createGlobalState(() => {
 
   return {
     taggerReadyPromise,
+    tags,
+    categories,
 
     // Computeds
     isTaggerReady,
-    tagsMap,
-    categoriesMap,
     tagsList,
     categoriesList,
     lastUsedTagIdsMap,

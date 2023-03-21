@@ -249,12 +249,12 @@ function clearPineds () {
       </v-col>
     </v-row>
 
-    <FolderBrowser
+    <!-- <FolderBrowser
       :show="folderBrowser.show.value"
       :selected="folderBrowser.selected.value"
       @close="onCloseFolderBrowser"
       @save="onSaveFolderBrowser"
-    />
+    /> -->
 
     <TaggerModal
       :show="taggerModal.show.value"

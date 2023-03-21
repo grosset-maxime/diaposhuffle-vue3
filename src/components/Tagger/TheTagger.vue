@@ -7,21 +7,20 @@
 // TODO: Bug: Error on set tag when items come from the bdd.
 
 // Types
-import type { Fn } from '@vueuse/core'
 import type { TagCategoryId, TagId, Tag, TagData, TagCategoryData } from '@/models/tag'
 
 // Vendors Libs
 import { ref, computed, watch, onMounted } from 'vue'
-import { useEventListener } from '@vueuse/core'
 import Fuse from 'fuse.js'
 
 // Stores
 import { useTaggerStore } from '@/stores/tagger'
 
 // Utils
-import { SHAKE_ANIMATION_TIME, getKey, isEmptyObj, getRandomElement } from '@/utils/utils'
+import { SHAKE_ANIMATION_TIME, isEmptyObj, getRandomElement } from '@/utils/utils'
 
 import { createTagCategory } from '@/models/tag'
+import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
 
 // Components
 import CategoriesList from './CategoriesList.vue'
@@ -31,7 +30,7 @@ import EditTagModal from './EditTagModal.vue'
 import EditCategoryModal from './EditCategoryModal.vue'
 
 const taggerStore = useTaggerStore()
-let stopKeyboardShortcuts: Fn | null
+const { startListener, stopListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
 const SELECTED_FOCUSED_SECTION_NAME = 'selectedTags'
 const UNSELECTED_FOCUSED_SECTION_NAME = 'unselectedTags'
@@ -61,12 +60,11 @@ const emit = defineEmits<{
   (e: 'cancel'): void;
   (e: 'toggleOpacity'): void;
   (e: 'toggleOpacity'): void;
-  (e: 'mounted'): void;
 }>()
 
 // Refs
-const selectedTagIdsMap = ref<Set<TagId>>(new Set(props.selected))
-const selectedCategoryIdsMap = ref<Set<TagCategoryId>>(new Set())
+const selectedTagIdsSet = ref<Set<TagId>>(new Set(props.selected))
+const selectedCategoryIdsSet = ref<Set<TagCategoryId>>(new Set())
 const tagsFilterInfoMap = new Map()
 
 const focused = ref({
@@ -131,7 +129,7 @@ const filterTextCmp = ref<{
 } | null>(null)
 
 // Computeds
-const tagsMap = taggerStore.tagsMap
+const tagsMap = taggerStore.tags
 const tagsList = taggerStore.tagsList
 
 const sortedTags = computed(() => {
@@ -153,10 +151,11 @@ const sortedTags = computed(() => {
   })
 })
 
-const categoriesMap = taggerStore.categoriesMap
+const categoriesMap = taggerStore.categories
+const categoriesList = taggerStore.categoriesList
 
-const categoryIds = computed(() => {
-  return Object.values(categoriesMap.value)
+const categoryIds = computed<Array<TagCategoryId>>(() => {
+  return [ ...categoriesList.value ]
     .sort((catA, catB) => {
       let sort = 0
       const direction = sorts.value.direction === 'asc'
@@ -168,7 +167,7 @@ const categoryIds = computed(() => {
         sort = catA.name.localeCompare(catB.name)
       }
       if (field === 'category') {
-        sort = catA.id - catB.id
+        sort = catA.id.localeCompare(catB.id)
       }
 
       return direction * sort
@@ -179,13 +178,13 @@ const categoryIds = computed(() => {
 const selectedTagIds = computed(() => {
   let sortedTagsValue = sortedTags.value
 
-  sortedTagsValue = sortedTagsValue.filter((tag) => selectedTagIdsMap.value.has(tag.id))
+  sortedTagsValue = sortedTagsValue.filter((tag) => selectedTagIdsSet.value.has(tag.id))
 
   let tagsIds = sortedTagsValue.map((tag) => tag.id)
 
   if (isFiltering.value) {
     const filteredTagsIds = filteredTagsList.value
-      .filter((tag) => selectedTagIdsMap.value.has(tag.id))
+      .filter((tag) => selectedTagIdsSet.value.has(tag.id))
       .map((tag) => tag.id)
 
     const filteredTagsIdsMap = Object.fromEntries(filteredTagsIds.map((id) => [ id, true ]))
@@ -199,8 +198,9 @@ const selectedTagIds = computed(() => {
 })
 
 const lastUsedTagIdsMap = taggerStore.lastUsedTagIdsMap
+
 /**
- * @returns {string[]} - List of last used tags ids.
+ * @returns List of last used tags ids.
  */
 const lastUsedTagIds = computed(() => {
   let tagsIds = Array.from(lastUsedTagIdsMap.value.keys())
@@ -217,22 +217,22 @@ const lastUsedTagIds = computed(() => {
     tagsIds = filteredTagsIds.concat(tagsIds)
   }
 
-  return tagsIds.filter((tagId) => !selectedTagIdsMap.value.has(tagId))
+  return tagsIds.filter((tagId) => !selectedTagIdsSet.value.has(tagId))
 })
 
 /**
- * @returns {string[]} - List of unselected tags ids.
+ * @returns List of unselected tags ids.
  */
 const unselectedTagIds = computed(() => {
   let sortedTagsValue = sortedTags.value
 
-  sortedTagsValue = sortedTagsValue.filter((tag) => !selectedTagIdsMap.value.has(tag.id))
+  sortedTagsValue = sortedTagsValue.filter((tag) => !selectedTagIdsSet.value.has(tag.id))
 
   let tagsIds = sortedTagsValue.map((tag) => tag.id)
 
   if (isFiltering.value) {
     const filteredTagsIds = filteredTagsList.value
-      .filter((tag) => !selectedTagIdsMap.value.has(tag.id))
+      .filter((tag) => !selectedTagIdsSet.value.has(tag.id))
       .map((tag) => tag.id)
 
     const filteredTagsIdsMap = Object.fromEntries(filteredTagsIds.map((id) => [ id, true ]))
@@ -367,7 +367,7 @@ const hasCategoriesFilter = computed(() => {
 })
 
 const noSelectedTagsText = computed(() => {
-  return isFiltering.value && !selectedTagIdsMap.value.size
+  return isFiltering.value && !selectedTagIdsSet.value.size
     ? 'No tags results'
     : 'No tags selected'
 })
@@ -384,8 +384,9 @@ const noUnselectedTagsText = computed(() => {
     : ''
 })
 
+//#region Methods
 async function onShow () {
-  attachKeyboardShortcuts()
+  startListener()
   resetFilters()
 
   try {
@@ -406,25 +407,25 @@ function onFetchTags () {
 }
 
 function onHide () {
-  removeKeyboardShortcuts()
+  stopListener()
 }
 
 function onSelectCategory (catId: TagCategoryId) {
-  selectedCategoryIdsMap.value.add(catId)
+  selectedCategoryIdsSet.value.add(catId)
   filters.value.categories.set(catId, true)
 }
 
 function onUnselectCategory (catId: TagCategoryId) {
-  selectedCategoryIdsMap.value.delete(catId)
+  selectedCategoryIdsSet.value.delete(catId)
   filters.value.categories.delete(catId)
 }
 
 function onTagClick (tagId: TagId) {
-  if (selectedTagIdsMap.value.has(tagId)) {
-    selectedTagIdsMap.value.delete(tagId)
+  if (selectedTagIdsSet.value.has(tagId)) {
+    selectedTagIdsSet.value.delete(tagId)
     emit('unselect', tagId)
   } else {
-    selectedTagIdsMap.value.add(tagId)
+    selectedTagIdsSet.value.add(tagId)
     emit('select', tagId)
 
     addLastUsedTagId(tagId)
@@ -470,14 +471,14 @@ function onCancelEditTagModal () {
 }
 
 function showAddTagModal () {
-  removeKeyboardShortcuts()
+  stopListener()
   editTagModal.value.add = true
   editTagModal.value.tagId = undefined
   editTagModal.value.show = true
 }
 
 function showEditTagModal (tagId: TagId) {
-  removeKeyboardShortcuts()
+  stopListener()
   editTagModal.value.add = false
   editTagModal.value.tagId = tagId
   editTagModal.value.show = true
@@ -485,7 +486,7 @@ function showEditTagModal (tagId: TagId) {
 
 function hideEditTagModal () {
   editTagModal.value.show = false
-  attachKeyboardShortcuts()
+  startListener()
 }
 
 async function onDeleteEditCategoryModal (catId: TagCategoryId) {
@@ -507,14 +508,14 @@ function onCancelEditCategoryModal () {
 }
 
 function showAddCategoryModal () {
-  removeKeyboardShortcuts()
+  stopListener()
   editCategoryModal.value.add = true
   editCategoryModal.value.categoryId = undefined
   editCategoryModal.value.show = true
 }
 
 function showEditCategoryModal (catId: TagCategoryId) {
-  removeKeyboardShortcuts()
+  stopListener()
   editCategoryModal.value.add = false
   editCategoryModal.value.categoryId = catId
   editCategoryModal.value.show = true
@@ -522,7 +523,7 @@ function showEditCategoryModal (catId: TagCategoryId) {
 
 function hideEditCategoryModal () {
   editCategoryModal.value.show = false
-  attachKeyboardShortcuts()
+  startListener()
 }
 
 function clearFilterText () {
@@ -563,7 +564,7 @@ function applyTextFilter<T> (array: Array<T>, keys: Array<string> = [ 'name' ]) 
 }
 
 function updateSelectedTagIdsMap () {
-  selectedTagIdsMap.value = new Set(props.selected)
+  selectedTagIdsSet.value = new Set(props.selected)
 }
 
 function resetFocus () {
@@ -693,10 +694,9 @@ function setFocusDown () {
   }
 }
 
-function keyboardShortcuts (e: KeyboardEvent) {
+function keyboardShortcuts (key: string, e: KeyboardEvent) {
   let preventDefault = false
   const stopPropagation = false
-  const key = getKey(e)
 
   if (e.shiftKey && key !== 'Shift') {
     switch (key) {
@@ -779,18 +779,7 @@ function keyboardShortcuts (e: KeyboardEvent) {
     e.stopPropagation()
   }
 }
-
-function attachKeyboardShortcuts () {
-  if (stopKeyboardShortcuts) {
-    return
-  }
-  stopKeyboardShortcuts = useEventListener(document, 'keydown', keyboardShortcuts)
-}
-
-function removeKeyboardShortcuts () {
-  stopKeyboardShortcuts && stopKeyboardShortcuts()
-  stopKeyboardShortcuts = null
-}
+//#endregion Methods
 
 // Watchers
 watch(unselectedTagIds, () => {
@@ -809,7 +798,6 @@ onMounted(() => {
       onShow()
     }
   }, 2000)
-  emit('mounted')
 })
 </script>
 
@@ -891,7 +879,7 @@ onMounted(() => {
     <div class="categories-list">
       <CategoriesList
         :category-ids="categoryIds"
-        :selected="selectedCategoryIdsMap"
+        :selected="selectedCategoryIdsSet"
         :nb-tags="nbTagsMap"
         :masked="notFilteredCategoryIdsMap"
         :edit-mode="props.editMode"

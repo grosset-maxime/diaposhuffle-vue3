@@ -1,14 +1,14 @@
 <script setup lang="ts">
 // Types
-import type { TagId } from '@/models/tag';
+import type { TagId } from '@/models/tag'
 
 // Vendors Libs
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 // Stores
-import { useTaggerStore } from '@/stores/tagger';
+import { useTaggerStore } from '@/stores/tagger'
 
-const taggerStore = useTaggerStore();
+const taggerStore = useTaggerStore()
 
 // Props
 interface Props {
@@ -26,62 +26,68 @@ const props = withDefaults(defineProps<Props>(), {
   clickable: false,
   close: false,
   edit: false,
-});
+})
 
 // Emits
 const emit = defineEmits<{
   (e: 'click', tagId: TagId): void;
   (e: 'click:close', tagId: TagId): void;
   (e: 'click:edit', tagId: TagId): void;
-}>();
+}>()
 
-const tag = computed(() => taggerStore.getTag(props.tagId));
+const tag = computed(() => taggerStore.getTag(props.tagId))
 
-const categoryId = computed(() => tag.value?.categoryId);
+const categoryId = computed(() => tag.value?.categoryId)
 
 const hasCategory = computed(
-  () => !!(categoryId.value && taggerStore.getCategory(categoryId.value))
-);
+  () => !!(categoryId.value && taggerStore.getCategory(categoryId.value)),
+)
 
-const categoryColor = computed(() =>
-  categoryId.value ? taggerStore.getCategoryColor(categoryId.value) || '' : ''
-);
+const categoryColor = computed(
+  () => categoryId.value
+    ? taggerStore.getCategoryColor(categoryId.value) || ''
+    : '',
+)
 
 const tagColor = computed(() => {
-  let color;
+  let color
 
   if (hasCategory.value) {
-    color = props.focused ? `#${categoryColor.value}FF` : `#${categoryColor.value}FF`;
+    color = props.focused
+      ? `#${categoryColor.value}FF`
+      : `#${categoryColor.value}FF`
   }
 
-  return color;
-});
+  return color
+})
 
 const tagBgColor = computed(() => {
-  let color;
+  let color
 
   if (hasCategory.value) {
-    color = props.focused ? `#${categoryColor.value}AA` : `#${categoryColor.value}20`;
+    color = props.focused
+      ? `#${categoryColor.value}AA`
+      : `#${categoryColor.value}20`
   } else if (props.focused) {
-    color = '#FFFFFF80';
+    color = '#FFFFFF80'
   }
 
-  return color;
-});
+  return color
+})
 
 const tagBoxShadow = computed(() => {
-  let boxShadow;
+  let boxShadow
 
   if (props.focused) {
     if (hasCategory.value) {
-      boxShadow = `0 0 7px 0 ${tagColor.value}`;
+      boxShadow = `0 0 7px 0 ${tagColor.value}`
     } else {
-      boxShadow = '0 0 7px 0 #FFFFFF';
+      boxShadow = '0 0 7px 0 #FFFFFF'
     }
   }
 
-  return boxShadow;
-});
+  return boxShadow
+})
 </script>
 
 <template>
@@ -107,11 +113,19 @@ const tagBoxShadow = computed(() => {
       <span class="name">{{ tag?.name }}</span>
 
       <v-btn v-if="edit" icon x-small class="edit-btn">
-        <v-icon @click.stop="emit('click:edit', tagId)" class="edit-icon"> mdi-pencil </v-icon>
+        <v-icon
+          class="edit-icon"
+          @click.stop="emit('click:edit', tagId)"
+        >
+          mdi-pencil
+        </v-icon>
       </v-btn>
 
       <v-btn v-if="close" icon x-small class="close-btn">
-        <v-icon @click.stop="emit('click:close', tagId)" class="close-icon">
+        <v-icon
+        class="close-icon"
+          @click.stop="emit('click:close', tagId)"
+        >
           mdi-close-circle
         </v-icon>
       </v-btn>
