@@ -1061,7 +1061,7 @@ watch(showTheHelp, (isShow) => {
 
     <v-alert
       class="alert"
-      :value="showAlert"
+      :model-value="showAlert"
       :type="alert.severity"
       dismissible
       prominent

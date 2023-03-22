@@ -251,7 +251,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <v-dialog content-class="edit-category-modal" :value="show" persistent no-click-animation>
+  <v-dialog
+    content-class="edit-category-modal"
+    :model-value="show"
+    persistent
+    no-click-animation
+  >
     <v-card outlined>
       <v-card-title class="orange--text">
         {{ titleModal }}
@@ -262,12 +267,12 @@ onMounted(() => {
           <v-form v-model="isFormValid" ref="formCmp">
             <v-row>
               <v-col v-if="!add" class="pt-0" cols="12">
-                <v-text-field :value="categoryData.id" label="Id" hide-details disabled />
+                <v-text-field :model-value="categoryData.id" label="Id" hide-details disabled />
               </v-col>
 
               <v-col class="pt-0" cols="12">
                 <v-text-field
-                  :value="categoryData.name"
+                  :model-value="categoryData.name"
                   autofocus
                   :rules="[rules.required]"
                   :hint="nameWarningMsg"

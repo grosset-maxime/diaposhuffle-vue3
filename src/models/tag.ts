@@ -1,27 +1,44 @@
+import { computed, type ComputedRef } from 'vue'
+import { useTaggerStore } from '@/stores/tagger'
+
 export type TagCategoryId = string;
 
 export type TagCategoryData = {
-  id?: TagCategoryId;
-  name: string;
+  id: TagCategoryId;
+  name?: string;
   color?: string;
 };
 
 export class TagCategory {
-  id: TagCategoryId
-  name: string
-  color: string
+  // Data
+  readonly id: TagCategoryId
+  readonly name: string
+  readonly color: string
+
+  readonly hashColor: string
+  readonly tags: ComputedRef<Map<TagId, Tag>>
 
   constructor ({ id = '', name, color = '' }: TagCategoryData) {
+    const taggerStore = useTaggerStore()
+
+    // Data
     this.id = id
-    this.name = name
+    this.name = name || this.id
     this.color = color
+
+    this.hashColor = `#${this.color}`
+
+    this.tags = computed(
+      () => new Map(
+        taggerStore.tagsList.value.filter((t) => t.categoryId === this.id)
+          .map((t) => [ t.id, t ]),
+      ),
+    )
   }
 
-  setId (id: TagCategoryId) {
-    this.id = id
-  }
+  isNone () { return this.id === '0' }
 
-  getData () {
+  getData (): TagCategoryData {
     return {
       id: this.id,
       name: this.name,
@@ -43,22 +60,30 @@ export type TagData = {
 };
 
 export class Tag {
-  id: TagId
-  name: string
-  categoryId: TagCategoryId
+  // Data
+  readonly id: TagId
+  readonly name: string
+  readonly categoryId: TagCategoryId
+
+  readonly category: ComputedRef<TagCategory | undefined>
 
   constructor ({ id, name, categoryId = '0' }: TagData) {
+    const taggerStore = useTaggerStore()
+
     if (!id) {
       throw new Error(`Invalid tag, tag has no id: ${id}`)
     }
 
+    // Data
     this.id = id
     this.name = name || id
     this.categoryId = categoryId
+
+    this.category = computed(() => taggerStore.getCategory(this.categoryId))
   }
 
   hasCategory () {
-    return this.categoryId !== '0'
+    return !!this.category.value
   }
 
   getData (): TagData {

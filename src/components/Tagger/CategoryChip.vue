@@ -98,8 +98,20 @@ const chipBoxShadow = computed(() => {
         {{ nbTags }}
       </div>
 
-      <v-btn v-if="edit" icon x-small class="edit-btn">
-        <v-icon class="edit-icon" @click.stop="emit('click:edit', categoryId)"> mdi-pencil </v-icon>
+      <v-btn
+        v-if="edit"
+        class="edit-btn"
+        size="small"
+        density="compact"
+        color="secondary"
+        icon
+      >
+        <v-icon
+          class="edit-icon"
+          @click.stop="emit('click:edit', categoryId)"
+        >
+          mdi-pencil
+        </v-icon>
       </v-btn>
     </span>
   </div>

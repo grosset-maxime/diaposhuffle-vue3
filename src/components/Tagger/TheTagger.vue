@@ -10,7 +10,8 @@
 import type { TagCategoryId, TagId, Tag, TagData, TagCategoryData } from '@/models/tag'
 
 // Vendors Libs
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { whenever } from '@vueuse/shared'
 import Fuse from 'fuse.js'
 
 // Stores
@@ -132,6 +133,7 @@ const filterTextCmp = ref<{
 const tagsMap = taggerStore.tags
 const tagsList = taggerStore.tagsList
 
+//#region Computeds
 const sortedTags = computed(() => {
   return [ ...tagsList.value ].sort((tagA, tagB) => {
     let sort = 0
@@ -383,29 +385,9 @@ const noUnselectedTagsText = computed(() => {
     ? 'No tags results'
     : ''
 })
+//#endregion Computeds
 
 //#region Methods
-async function onShow () {
-  startListener()
-  resetFilters()
-
-  try {
-    await taggerStore.taggerReadyPromise
-    onFetchTags()
-    resetFocus()
-  } catch (e) {
-    // TODO: ENH: show error alert.
-    // eslint-disable-next-line no-console
-    console.error(e)
-  }
-
-  isLoading.value = false
-}
-
-function onFetchTags () {
-  updateSelectedTagIdsMap()
-}
-
 function onHide () {
   stopListener()
 }
@@ -453,7 +435,7 @@ function onFilterTextBlur () {
 async function onDeleteEditTagModal (tagId: TagId) {
   await taggerStore.deleteTag(tagId)
 
-  onFetchTags()
+  updateSelectedTagIdsMap()
   hideEditTagModal()
 }
 
@@ -462,7 +444,7 @@ async function onConfirmEditTagModal (tagData: TagData) {
     ? taggerStore.addTag(tagData)
     : taggerStore.updateTag(tagData))
 
-  onFetchTags()
+  updateSelectedTagIdsMap()
   hideEditTagModal()
 }
 
@@ -791,18 +773,23 @@ watch(isFiltering, () => {
   resetFocus()
 })
 
-onMounted(() => {
-  // TODO: TEMP: only for testing purpose
-  setTimeout(() => {
-    if (isLoading.value) {
-      onShow()
-    }
-  }, 2000)
-})
+whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
+  if (!isTaggerReady) { return }
+
+  startListener()
+  resetFilters()
+  resetFocus()
+
+  isLoading.value = false
+}, { immediate: true })
 </script>
 
 <template>
   <div class="tagger">
+    <div v-if="isLoading" class="loading">
+      <CircularLoading indeterminate />
+    </div>
+
     <div
       :class="[
         'selected-tags',
@@ -831,7 +818,7 @@ onMounted(() => {
       <div class="filter-form input-action">
         <v-text-field
           ref="filterTextCmp"
-          :value="filters.text"
+          :model-value="filters.text"
           label="Filter tags"
           prepend-icon="mdi-magnify"
           clearable
@@ -848,7 +835,7 @@ onMounted(() => {
       <div class="sort-by-field input-action">
         <v-select
           ref="sortByField"
-          :value="sorts.field"
+          :model-value="sorts.field"
           :items="sorts.fieldItems"
           color="orange"
           label="Sort By"
@@ -861,7 +848,7 @@ onMounted(() => {
       <div class="sort-direction input-action">
         <v-select
           ref="sortDirection"
-          :value="sorts.direction"
+          :model-value="sorts.direction"
           :items="sorts.directionItems"
           label="Sort Direction"
           hide-details
@@ -935,11 +922,10 @@ onMounted(() => {
         @addTag="showAddTagModal"
         @editTag="showEditTagModal"
       />
-
-      <CircularLoading v-if="isLoading" indeterminate />
     </div>
 
     <EditTagModal
+      v-if="editMode"
       :show="editTagModal.show"
       :add="editTagModal.add"
       :tag-id="editTagModal.tagId"
@@ -949,6 +935,7 @@ onMounted(() => {
     />
 
     <EditCategoryModal
+      v-if="editMode"
       :show="editCategoryModal.show"
       :add="editCategoryModal.add"
       :category-id="editCategoryModal.categoryId"
@@ -1009,5 +996,12 @@ onMounted(() => {
   .shake {
     @include shake-animation;
   }
+}
+.loading {
+  position: absolute;
+  height: 100vh;
+  width: 100vw;
+  background: #000000AA;
+  z-index: 1000;
 }
 </style>

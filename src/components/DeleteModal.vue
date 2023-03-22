@@ -1,14 +1,14 @@
 <script setup lang="ts">
 // Types
-import type { Fn } from '@vueuse/core';
+import type { Fn } from '@vueuse/core'
 
 // Vendors Libs
-import { ref, watch } from 'vue';
-import { useEventListener } from '@vueuse/core';
+import { ref, watch } from 'vue'
+import { useEventListener } from '@vueuse/core'
 
-import { getKey } from '@/utils/utils';
+import { getKey } from '@/utils/utils'
 
-let stopKeyboardShortcuts: Fn | null;
+let stopKeyboardShortcuts: Fn | null
 
 interface opts {
   fromBddOnly: boolean;
@@ -17,7 +17,7 @@ interface opts {
 const DEFAULT_OPTIONS: opts = {
   fromBddOnly: false,
   ignoreIfNotExist: false,
-};
+}
 
 // Props
 interface Props {
@@ -31,76 +31,76 @@ const props = withDefaults(defineProps<Props>(), {
   showOptions: false,
   showPreview: false,
   showSrc: false,
-});
+})
 
 // Emits
 const emit = defineEmits<{
   (e: 'confirm', opts: opts): void;
   (e: 'cancel'): void;
   (e: 'click:outside'): void;
-}>();
+}>()
 
 // Refs
-const options = ref({ ...DEFAULT_OPTIONS });
+const options = ref({ ...DEFAULT_OPTIONS })
 
 // Watchers
 watch(
   () => props.show,
   (isShow) => {
     if (isShow) {
-      attachKeyboardShortcuts();
-      resetOptions();
+      attachKeyboardShortcuts()
+      resetOptions()
     } else {
-      removeKeyboardShortcuts();
+      removeKeyboardShortcuts()
     }
-  }
-);
+  },
+)
 
 // Methods
-function onConfirm() {
-  emit('confirm', { ...options.value });
+function onConfirm () {
+  emit('confirm', { ...options.value })
 }
 
-function onCancel() {
-  emit('cancel');
+function onCancel () {
+  emit('cancel')
 }
 
-function resetOptions() {
-  options.value = { ...DEFAULT_OPTIONS };
+function resetOptions () {
+  options.value = { ...DEFAULT_OPTIONS }
 }
 
-function keyboardShortcuts(e: KeyboardEvent) {
-  const key = getKey(e);
+function keyboardShortcuts (e: KeyboardEvent) {
+  const key = getKey(e)
 
   switch (key) {
-    case 'Enter':
-      onConfirm();
-      break;
+  case 'Enter':
+    onConfirm()
+    break
 
-    case 'Escape':
-      onCancel();
-      break;
-    default:
+  case 'Escape':
+    onCancel()
+    break
+  default:
   }
 }
 
-function attachKeyboardShortcuts() {
+function attachKeyboardShortcuts () {
   if (stopKeyboardShortcuts) {
-    return;
+    return
   }
-  stopKeyboardShortcuts = useEventListener(document, 'keydown', keyboardShortcuts);
+  stopKeyboardShortcuts = useEventListener(document, 'keydown', keyboardShortcuts)
 }
 
-function removeKeyboardShortcuts() {
-  stopKeyboardShortcuts && stopKeyboardShortcuts();
-  stopKeyboardShortcuts = null;
+function removeKeyboardShortcuts () {
+  stopKeyboardShortcuts && stopKeyboardShortcuts()
+  stopKeyboardShortcuts = null
 }
 </script>
 
 <template>
   <v-dialog
     content-class="delete-modal"
-    :value="show"
+    :model-value="show"
     persistent
     no-click-animation
     @click:outside="emit('click:outside')"

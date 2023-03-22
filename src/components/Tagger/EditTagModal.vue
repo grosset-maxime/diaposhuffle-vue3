@@ -1,9 +1,9 @@
 <script setup lang="ts">
 // Types
-import type { TagId, TagData, TagCategory } from '@/models/tag'
+import type { Tag, TagId, TagData } from '@/models/tag'
 
 // Vendors Libs
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
 
@@ -17,7 +17,7 @@ import { useTaggerStore } from '@/stores/tagger'
 const EMPTY_TAG_DATA: TagData = {
   id: '',
   name: '',
-  categoryId: '',
+  categoryId: '0',
 }
 
 const taggerStore = useTaggerStore()
@@ -44,20 +44,16 @@ const emit = defineEmits<{
 
 // Refs
 const tagData = ref<TagData>({ ...EMPTY_TAG_DATA })
-const nameWarningMsg = ref('')
-const rules = ref({
-  required: (value: string) => !!value || 'Required.',
-})
 const isFormValid = ref(false)
 const showDeleteModal = ref(false)
 const loading = ref(false)
 
-// TODO
 const formCmp = ref<{
-  reset: Function;
-  resetValidation: Function;
-  validate: Function;
-} | null>(null)
+  reset: () => void
+  validate: () => Promise<{
+    valid: boolean
+    errors: { id: string | number; errorMessages: string[] }[]
+  }>} | null>(null)
 
 // Computeds
 const tagModel = computed(
@@ -76,66 +72,56 @@ const confirmBtnText = computed(() => (props.add
 const tagsList = taggerStore.tagsList
 const categoriesList = taggerStore.categoriesList
 
-const modelName = computed(() => tagData.value?.name || '')
+const categoriesListSelect = computed(() => categoriesList.value.map((cat) => ({
+  value: cat.id,
+  title: cat.name,
+  disabled: false,
+  color: cat.hashColor,
+})))
+
+const tagDataCategoryColor = computed(
+  () => taggerStore.getCategory(tagData.value?.categoryId || '0')?.hashColor,
+)
 
 // Methods
-// TODO
-function getCategoryColor (category: TagCategory) {
-  return `#${category.color}`
-}
-
-function setModel () {
-  resetForm()
-
-  tagData.value = tagModel.value
-    ? tagModel.value.getData()
-    : { ...EMPTY_TAG_DATA }
-}
-
 function resetForm () {
-  // TODO
-  // formCmp.value?.reset()
+  formCmp.value?.reset()
 }
 
-function resetFormValidation () {
-  // TODO
-  // formCmp.value?.resetValidation()
-}
-
-function isIdNotExists (value: TagId) {
-  return (
+const rules = {
+  required: (value: string) => !!value || 'Required.',
+  isIdNotExists: (value: TagId) => (
     !value
     || !props.add
     || !tagsList.value.some((tag) => tag.id.toLowerCase() === value.trim().toLowerCase())
     || 'Id already exists.'
-  )
+  ),
+  isNameNotExists: (value: string = '') => (
+    tagsList.value.some(
+      (tag) => tag.id !== tagData.value.id
+        && tag.name.toLowerCase() === value.trim().toLowerCase(),
+    ) && 'Name already exists.'
+  ),
+  isNotSameName: (value: string) => {
+    if (props.add) { return true }
+    return value === tagModel.value?.name && 'Same name as now...'
+  },
 }
 
-function isNameExists (value: string = '') {
-  return tagsList.value.some(
-    (tag) => tag.id !== tagData.value.id
-      && tag.name.toLowerCase() === value.trim().toLowerCase(),
-  )
-}
+async function onConfirm () {
+  loading.value = true
 
-function onConfirm () {
-  // TODO
-  // const isFormValid = formCmp.value?.validate()
+  const { valid } = await formCmp.value!.validate()
 
-  if (isFormValid.value) {
-    loading.value = true
+  if (valid) {
     emit('confirm', { ...tagData.value })
+  } else {
+    loading.value = false
   }
 }
 
 function onCancel () {
   emit('cancel')
-}
-
-function onDelete () {
-  loading.value = true
-  props.tagId && emit('delete', props.tagId)
-  onCancel()
 }
 
 function onDeleteBtnClick () {
@@ -146,7 +132,8 @@ function closeConfirmDelete ({ deleteTag }: { deleteTag?: boolean } = {}) {
   showDeleteModal.value = false
 
   if (deleteTag) {
-    onDelete()
+    loading.value = true
+    props.tagId && emit('delete', props.tagId)
   }
 }
 
@@ -193,22 +180,18 @@ watch(
     if (isShow) {
       loading.value = false
       startListener()
-
-      if (props.add) {
-        resetForm()
-      } else {
-        resetFormValidation()
-      }
     } else {
       stopListener()
     }
   },
 )
 
-watch(modelName, (name) => {
-  nameWarningMsg.value = name?.trim() && isNameExists(name)
-    ? 'Name already exists.'
-    : ''
+watch(tagModel, (tag?: Tag) => {
+  resetForm()
+
+  tagData.value = tag
+    ? tag.getData()
+    : { ...EMPTY_TAG_DATA }
 })
 
 watch(showDeleteModal, (shouldShow) => {
@@ -218,17 +201,17 @@ watch(showDeleteModal, (shouldShow) => {
     startListener()
   }
 })
-
-onMounted(() => {
-  loading.value = false
-  setModel()
-})
 </script>
 
 <template>
-  <v-dialog content-class="edit-tag-modal" :value="show" persistent no-click-animation>
+  <v-dialog
+    content-class="edit-tag-modal"
+    :model-value="show"
+    persistent
+    no-click-animation
+  >
     <v-card outlined>
-      <v-card-title class="orange--text">
+      <v-card-title class="text-primary">
         {{ titleModal }}
       </v-card-title>
 
@@ -238,62 +221,54 @@ onMounted(() => {
             <v-row>
               <v-col cols="12">
                 <v-text-field
-                  :value="tagData.id"
+                  v-model="tagData.id"
                   :disabled="!add"
                   :autofocus="add"
-                  :rules="[rules.required, isIdNotExists]"
+                  :rules="add ? [rules.required, rules.isIdNotExists] : undefined"
                   label="Id"
                   required
-                  @input="tagData.id = $event"
+                  variant="underlined"
                 />
               </v-col>
 
               <v-col cols="12">
                 <v-text-field
-                  :value="tagData.name"
+                  v-model="tagData.name"
                   :autofocus="!add"
-                  :rules="[rules.required]"
-                  :hint="nameWarningMsg"
+                  :rules="[rules.required, rules.isNameNotExists, rules.isNotSameName]"
                   label="Name"
                   required
-                  @input="tagData.name = $event"
+                  variant="underlined"
                 />
               </v-col>
 
               <v-col cols="12">
                 <v-autocomplete
-                  :value="tagData.categoryId"
-                  :items="categoriesList"
-                  item-text="name"
-                  item-value="id"
+                  v-model="tagData.categoryId"
+                  :items="categoriesListSelect"
                   label="Category"
-                  chips
-                  deletable-chips
                   hide-selected
-                  @input="tagData.categoryId = $event"
+                  variant="underlined"
                 >
-                  <template v-slot:selection="data">
-                    <v-chip
-                      v-bind="data.attrs"
-                      :color="getCategoryColor(data.item)"
-                      text-color="white"
-                      close
-                      outlined
-                      @click:close="tagData.categoryId = ''"
+                  <template v-slot:item="{ props, item }">
+                    <v-list-item
+                      v-bind="props"
+                      :title="item?.name"
                     >
-                      <v-avatar left :color="getCategoryColor(data.item)" />
-                      {{ data.item.name }}
-                    </v-chip>
+                      <template v-slot:prepend>
+                        <v-avatar :color="item.raw.color" size="30"/>
+                      </template>
+                      <template v-slot:default>
+                        {{ item.title }}
+                      </template>
+                    </v-list-item>
                   </template>
 
-                  <template v-slot:item="data">
-                    <v-list-item-avatar :color="getCategoryColor(data.item)" size="30" />
-                    <v-list-item-content>
-                      <!-- TODO: why v-html ?? -->
-                      <!-- <v-list-item-title v-html="data.item.name" /> -->
-                    </v-list-item-content>
+                  <template v-slot:prepend v-if="tagDataCategoryColor">
+                    <v-avatar :color="tagDataCategoryColor"/>
                   </template>
                 </v-autocomplete>
+
               </v-col>
             </v-row>
           </v-form>
@@ -308,9 +283,15 @@ onMounted(() => {
           Delete
         </v-btn>
 
-        <v-btn class="modal-btn" tabindex="-1" @click="onCancel"> Cancel </v-btn>
+        <v-btn class="modal-btn" tabindex="-1" @click="onCancel">Cancel</v-btn>
 
-        <v-btn class="modal-btn primary" :disabled="!isFormValid" tabindex="0" @click="onConfirm">
+        <v-btn
+          class="modal-btn"
+          :disabled="!isFormValid"
+          @click="onConfirm"
+          color="primary"
+          tabindex="0"
+        >
           {{ confirmBtnText }}
         </v-btn>
       </v-card-actions>
@@ -325,7 +306,7 @@ onMounted(() => {
       @cancel="closeConfirmDelete"
       @click:outside="closeConfirmDelete"
     >
-      <template v-slot:message> Delete this tag? </template>
+      <template v-slot:message>Delete this tag?</template>
     </DeleteModal>
   </v-dialog>
 </template>

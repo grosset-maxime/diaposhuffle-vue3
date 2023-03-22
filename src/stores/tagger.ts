@@ -6,6 +6,7 @@ import { computed, ref, reactive } from 'vue'
 import { createGlobalState } from '@vueuse/core'
 
 import { buildError } from '@/api/api'
+import { createTagCategory } from '@/models/tag'
 import {
   fetchTags as fetchTagsAPI,
   addTag as addTagAPI,
@@ -40,7 +41,6 @@ export const useTaggerStore = createGlobalState(() => {
   // Getters
   const getTag = (id: TagId) => tags.value.get(id)
   const getCategory = (id: TagCategoryId) => categories.value.get(id)
-  const getCategoryColor = (id: TagCategoryId) => categories.value.get(id)?.color
   const getErrors = () => errors
 
   //#region Mutations
@@ -103,7 +103,7 @@ export const useTaggerStore = createGlobalState(() => {
     }
   }
 
-  async function updateTag (tagData: TagData | Tag) {
+  async function updateTag (tagData: TagData) {
     try {
       const tag = await updateTagAPI(tagData)
 
@@ -165,7 +165,7 @@ export const useTaggerStore = createGlobalState(() => {
     }
   }
 
-  async function updateCategory (categoryData: TagCategoryData | TagCategory) {
+  async function updateCategory (categoryData: TagCategoryData) {
     try {
       const category = await updateCategoryAPI(categoryData)
 
@@ -209,8 +209,7 @@ export const useTaggerStore = createGlobalState(() => {
     }
   }
 
-  async function _fetchTags () {
-    console.log('### fetchTags')
+  async function _fetchTags (): Promise<Map<TagId, Tag>> {
     if (tagsFetched.value) {
       return tags.value
     }
@@ -231,14 +230,20 @@ export const useTaggerStore = createGlobalState(() => {
     return tags.value
   }
 
-  async function _fetchCategories () {
-    console.log('### fetchCategories')
+  async function _fetchCategories (): Promise<Map<TagCategoryId, TagCategory>> {
     if (categoriesFetched.value) {
       return categories.value
     }
 
     try {
       const categories = await fetchCategoriesAPI()
+
+      categories.push(createTagCategory({
+        id: '0',
+        name: 'None',
+        color: 'FFFFFF',
+      }))
+
       _setCategories(categories)
     } catch (e) {
       const error = buildError(e)
@@ -254,10 +259,11 @@ export const useTaggerStore = createGlobalState(() => {
   }
   //#endregion Actions
 
+  // TODO: ENH: show error alert if fail to fetch tags or categories.
   const taggerReadyPromise = Promise.all([
     _fetchTags(),
     _fetchCategories(),
-  ]).then(() => taggerReady.value = true)
+  ]).then(() => { taggerReady.value = true })
 
   return {
     taggerReadyPromise,
@@ -274,7 +280,6 @@ export const useTaggerStore = createGlobalState(() => {
     // Getters
     getTag,
     getCategory,
-    getCategoryColor,
     getErrors,
 
     // Mutations

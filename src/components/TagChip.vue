@@ -4,6 +4,7 @@ import type { TagId } from '@/models/tag'
 
 // Vendors Libs
 import { computed } from 'vue'
+import { eagerComputed } from '@vueuse/shared'
 
 // Stores
 import { useTaggerStore } from '@/stores/tagger'
@@ -37,37 +38,35 @@ const emit = defineEmits<{
 
 const tag = computed(() => taggerStore.getTag(props.tagId))
 
-const categoryId = computed(() => tag.value?.categoryId)
-
-const hasCategory = computed(
-  () => !!(categoryId.value && taggerStore.getCategory(categoryId.value)),
+const isNoneCategory = computed(
+  () => !!tag.value?.category.value?.isNone(),
 )
 
 const categoryColor = computed(
-  () => categoryId.value
-    ? taggerStore.getCategoryColor(categoryId.value) || ''
+  () => tag.value
+    ? tag.value.category.value?.hashColor || ''
     : '',
 )
 
-const tagColor = computed(() => {
+const tagColor = eagerComputed(() => {
   let color
 
-  if (hasCategory.value) {
+  if (!isNoneCategory.value) {
     color = props.focused
-      ? `#${categoryColor.value}FF`
-      : `#${categoryColor.value}FF`
+      ? `${categoryColor.value}FF`
+      : `${categoryColor.value}FF`
   }
 
   return color
 })
 
-const tagBgColor = computed(() => {
+const tagBgColor = eagerComputed(() => {
   let color
 
-  if (hasCategory.value) {
+  if (!isNoneCategory.value) {
     color = props.focused
-      ? `#${categoryColor.value}AA`
-      : `#${categoryColor.value}20`
+      ? `${categoryColor.value}AA`
+      : `${categoryColor.value}20`
   } else if (props.focused) {
     color = '#FFFFFF80'
   }
@@ -75,11 +74,11 @@ const tagBgColor = computed(() => {
   return color
 })
 
-const tagBoxShadow = computed(() => {
+const tagBoxShadow = eagerComputed(() => {
   let boxShadow
 
   if (props.focused) {
-    if (hasCategory.value) {
+    if (!isNoneCategory.value) {
       boxShadow = `0 0 7px 0 ${tagColor.value}`
     } else {
       boxShadow = '0 0 7px 0 #FFFFFF'
@@ -98,7 +97,7 @@ const tagBoxShadow = computed(() => {
       {
         clickable,
         focused,
-        'has-no-category': !hasCategory,
+        'is-none-category': isNoneCategory,
         masked,
       },
     ]"
@@ -112,7 +111,14 @@ const tagBoxShadow = computed(() => {
     <span class="tag-content">
       <span class="name">{{ tag?.name }}</span>
 
-      <v-btn v-if="edit" icon x-small class="edit-btn">
+      <v-btn
+        v-if="edit"
+        class="edit-btn"
+        size="small"
+        density="compact"
+        color="secondary"
+        icon
+      >
         <v-icon
           class="edit-icon"
           @click.stop="emit('click:edit', tagId)"
@@ -121,7 +127,14 @@ const tagBoxShadow = computed(() => {
         </v-icon>
       </v-btn>
 
-      <v-btn v-if="close" icon x-small class="close-btn">
+      <v-btn
+        v-if="close"
+        class="close-btn"
+        size="small"
+        density="compact"
+        color="secondary"
+        icon
+      >
         <v-icon
         class="close-icon"
           @click.stop="emit('click:close', tagId)"
@@ -179,7 +192,7 @@ const tagBoxShadow = computed(() => {
     cursor: pointer;
   }
 
-  &.has-no-category {
+  &.is-none-category {
     border-style: dashed;
   }
 

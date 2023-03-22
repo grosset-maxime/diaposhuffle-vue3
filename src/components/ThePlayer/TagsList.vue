@@ -86,16 +86,11 @@ function getTagStyles (tag?: Tag) {
 }
 
 function getTagCategoryColor (tag?: Tag) {
-  const DEFAULT_COLOR = 'FFF'
-  const computeColor = (color: string) => `#${color || 'FFF'}`
+  const DEFAULT_COLOR = '#FFF'
 
-  if (!tag) {
-    return computeColor(DEFAULT_COLOR)
-  }
-
-  return computeColor(
-    taggerStore.getCategoryColor(tag.categoryId) || DEFAULT_COLOR,
-  )
+  return tag
+    ? tag.category.value?.hashColor || DEFAULT_COLOR
+    : DEFAULT_COLOR
 }
 </script>
 

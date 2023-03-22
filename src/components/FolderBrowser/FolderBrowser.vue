@@ -6,16 +6,16 @@
 // TODO: Feature: Allow to search a folder by its name which has not been fetch yet (Need a new backend API).
 
 // Types
-import type { Fn } from '@vueuse/core';
+import type { Fn } from '@vueuse/core'
 
 // Vendors Libs
-import { ref, computed, watch } from 'vue';
-import { useEventListener } from '@vueuse/core';
+import { ref, computed, watch } from 'vue'
+import { useEventListener } from '@vueuse/core'
 
-import { getKey } from '@/utils/utils';
+import { getKey } from '@/utils/utils'
 
 // Components
-import FolderList from '@/components/FolderBrowser/FolderList.vue';
+import FolderList from '@/components/FolderBrowser/FolderList.vue'
 
 // Props
 interface Props {
@@ -25,133 +25,133 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   show: false,
   selected: (): Array<string> => [],
-});
+})
 
 // Emits
 const emit = defineEmits<{
   (e: 'close'): void;
   (e: 'save', folders: Array<string>): void;
-}>();
+}>()
 
-let stopKeyboardShortcuts: Fn | null;
+let stopKeyboardShortcuts: Fn | null
 
 // Refs
-const selectedFolders = ref<Array<string>>([]);
+const selectedFolders = ref<Array<string>>([])
 
-const FolderListCmp = ref<{ onShow: Function } | null>(null);
+const FolderListCmp = ref<{ onShow: Function } | null>(null)
 
 // Computeds
-const nbSelected = computed(() => selectedFolders.value.length);
+const nbSelected = computed(() => selectedFolders.value.length)
 
 // Watchs
 watch(
   () => props.show,
   (show) => {
     if (show) {
-      onShow();
+      onShow()
     } else {
-      onHide();
+      onHide()
     }
-  }
-);
+  },
+)
 
-function onShow() {
-  attachKeyboardShortcuts();
+function onShow () {
+  attachKeyboardShortcuts()
 
-  selectedFolders.value = [...props.selected];
+  selectedFolders.value = [ ...props.selected ]
 
   // Wait for v-dialog transition end before continuing.
   setTimeout(() => {
-    FolderListCmp.value?.onShow();
-  }, 300);
+    FolderListCmp.value?.onShow()
+  }, 300)
 }
 
-function onHide() {
-  removeKeyboardShortcuts();
+function onHide () {
+  removeKeyboardShortcuts()
 }
 
-function onConfirm() {
-  emit('save', [...selectedFolders.value]);
-  onClose();
+function onConfirm () {
+  emit('save', [ ...selectedFolders.value ])
+  onClose()
 }
 
-function onCancel() {
-  onClose();
+function onCancel () {
+  onClose()
 }
 
-function onClose() {
-  onHide();
-  emit('close');
+function onClose () {
+  onHide()
+  emit('close')
 }
 
-function onSelect(path: string) {
+function onSelect (path: string) {
   if (!selectedFolders.value.includes(path)) {
-    selectedFolders.value.push(path);
+    selectedFolders.value.push(path)
   }
 }
 
-function onUnSelect(path: string) {
-  selectedFolders.value = selectedFolders.value.filter((p) => p !== path);
+function onUnSelect (path: string) {
+  selectedFolders.value = selectedFolders.value.filter((p) => p !== path)
 }
 
-function onUnselectAll() {
-  selectedFolders.value = [];
+function onUnselectAll () {
+  selectedFolders.value = []
 }
 
-function keyboardShortcuts(e: KeyboardEvent) {
-  const key = getKey(e);
-  let preventDefault = false;
-  const stopPropagation = false;
+function keyboardShortcuts (e: KeyboardEvent) {
+  const key = getKey(e)
+  let preventDefault = false
+  const stopPropagation = false
 
   if (e.altKey) {
     switch (key) {
-      // On windows, Meta + Enter does not trigger a keydown event,
-      // So, set Alt + Enter to validate.
-      case 'Enter':
-        onConfirm();
-        preventDefault = true;
-        break;
+    // On windows, Meta + Enter does not trigger a keydown event,
+    // So, set Alt + Enter to validate.
+    case 'Enter':
+      onConfirm()
+      preventDefault = true
+      break
 
-      default:
+    default:
     }
   } else if (e.metaKey) {
     // On windows, Alt + Escape does not trigger a keydown event,
     // So, set Meta + Escape to cancel.
     switch (key) {
-      case 'Escape':
-        onCancel();
-        preventDefault = true;
-        break;
+    case 'Escape':
+      onCancel()
+      preventDefault = true
+      break
 
-      default:
+    default:
     }
   }
 
   if (preventDefault) {
-    e.preventDefault();
+    e.preventDefault()
   }
   if (stopPropagation) {
-    e.stopPropagation();
+    e.stopPropagation()
   }
 }
 
-function attachKeyboardShortcuts() {
+function attachKeyboardShortcuts () {
   if (stopKeyboardShortcuts) {
-    return;
+    return
   }
-  stopKeyboardShortcuts = useEventListener(document, 'keydown', keyboardShortcuts);
+  stopKeyboardShortcuts = useEventListener(document, 'keydown', keyboardShortcuts)
 }
 
-function removeKeyboardShortcuts() {
-  stopKeyboardShortcuts && stopKeyboardShortcuts();
-  stopKeyboardShortcuts = null;
+function removeKeyboardShortcuts () {
+  stopKeyboardShortcuts && stopKeyboardShortcuts()
+  stopKeyboardShortcuts = null
 }
 </script>
 
 <template>
   <v-dialog
     content-class="folder-browser"
-    :value="show"
+    :model-value="show"
     fullscreen
     hide-overlay
     transition="dialog-bottom-transition"
