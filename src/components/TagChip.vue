@@ -13,7 +13,7 @@ const taggerStore = useTaggerStore()
 
 // Props
 interface Props {
-  tagId?: TagId;
+  tagId: TagId;
   focused?: boolean;
   masked?: boolean;
   clickable?: boolean;
@@ -21,7 +21,6 @@ interface Props {
   edit?: boolean;
 }
 const props = withDefaults(defineProps<Props>(), {
-  tagId: '',
   focused: false,
   masked: false,
   clickable: false,
@@ -37,16 +36,11 @@ const emit = defineEmits<{
 }>()
 
 const tag = computed(() => taggerStore.getTag(props.tagId))
+const category = computed(() => tag.value?.category)
 
-const isNoneCategory = computed(
-  () => !!tag.value?.category.value?.isNone(),
-)
+const isNoneCategory = computed(() => !!category.value?.isNone())
 
-const categoryColor = computed(
-  () => tag.value
-    ? tag.value.category.value?.hashColor || ''
-    : '',
-)
+const categoryColor = computed(() => category.value?.hashColor || '')
 
 const tagColor = eagerComputed(() => {
   let color

@@ -54,7 +54,7 @@ const panels = [
       },
       {
         shortcut: 'a',
-        description: "Open Add the folder's picture/video to the random list folder modal.",
+        description: 'Open Add the folder\'s picture/video to the random list folder modal.',
       },
       {
         shortcut: 'd / SUPP',
@@ -154,10 +154,12 @@ const panels = [
       },
     ],
   },
-];
+]
 const openedPanels = panels
-  .map((panel, index) => (panel.opened ? index : -1))
-  .filter((v) => v >= 0);
+  .map((panel, index) => (panel.opened
+    ? index
+    : -1))
+  .filter((v) => v >= 0)
 </script>
 
 <template>
@@ -166,7 +168,13 @@ const openedPanels = panels
       <v-expansion-panel v-for="panel in panels" :key="panel.title">
         <v-expansion-panel-header>{{ panel.title }}</v-expansion-panel-header>
         <v-expansion-panel-content class="pt-1">
-          <v-row v-for="(item, i) in panel.content" :key="i" dense class="item-row" align="center">
+          <v-row
+            v-for="(item, i) in panel.content"
+            :key="i"
+            density="compact"
+            class="item-row"
+            align="center"
+          >
             <v-col>
               {{ item.shortcut }}
             </v-col>

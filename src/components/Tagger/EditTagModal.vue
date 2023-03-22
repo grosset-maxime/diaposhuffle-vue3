@@ -83,7 +83,7 @@ const tagDataCategoryColor = computed(
   () => taggerStore.getCategory(tagData.value?.categoryId || '0')?.hashColor,
 )
 
-// Methods
+//#region Methods
 function resetForm () {
   formCmp.value?.reset()
 }
@@ -100,11 +100,15 @@ const rules = {
     tagsList.value.some(
       (tag) => tag.id !== tagData.value.id
         && tag.name.toLowerCase() === value.trim().toLowerCase(),
-    ) && 'Name already exists.'
+    )
+      ? 'Name already exists.'
+      : true
   ),
   isNotSameName: (value: string) => {
     if (props.add) { return true }
-    return value === tagModel.value?.name && 'Same name as now...'
+    return value === tagModel.value?.name
+      ? 'Same name as now...'
+      : true
   },
 }
 
@@ -172,6 +176,7 @@ function keyboardShortcuts (key: string, e: KeyboardEvent) {
     e.stopPropagation()
   }
 }
+//#endregion Methods
 
 // Watchers
 watch(

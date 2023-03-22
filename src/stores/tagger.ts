@@ -81,6 +81,11 @@ export const useTaggerStore = createGlobalState(() => {
     const map = new Map(categories.value)
     map.delete(cat.id)
     categories.value = map
+
+    _updateTags()
+  }
+  const _updateTags = () => {
+    tags.value.forEach((tag) => tag.update())
   }
   //#endregion Mutations
 
@@ -263,7 +268,11 @@ export const useTaggerStore = createGlobalState(() => {
   const taggerReadyPromise = Promise.all([
     _fetchTags(),
     _fetchCategories(),
-  ]).then(() => { taggerReady.value = true })
+  ]).then(() => {
+    _updateTags()
+
+    taggerReady.value = true
+  })
 
   return {
     taggerReadyPromise,

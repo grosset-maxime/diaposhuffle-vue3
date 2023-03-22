@@ -1,9 +1,9 @@
 <script setup lang="ts">
 // Types
-import type { TagCategoryId, TagCategoryData } from '@/models/tag'
+import type { TagCategoryId, TagCategoryData, TagCategory } from '@/models/tag'
 
 // Vendors Libs
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
 
@@ -44,21 +44,17 @@ const emit = defineEmits<{
 // Refs
 const categoryData = ref<TagCategoryData>({ ...EMPTY_CATEGORY_DATA })
 const color = ref('')
-const nameWarningMsg = ref('')
 const colorWarningMsg = ref('')
-const rules = ref({
-  required: (value: string) => !!value || 'Required.',
-})
 const isFormValid = ref(false)
 const showDeleteModal = ref(false)
 const loading = ref(false)
 
-// TODO
 const formCmp = ref<{
-  reset: Function;
-  resetValidation: Function;
-  validate: Function;
-} | null>(null)
+  reset: () => void
+  validate: () => Promise<{
+    valid: boolean
+    errors: { id: string | number; errorMessages: string[] }[]
+  }>} | null>(null)
 
 // Computeds
 const categoryModel = computed(
@@ -76,58 +72,47 @@ const confirmBtnText = computed(() => (props.add
 
 const categoriesList = taggerStore.categoriesList
 
-const modelName = computed(() => categoryData.value.name)
-
-// Methods
-function setModel () {
-  resetForm()
-
-  categoryData.value = categoryModel.value
-    ? categoryModel.value.getData()
-    : { ...EMPTY_CATEGORY_DATA }
-
-  // TODO: do not use category directly.
-  color.value = categoryData.value.color
-    ? `#${categoryData.value.color}`
-    : ''
-}
-
+//#region Methods
 function resetForm () {
-  color.value = ''
-
-  // TODO
-  // formCmp.value?.reset()
+  formCmp.value?.reset()
 }
 
-function resetFormValidation () {
-  formCmp.value?.resetValidation()
+const rules = {
+  required: (value: string) => !!value || 'Required.',
+  isIdNotExists: (value: TagCategoryId) => (
+    !value
+    || !props.add
+    || !categoriesList.value.some((cat) => cat.id.toLowerCase() === value.trim().toLowerCase())
+    || 'Id already exists.'
+  ),
+  isNameNotExists: (value: string = '') => (
+    categoriesList.value.some(
+      (cat) => cat.id !== categoryData.value.id
+        && cat.name.toLowerCase() === value.trim().toLowerCase(),
+    )
+      ? 'Name already exists.'
+      : true
+  ),
+  isNotSameName: (value: string) => {
+    if (props.add) { return true }
+    return value === categoryModel.value?.name
+      ? 'Same name as now...'
+      : true
+  },
 }
 
-function isNameExists (value: string) {
-  return categoriesList.value.some(
-    (cat) => cat.id !== categoryData.value.id
-      && cat.name.toLowerCase() === value?.trim().toLowerCase(),
-  )
-}
+async function onConfirm () {
+  const { valid } = await formCmp.value!.validate()
 
-function onConfirm () {
-  // TODO
-  // const isFormValid = formCmp.value?.validate()
-
-  if (isFormValid.value) {
-    loading.value = true
+  if (valid) {
     emit('confirm', { ...categoryData.value })
+  } else {
+    loading.value = false
   }
 }
 
 function onCancel () {
   emit('cancel')
-}
-
-function onDelete () {
-  loading.value = true
-  props.categoryId && emit('delete', props.categoryId)
-  onCancel()
 }
 
 function onDeleteBtnClick () {
@@ -138,7 +123,8 @@ function closeConfirmDelete ({ deleteCat }: { deleteCat?: boolean } = {}) {
   showDeleteModal.value = false
 
   if (deleteCat) {
-    onDelete()
+    loading.value = true
+    props.categoryId && emit('delete', props.categoryId)
   }
 }
 
@@ -177,47 +163,46 @@ function keyboardShortcuts (key: string, e: KeyboardEvent) {
     e.stopPropagation()
   }
 }
+//#endregion Methods
 
-watch(
-  () => props.show,
-  (isShow) => {
-    if (isShow) {
-      loading.value = false
-      startListener()
+watch(() => props.show, (isShow) => {
+  if (isShow) {
+    loading.value = false
+    startListener()
+  } else {
+    stopListener()
+  }
+})
 
-      if (props.add) {
-        resetForm()
-      } else {
-        resetFormValidation()
-      }
-    } else {
-      stopListener()
-    }
-  },
-)
+watch(categoryModel, (category?: TagCategory) => {
+  resetForm()
 
-watch(
-  () => props.categoryId,
-  () => { setModel() },
-)
+  categoryData.value = category
+    ? category.getData()
+    : { ...EMPTY_CATEGORY_DATA }
+
+  color.value = category
+    ? category.hashColor
+    : ''
+})
 
 watch(color, (value) => {
   if (!value) {
     return
   }
 
+  // TODO
   // temporary fix while there is no way to disable the alpha channel in the
   // colorpicker component: https://github.com/vuetifyjs/vuetify/issues/9590
   if (value.toString().match(/#[a-zA-Z0-9]{8}/)) {
     color.value = value.substring(0, 7)
   }
 
-  if (categoryData.value.color && color.value.includes(categoryData.value.color)) {
+  if (categoryData.value.color && value.includes(categoryData.value.color)) {
     return
   }
 
-  // TODO: reactivity?
-  categoryData.value.color = color.value.substring(1)
+  categoryData.value.color = value.substring(1)
 
   const isColorAlreadyAssigned = categoriesList.value.some(
     (cat) =>
@@ -230,23 +215,12 @@ watch(color, (value) => {
     : ''
 })
 
-watch(modelName, (name) => {
-  nameWarningMsg.value = name?.trim() && isNameExists(name)
-    ? 'Name already exists.'
-    : ''
-})
-
 watch(showDeleteModal, (shouldShow) => {
   if (shouldShow) {
     stopListener()
   } else {
     startListener()
   }
-})
-
-onMounted(() => {
-  loading.value = false
-  setModel()
 })
 </script>
 
@@ -258,7 +232,7 @@ onMounted(() => {
     no-click-animation
   >
     <v-card outlined>
-      <v-card-title class="orange--text">
+      <v-card-title class="text-primary">
         {{ titleModal }}
       </v-card-title>
 
@@ -267,18 +241,23 @@ onMounted(() => {
           <v-form v-model="isFormValid" ref="formCmp">
             <v-row>
               <v-col v-if="!add" class="pt-0" cols="12">
-                <v-text-field :model-value="categoryData.id" label="Id" hide-details disabled />
+                <v-text-field
+                  :model-value="categoryData.id"
+                  label="Id"
+                  hide-details
+                  disabled
+                  variant="underlined"
+                />
               </v-col>
 
               <v-col class="pt-0" cols="12">
                 <v-text-field
-                  :model-value="categoryData.name"
+                  v-model="categoryData.name"
                   autofocus
-                  :rules="[rules.required]"
-                  :hint="nameWarningMsg"
+                  :rules="[rules.required, rules.isNameNotExists, rules.isNotSameName]"
                   label="Name"
                   required
-                  @input="categoryData.name = $event"
+                  variant="underlined"
                 />
               </v-col>
 
@@ -288,7 +267,7 @@ onMounted(() => {
                   class="color-warning-alert"
                   type="warning"
                   icon="mdi-alert"
-                  dense
+                  density="compact"
                 >
                   {{ colorWarningMsg }}
                 </v-alert>
@@ -317,9 +296,15 @@ onMounted(() => {
           Delete
         </v-btn>
 
-        <v-btn class="modal-btn" tabindex="-1" @click="onCancel"> Cancel </v-btn>
+        <v-btn class="modal-btn" tabindex="-1" @click="onCancel">Cancel</v-btn>
 
-        <v-btn class="modal-btn primary" :disabled="!isFormValid" tabindex="0" @click="onConfirm">
+        <v-btn
+          class="modal-btn"
+          :disabled="!isFormValid"
+          color="primary"
+          tabindex="0"
+          @click="onConfirm"
+        >
           {{ confirmBtnText }}
         </v-btn>
       </v-card-actions>
@@ -334,7 +319,7 @@ onMounted(() => {
       @cancel="closeConfirmDelete"
       @click:outside="closeConfirmDelete"
     >
-      <template v-slot:message> Delete this category? </template>
+      <template v-slot:message>Delete this category?</template>
     </DeleteModal>
   </v-dialog>
 </template>

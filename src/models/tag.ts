@@ -65,11 +65,9 @@ export class Tag {
   readonly name: string
   readonly categoryId: TagCategoryId
 
-  readonly category: ComputedRef<TagCategory | undefined>
+  category: TagCategory | undefined
 
   constructor ({ id, name, categoryId = '0' }: TagData) {
-    const taggerStore = useTaggerStore()
-
     if (!id) {
       throw new Error(`Invalid tag, tag has no id: ${id}`)
     }
@@ -79,11 +77,11 @@ export class Tag {
     this.name = name || id
     this.categoryId = categoryId
 
-    this.category = computed(() => taggerStore.getCategory(this.categoryId))
+    this.category = undefined
   }
 
   hasCategory () {
-    return !!this.category.value
+    return !!this.category
   }
 
   getData (): TagData {
@@ -92,6 +90,11 @@ export class Tag {
       name: this.name,
       categoryId: this.categoryId,
     }
+  }
+
+  update () {
+    const taggerStore = useTaggerStore()
+    this.category = taggerStore.getCategory(this.categoryId)
   }
 }
 

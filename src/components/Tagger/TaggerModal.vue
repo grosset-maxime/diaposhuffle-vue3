@@ -121,7 +121,7 @@ watch(
               v-bind="props"
               @click="editMode = !editMode"
             >
-              <v-icon class="edit-icon" dense> mdi-pencil </v-icon>
+              <v-icon class="edit-icon" density="compact"> mdi-pencil </v-icon>
             </v-btn>
           </template>
           <span>Edit Mode</span>
@@ -136,7 +136,7 @@ watch(
               v-bind="props"
               @click="onRandom"
             >
-              <v-icon class="select-random-icon" dense> mdi-shuffle-variant </v-icon>
+              <v-icon class="select-random-icon" density="compact"> mdi-shuffle-variant </v-icon>
             </v-btn>
           </template>
           <span>Select Random</span>
