@@ -20,7 +20,6 @@ import { useTaggerStore } from '@/stores/tagger'
 // Utils
 import { SHAKE_ANIMATION_TIME, isEmptyObj, getRandomElement } from '@/utils/utils'
 
-import { createTagCategory } from '@/models/tag'
 import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
 
 // Components
@@ -130,7 +129,6 @@ const filterTextCmp = ref<{
 } | null>(null)
 
 // Computeds
-const tagsMap = taggerStore.tags
 const tagsList = taggerStore.tagsList
 
 //#region Computeds
@@ -315,37 +313,12 @@ const notFilteredUnselectedTagIdsMap = computed(() => {
   return new Map(notFilteredTagIds.map((tagId) => [ tagId, true ]))
 })
 
-const nbTagsMap = computed(() => {
-  const nbTagsMap: Map<TagCategoryId, number> = new Map()
-  const tagIds = ([] as Array<TagId>).concat(selectedTagIds.value, unselectedTagIds.value)
-
-  Object.keys(categoriesMap.value).forEach((catId) => {
-    nbTagsMap.set(
-      catId,
-      tagIds.filter((tagId) => tagsMap.value.get(tagId)?.categoryId === catId).length,
-    )
-  })
-
-  nbTagsMap.set('0', tagIds.filter((tagId) => tagsMap.value.get(tagId)?.categoryId === '0').length)
-
-  return nbTagsMap
-})
-
 const notFilteredCategoryIdsMap = computed<Map<TagCategoryId, boolean>>(() => {
   if (!filters.value.text) {
     return new Map()
   }
 
-  const NONE_CATEGORY = {
-    id: '0',
-    name: 'None',
-    color: 'FFFFFF',
-  }
-
-  const categoriesMapValue = categoriesMap.value
-  categoriesMapValue.set(NONE_CATEGORY.id, createTagCategory(NONE_CATEGORY))
-
-  const categories = Array.from(categoriesMapValue.values())
+  const categories = Array.from(categoriesMap.value.values())
 
   const matchedCategoryIdsMap = Object.fromEntries(
     applyTextFilter(categories)
@@ -801,7 +774,7 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
       <TagsList
         :tag-ids="selectedTagIds"
         :focused="focused.section === SELECTED_FOCUSED_SECTION_NAME ? focused : undefined"
-        :edit-mode="props.editMode"
+        :edit-mode="!!selectedTagIds.length && props.editMode"
         :no-tags-text="noSelectedTagsText"
         :masked="notFilteredSelectedTagIdsMap"
         closable-tags
@@ -867,7 +840,6 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
       <CategoriesList
         :category-ids="categoryIds"
         :selected="selectedCategoryIdsSet"
-        :nb-tags="nbTagsMap"
         :masked="notFilteredCategoryIdsMap"
         :edit-mode="props.editMode"
         @select="onSelectCategory"

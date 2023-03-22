@@ -16,11 +16,9 @@ export class TagCategory {
   readonly color: string
 
   readonly hashColor: string
-  readonly tags: ComputedRef<Map<TagId, Tag>>
+  tags: Map<TagId, Tag>
 
   constructor ({ id = '', name, color = '' }: TagCategoryData) {
-    const taggerStore = useTaggerStore()
-
     // Data
     this.id = id
     this.name = name || this.id
@@ -28,12 +26,7 @@ export class TagCategory {
 
     this.hashColor = `#${this.color}`
 
-    this.tags = computed(
-      () => new Map(
-        taggerStore.tagsList.value.filter((t) => t.categoryId === this.id)
-          .map((t) => [ t.id, t ]),
-      ),
-    )
+    this.tags = new Map()
   }
 
   isNone () { return this.id === '0' }
@@ -44,6 +37,15 @@ export class TagCategory {
       name: this.name,
       color: this.color,
     }
+  }
+
+  update () {
+    const taggerStore = useTaggerStore()
+
+    this.tags = new Map(
+      taggerStore.tagsList.value.filter((t) => t.categoryId === this.id)
+        .map((t) => [ t.id, t ]),
+    )
   }
 }
 

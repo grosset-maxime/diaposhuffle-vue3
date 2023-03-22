@@ -61,21 +61,31 @@ export const useTaggerStore = createGlobalState(() => {
   const _setTags = (fetchedTags: Array<Tag>) => {
     tags.value = new Map(fetchedTags.map((tag) => [ tag.id, tag ]))
   }
-  const _addTag = (tag: Tag) => tags.value = (new Map(tags.value)).set(tag.id, tag)
-  const _updateTag = (tag: Tag) => tags.value = (new Map(tags.value)).set(tag.id, tag)
+  const _addTag = (tag: Tag) => {
+    tags.value = (new Map(tags.value)).set(tag.id, tag)
+    _updateCategories()
+  }
+  const _updateTag = (tag: Tag) => {
+    tags.value = (new Map(tags.value)).set(tag.id, tag)
+    _updateCategories()
+  }
   const _deleteTag = (tag: Tag) => {
     const map = new Map(tags.value)
     map.delete(tag.id)
     tags.value = map
+
+    _updateCategories()
   }
   const _setCategories = (cats: Array<TagCategory>) => {
     categories.value = new Map(cats.map((cat) => [ cat.id, cat ]))
   }
   const _addCategory = (cat: TagCategory) => {
     categories.value = (new Map(categories.value)).set(cat.id, cat)
+    _updateTags()
   }
   const _updateCategory = (cat: TagCategory) => {
     categories.value = (new Map(categories.value)).set(cat.id, cat)
+    _updateTags()
   }
   const _deleteCategory = (cat: TagCategory) => {
     const map = new Map(categories.value)
@@ -86,6 +96,9 @@ export const useTaggerStore = createGlobalState(() => {
   }
   const _updateTags = () => {
     tags.value.forEach((tag) => tag.update())
+  }
+  const _updateCategories = () => {
+    categories.value.forEach((cat) => cat.update())
   }
   //#endregion Mutations
 
@@ -270,6 +283,7 @@ export const useTaggerStore = createGlobalState(() => {
     _fetchCategories(),
   ]).then(() => {
     _updateTags()
+    _updateCategories()
 
     taggerReady.value = true
   })

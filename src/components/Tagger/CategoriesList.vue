@@ -70,15 +70,6 @@ function onCategoryClick (catId: TagCategoryId) {
       @click="onCategoryClick"
       @click:edit="emit('editCategory', catId)"
     />
-
-    <CategoryChip
-      key="cat-0"
-      category-id="0"
-      :selected="selected.has('0')"
-      :nb-tags="nbTags.get('0')"
-      :masked="!!masked.get('0')"
-      @click="onCategoryClick"
-    />
   </div>
 </template>
 

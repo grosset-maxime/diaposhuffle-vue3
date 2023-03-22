@@ -1,34 +1,28 @@
 <script setup lang="ts">
 // Types
-import { createTagCategory, type TagCategoryId } from '@/models/tag'
+import type { TagCategoryId } from '@/models/tag'
 
 // Vendors Libs
 import { computed } from 'vue'
 
 // Stores
 import { useTaggerStore } from '@/stores/tagger'
+import { eagerComputed } from '@vueuse/shared'
 
 const taggerStore = useTaggerStore()
 
-const DEFAULT_COLOR = 'FFFFFF'
-const NONE_CATEGORY = createTagCategory({
-  id: '0',
-  name: 'None',
-  color: DEFAULT_COLOR,
-})
+const DEFAULT_COLOR = '#FFFFFF'
 
 // Props
 interface Props {
   categoryId?: TagCategoryId;
   selected?: boolean;
-  nbTags?: number;
   masked?: boolean;
   edit?: boolean;
 }
 const props = withDefaults(defineProps<Props>(), {
   categoryId: '',
   selected: false,
-  nbTags: 0,
   masked: false,
   edit: false,
 })
@@ -40,28 +34,25 @@ const emit = defineEmits<{
 }>()
 
 // Computeds
-const isNoneCategory = computed(() => props.categoryId === '0')
-const category = computed(() => {
-  return isNoneCategory.value
-    ? NONE_CATEGORY
-    : taggerStore.getCategory(props.categoryId)
-})
+const category = computed(() => taggerStore.getCategory(props.categoryId))
+const isNoneCategory = computed(() => !!category.value?.isNone())
+const nbTags = computed(() => category.value?.tags.size || 0)
 
-const categoryColor = computed(() => `#${category.value?.color || DEFAULT_COLOR}`)
+const categoryColor = computed(() => category.value?.hashColor || DEFAULT_COLOR)
 
-const chipColor = computed(() => {
+const chipColor = eagerComputed(() => {
   return props.selected
     ? `${categoryColor.value}FF`
     : `${categoryColor.value}FF`
 })
 
-const chipBgColor = computed(() => {
+const chipBgColor = eagerComputed(() => {
   return props.selected
     ? `${categoryColor.value}AA`
     : `${categoryColor.value}20`
 })
 
-const chipBoxShadow = computed(() => {
+const chipBoxShadow = eagerComputed(() => {
   let boxShadow
 
   if (props.selected) {
