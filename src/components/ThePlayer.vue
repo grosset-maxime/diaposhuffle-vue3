@@ -166,7 +166,7 @@ const ItemsPlayerCmp = ref<{
 // Computeds
 
 const hasFileTypesSource = computed(() => !!sourceOptsStore.fileTypes.value.length)
-const hasTagsSource = computed(() => !!sourceOptsStore.tags.value.length)
+const hasTagsSource = computed(() => !!sourceOptsStore.tags.value.size)
 const isFromPinedsSource = sourceOptsStore.isFromPined
 
 const isSourceDB = computed(() => playerStore.getFetchSource() === FetchSource.db)

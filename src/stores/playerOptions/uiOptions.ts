@@ -30,16 +30,16 @@ export const useUIOptionsStore = createGlobalState(() => {
     pinTags: true,
 
     showHistory: true,
-    pinHistory: true,
+    pinHistory: false,
 
     showPined: true,
     pinPined: true,
 
     showListIndex: true,
-    pinListIndex: true,
+    pinListIndex: false,
 
     showLoop: true,
-    pinLoop: true,
+    pinLoop: false,
   }
 
   // States

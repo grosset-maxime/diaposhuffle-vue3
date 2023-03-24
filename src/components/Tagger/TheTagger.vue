@@ -54,10 +54,8 @@ const emit = defineEmits<{
   (e: 'toggleOpacity'): void;
 }>()
 
-//#region Refs
 const selectedTagsIdsSet = ref<Set<TagId>>(new Set(props.selected))
 const isLoading = ref(true)
-//#endregion Refs
 
 //#region Filtering section
 const filters = ref<{

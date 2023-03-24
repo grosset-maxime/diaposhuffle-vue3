@@ -1,10 +1,10 @@
 // Types
-import type { Item, ItemExtension } from '@/models/item';
-import type { TagId } from '@/models/tag';
-import type { TagsOperator, FileType } from '@/stores/playerOptions/sourceOptions';
+import type { Item, ItemExtension } from '@/models/item'
+import type { TagId } from '@/models/tag'
+import type { TagsOperator, FileType } from '@/stores/playerOptions/sourceOptions'
 
-import { createItem } from '@/models/item';
-import { BASE_URL, buildError, fetchJson } from '@/api/api';
+import { createItem } from '@/models/item'
+import { BASE_URL, buildError, fetchJson } from '@/api/api'
 
 /**
  * Fetch one random item from file system.
@@ -13,17 +13,17 @@ import { BASE_URL, buildError, fetchJson } from '@/api/api';
  * @returns Promise with fetched item from FS.
  */
 export const fetchRandomItem = async ({ folders }: { folders?: Array<string> } = {}) => {
-  let item: Item;
+  let item: Item
 
   try {
-    const url = `${BASE_URL}/api/getRandomPic`;
+    const url = `${BASE_URL}/api/getRandomPic`
 
     const opts = {
       method: 'POST',
       body: JSON.stringify({
         customFolders: folders,
       }),
-    };
+    }
 
     const response: {
       success: boolean;
@@ -39,14 +39,14 @@ export const fetchRandomItem = async ({ folders }: { folders?: Array<string> } =
         useCache: boolean;
         warning: string;
       };
-    } = await fetchJson(url, opts);
-    item = createItem(response.pic);
+    } = await fetchJson(url, opts)
+    item = createItem(response.pic)
   } catch (error) {
-    throw buildError(error);
+    throw buildError(error)
   }
 
-  return item;
-};
+  return item
+}
 
 /**
  * Fetch list of items matching options from the bdd.
@@ -61,10 +61,10 @@ export const fetchItemsFromBdd = async ({
   tagsOperator,
   types,
 }: { tags?: Array<TagId>; types?: Array<FileType>; tagsOperator?: TagsOperator } = {}) => {
-  let items: Array<Item> = [];
+  let items: Array<Item> = []
 
   try {
-    const url = `${BASE_URL}/api/getPicsFromBdd`;
+    const url = `${BASE_URL}/api/getPicsFromBdd`
 
     const opts = {
       method: 'POST',
@@ -73,7 +73,7 @@ export const fetchItemsFromBdd = async ({
         tagsOperator,
         types,
       }),
-    };
+    }
 
     const response: {
       success: boolean;
@@ -84,7 +84,7 @@ export const fetchItemsFromBdd = async ({
         tags: string; // ";tagId_1;tagId_2;" ex: ";ccc;aaaaaaaa;"
         type: string; // ex: "1" (TODO: seems not used yet)
       }>;
-    } = await fetchJson(url, opts);
+    } = await fetchJson(url, opts)
 
     items = response.results.map((item) =>
       createItem({
@@ -92,14 +92,14 @@ export const fetchItemsFromBdd = async ({
         tags: item.tags.split(';').filter((tag) => tag),
         extension: item.extension,
         // TODO: set type (file type) ?
-      })
-    );
+      }),
+    )
   } catch (error) {
-    throw buildError(error);
+    throw buildError(error)
   }
 
-  return items;
-};
+  return items
+}
 
 /**
  * Delete an item.
@@ -121,15 +121,15 @@ export const deleteItem = async ({
   fromBddOnly?: boolean;
 }) => {
   if (!item || !item.src) {
-    throw buildError('Missing mandatory options.');
+    throw buildError('Missing mandatory options.')
   }
 
   let response: {
     success: boolean;
-  };
+  }
 
   try {
-    const url = `${BASE_URL}/api/deletePic`;
+    const url = `${BASE_URL}/api/deletePic`
     const opts = {
       method: 'POST',
       body: JSON.stringify({
@@ -137,15 +137,15 @@ export const deleteItem = async ({
         continueIfNotExist: ignoreIfNotExist,
         deleteOnlyFromBdd: fromBddOnly,
       }),
-    };
+    }
 
-    response = await fetchJson(url, opts);
+    response = await fetchJson(url, opts)
   } catch (error) {
-    throw buildError(error);
+    throw buildError(error)
   }
 
-  return response;
-};
+  return response
+}
 
 /**
  * Set tags to provided item.
@@ -154,27 +154,27 @@ export const deleteItem = async ({
  * @returns Promise with success
  */
 export const setItemTags = async ({ item }: { item: Item }) => {
-  const { name, path, tags } = item;
+  const { name, path, tags } = item
 
   if (!name || !path) {
-    throw buildError('Missing mandatory options.');
+    throw buildError('Missing mandatory options.')
   }
 
   let response: {
     success: boolean;
-  };
+  }
 
   try {
-    const url = `${BASE_URL}/api/setTags`;
+    const url = `${BASE_URL}/api/setTags`
     const opts = {
       method: 'POST',
       body: JSON.stringify({ name, path, tags }),
-    };
+    }
 
-    response = await fetchJson(url, opts);
+    response = await fetchJson(url, opts)
   } catch (error) {
-    throw buildError(error);
+    throw buildError(error)
   }
 
-  return response;
-};
+  return response
+}

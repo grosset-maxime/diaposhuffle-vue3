@@ -11,6 +11,7 @@ import { computed, ref, watch } from 'vue'
 import { eagerComputed } from '@vueuse/shared'
 
 // Stores
+import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
 import { useSourceOptionsStore } from '@/stores/playerOptions/sourceOptions'
 import { usePlayerStore } from '@/stores/player'
 
@@ -19,64 +20,25 @@ import FolderBrowser from '../FolderBrowser/FolderBrowser.vue'
 import TaggerModal from '../Tagger/TaggerModal.vue'
 import TagChip from '../TagChip.vue'
 
+const { showTagger } = useDiapoShuffleStore()
 const sourceOptsStore = useSourceOptionsStore()
 const playerStore = usePlayerStore()
 
-// Refs
+//#region Folder Browser
 const folderBrowser = {
   show: ref(false),
   selected: ref<Set<string>>(new Set(sourceOptsStore.folders.value)),
 }
-const taggerModal = {
-  show: ref(false),
-  selected: ref<Set<TagId>>(new Set(sourceOptsStore.tags.value)),
-}
-
-// Computeds
-const filterFileTypes = computed({
-  get () {
-    return sourceOptsStore.fileTypes.value.map((type) =>
-      sourceOptsStore.availableFileTypes.value.indexOf(type),
-    )
-  },
-  set (typesIndex) {
-    const fileTypes = typesIndex.map((index) => sourceOptsStore.availableFileTypes.value[ index ])
-    sourceOptsStore.setFileTypes(fileTypes)
-  },
-})
 
 const nbSelectedFolders = eagerComputed(() => {
   return folderBrowser.selected.value.size
 })
 
-const nbSelectedTags = eagerComputed(() => {
-  return taggerModal.selected.value.size
-})
-
-const isFromPinedComputed = computed({
-  get () {
-    return sourceOptsStore.isFromPined.value
-  },
-  set (isFromPined) {
-    sourceOptsStore.isFromPined.value = isFromPined
-  },
-})
-
-const pinedsLength = eagerComputed(() => {
-  return playerStore.getPinedLength()
-})
-
-// Watchs
 watch(
   folderBrowser.selected,
-  () => (sourceOptsStore.folders.value = Array.from(folderBrowser.selected.value.values())),
-)
-watch(
-  taggerModal.selected,
-  () => (sourceOptsStore.tags.value = Array.from(taggerModal.selected.value.values())),
+  () => (sourceOptsStore.folders.value = folderBrowser.selected.value),
 )
 
-// Mehods
 function showFolderBrowser () {
   folderBrowser.show.value = true
 }
@@ -96,38 +58,83 @@ function onUnselectAllFolders () {
 function onUnselectFolder (path: string) {
   folderBrowser.selected.value.delete(path)
 }
+//#endregion Folder Browser
+
+//#region Tagger
+const selectedTags = ref<Set<TagId>>(new Set(sourceOptsStore.tags.value))
+
+const nbSelectedTags = computed(() => {
+  return selectedTags.value.size
+})
+
+watch(
+  selectedTags,
+  (val) => { sourceOptsStore.tags.value = val },
+)
 
 function showTaggerModal () {
-  taggerModal.show.value = true
+  showTagger.value = true
 }
 
 function onCloseTaggerModal () {
-  taggerModal.show.value = false
+  showTagger.value = false
 }
 
 function onSaveTaggerModal (selectedTagIds: Set<TagId>) {
-  taggerModal.selected.value = selectedTagIds
+  selectedTags.value = selectedTagIds
 }
 
 function onUnselectAllTags () {
-  taggerModal.selected.value.clear()
+  selectedTags.value = new Set()
 }
 
 function onUnselectTag (tagId: TagId) {
-  taggerModal.selected.value.delete(tagId)
+  const newSet = new Set(selectedTags.value)
+  newSet.delete(tagId)
+  selectedTags.value = newSet
 }
+//#endregion Tagger
+
+//#region Types
+const filterFileTypes = computed({
+  get () {
+    return sourceOptsStore.fileTypes.value.map((type) =>
+      sourceOptsStore.availableFileTypes.value.indexOf(type),
+    )
+  },
+  set (typesIndex) {
+    const fileTypes = typesIndex.map((index) => sourceOptsStore.availableFileTypes.value[ index ])
+    sourceOptsStore.setFileTypes(fileTypes)
+  },
+})
+//#endregion Types
+
+//#region Pineds
+const isFromPinedComputed = computed({
+  get () {
+    return sourceOptsStore.isFromPined.value
+  },
+  set (isFromPined) {
+    sourceOptsStore.isFromPined.value = isFromPined
+  },
+})
+
+const pinedsLength = eagerComputed(() => {
+  return playerStore.getPinedLength()
+})
 
 function clearPineds () {
   isFromPinedComputed.value = false
   playerStore.clearPineds()
 }
+//#endregion Pineds
 </script>
 
 <template>
   <v-container class="source-options">
     <v-row align="center">
       <v-col>
-        <span class="v-label theme--dark"> Folder(s) </span>
+        <span class="v-label"> Folder(s) </span>
 
         <v-btn color="secondary" @click="showFolderBrowser"> Browse... </v-btn>
 
@@ -140,7 +147,7 @@ function clearPineds () {
           Unselect All
         </v-btn>
 
-        <span class="v-label theme--dark nb-selected-folders" v-if="nbSelectedFolders">
+        <span class="v-label nb-selected-folders" v-if="nbSelectedFolders">
           Selected: {{ nbSelectedFolders }}
         </span>
       </v-col>
@@ -164,7 +171,7 @@ function clearPineds () {
 
     <v-row align="center">
       <v-col>
-        <span class="v-label theme--dark"> Tag(s) </span>
+        <span class="v-label"> Tag(s) </span>
 
         <v-btn color="secondary" @click="showTaggerModal"> Select... </v-btn>
 
@@ -193,7 +200,7 @@ function clearPineds () {
     <v-row v-if="nbSelectedTags" align="center" class="selected-tags">
       <v-col>
         <TagChip
-          v-for="tagId in taggerModal.selected.value"
+          v-for="tagId in selectedTags"
           :key="tagId"
           :tag-id="tagId"
           close
@@ -257,8 +264,8 @@ function clearPineds () {
     /> -->
 
     <TaggerModal
-      :show="taggerModal.show.value"
-      :selected="taggerModal.selected.value"
+      :show="showTagger"
+      :selected="selectedTags"
       @close="onCloseTaggerModal"
       @save="onSaveTaggerModal"
     />

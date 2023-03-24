@@ -29,6 +29,7 @@ const selected = ref<Set<TagId>>(new Set(props.selected))
 const editMode = ref(false)
 const hasOpacity = ref(false)
 const theTaggerCmp = ref<{ selectRandom: () => void } | null>(null)
+const showTheTagger = ref(false)
 
 // Computeds
 const modalClasses = computed(() => {
@@ -45,9 +46,12 @@ function onShow () {
   hasOpacity.value = false
 
   selected.value = new Set(props.selected)
+  showTheTagger.value = true
 }
 
-function onHide () {}
+function onHide () {
+  setTimeout(() => showTheTagger.value = false, 300)
+}
 
 function onSave () {
   emit('save', new Set(selected.value))
@@ -71,10 +75,6 @@ function onSelect (tagId: TagId) {
 function onUnselect (tagId: TagId) {
   selected.value.delete(tagId)
 }
-
-// function onUnselectAll () {
-//   selected.value.clear()
-// }
 
 function onToggleOpacity () {
   hasOpacity.value = !hasOpacity.value
@@ -104,7 +104,7 @@ watch(
     persistent
     no-click-animation
   >
-    <v-card style="height: 100%">
+    <v-card style="height: 100%" v-if="showTheTagger">
       <v-toolbar class="tagger-modal-toolbar" density="compact" color="background">
         <v-btn icon @click="onCancel">
           <v-icon>mdi-close</v-icon>

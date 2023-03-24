@@ -53,14 +53,14 @@ export const useSourceOptionsStore = createGlobalState(() => {
   //#region Computeds
   // List of selected folder path.
   const folders = computed({
-    get: () => states.value.folders,
-    set: (val) => (states.value.folders = val),
+    get: () => new Set(states.value.folders),
+    set: (val) => (states.value.folders = Array.from(val.values())),
   })
 
   // List of selected tags ids.
   const tags = computed({
-    get: () => states.value.tags,
-    set: (val) => (states.value.tags = val),
+    get: () => new Set(states.value.tags),
+    set: (val) => (states.value.tags = Array.from(val.values())),
   })
 
   const tagsOperator = computed({

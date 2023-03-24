@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { eagerComputed } from '@vueuse/shared'
 
 import { useUIOptionsStore } from '@/stores/playerOptions/uiOptions'
@@ -40,26 +39,16 @@ const pinUnpinAll = eagerComputed(
     && pinListIndex.value
     && pinLoop.value,
 )
-
-const showHideAllLabel = computed(() => {
-  return showHideAll.value
-    ? 'Hide all'
-    : 'Show all'
-})
-const pinUnpinAllLabel = computed(() => {
-  return pinUnpinAll.value
-    ? 'Unpin all'
-    : 'Pin all'
-})
 </script>
 
 <template>
   <v-container class="ui-options">
     <v-row align="center">
-      <v-col class="col">
+      <v-col class="col d-flex">
+        <span class="v-label">Hide all</span>
         <v-switch
           :model-value="showHideAll"
-          :label="showHideAllLabel"
+          label="Show all"
           color="blue"
           hide-details
           inset
@@ -67,10 +56,11 @@ const pinUnpinAllLabel = computed(() => {
           @change="toggleShowAll(!showHideAll)"
         />
       </v-col>
-      <v-col class="col">
+      <v-col class="col d-flex">
+        <span class="v-label">Hide all</span>
         <v-switch
           :model-value="pinUnpinAll"
-          :label="pinUnpinAllLabel"
+          label="Show all"
           color="blue"
           hide-details
           inset
@@ -230,13 +220,11 @@ const pinUnpinAllLabel = computed(() => {
 </template>
 
 <style lang="scss" scoped>
-.ui-options {
-  .all-separator {
-    opacity: 0.4;
-  }
-  .v-label {
-    margin-right: 20px;
-  }
+.all-separator {
+  opacity: 0.4;
+}
+.v-label {
+  margin-right: 10px;
 }
 .col {
   padding: 4px 12px;
