@@ -342,11 +342,20 @@ export const useTheTagger = ({
   //#endregion Categories section
 
   //#region Last Used Tags section
-  const lastUsedTagsMap = computed(
-    () => isFiltering.value
-      ? filteredLastUsedTagsMap.value
-      : sortedLastUsedTagsMap.value,
-  )
+  const lastUsedTagsMap = computed(() => {
+    const tagsMap: Map<TagId, Tag> = new Map()
+    const mapToFilter = isFiltering.value
+      ? filteredLastUsedTagsMap
+      : sortedLastUsedTagsMap
+
+    mapToFilter.value.forEach((tag, tagId) => {
+      if(!selectedTagsIdsSet.value.has(tagId)){
+        tagsMap.set(tagId, tag)
+      }
+    })
+
+    return tagsMap
+  })
   //#endregion Last Used Tags section
 
   //#region Unselected Tags section

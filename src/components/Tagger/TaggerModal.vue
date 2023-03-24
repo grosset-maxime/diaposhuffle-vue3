@@ -1,6 +1,4 @@
 <script setup lang="ts">
-// TODO: Fix: select random tag button
-
 // Types
 import type { TagId } from '@/models/tag'
 
@@ -30,6 +28,7 @@ const emit = defineEmits<{
 const selected = ref<Set<TagId>>(new Set(props.selected))
 const editMode = ref(false)
 const hasOpacity = ref(false)
+const theTaggerCmp = ref<{ selectRandom: () => void } | null>(null)
 
 // Computeds
 const modalClasses = computed(() => {
@@ -81,8 +80,9 @@ function onToggleOpacity () {
   hasOpacity.value = !hasOpacity.value
 }
 
-// TODO
-function onRandom () {}
+function selectRandom () {
+  theTaggerCmp.value?.selectRandom()
+}
 //#endregion Methods
 
 watch(
@@ -112,7 +112,7 @@ watch(
 
         <v-toolbar-title class="title">Tagger</v-toolbar-title>
 
-        <v-tooltip location="bottom">
+        <v-tooltip location="right">
           <template v-slot:activator="{ props }">
             <v-btn
               class="edit-btn"
@@ -127,14 +127,14 @@ watch(
           <span>Edit Mode</span>
         </v-tooltip>
 
-        <v-tooltip location="bottom">
+        <v-tooltip location="right">
           <template v-slot:activator="{ props }">
             <v-btn
               class="select-random-btn"
               icon
               small
               v-bind="props"
-              @click="onRandom"
+              @click="selectRandom"
             >
               <v-icon class="select-random-icon" density="compact"> mdi-shuffle-variant </v-icon>
             </v-btn>
@@ -152,7 +152,7 @@ watch(
 
       <TheTagger
         class="tagger-ctn"
-        ref="TaggerCmp"
+        ref="theTaggerCmp"
         :selected="selected"
         :edit-mode="editMode"
         @select="onSelect"

@@ -4,10 +4,11 @@
 // TODO: Enh: On sort update focused tag position.
 // TODO: Feature: On up/down keydown, focus above/below tags section.
 // TODO: Enh: On up/down left/right keydown set tag focus to right tag.
-// TODO: Bug: Error on set tag when items come from the bdd.
+
+// TODO: Bug: Error on set tag when items come from the bdd. => Already fixed ??
 
 // Types
-import type { TagCategoryId, TagId, Tag, TagData, TagCategoryData } from '@/models/tag'
+import type { TagCategoryId, TagId, TagData, TagCategoryData } from '@/models/tag'
 import type { Sort } from '@/logic/TheTagger/theTagger'
 
 // Vendors Libs
@@ -33,16 +34,6 @@ import EditCategoryModal from './EditCategoryModal.vue'
 const taggerStore = useTaggerStore()
 const { startListener, stopListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
-const SELECTED_FOCUSED_SECTION_NAME = 'selectedTags'
-const UNSELECTED_FOCUSED_SECTION_NAME = 'unselectedTags'
-const LAST_USED_FOCUSED_SECTION_NAME = 'lastUsedTags'
-
-const sectionsNames = [
-  SELECTED_FOCUSED_SECTION_NAME,
-  LAST_USED_FOCUSED_SECTION_NAME,
-  UNSELECTED_FOCUSED_SECTION_NAME,
-]
-
 // Props
 interface Props {
   selected?: Set<TagId>;
@@ -65,13 +56,10 @@ const emit = defineEmits<{
 
 //#region Refs
 const selectedTagsIdsSet = ref<Set<TagId>>(new Set(props.selected))
+const isLoading = ref(true)
+//#endregion Refs
 
-const focused = ref({
-  id: '',
-  pos: 0,
-  section: UNSELECTED_FOCUSED_SECTION_NAME,
-})
-
+//#region Filtering section
 const filters = ref<{
   text: string;
   categories: Set<TagCategoryId>;
@@ -97,64 +85,18 @@ const SORTS_SELECT_OPTS = {
   ],
 }
 
-const isFilterTextHasFocus = ref(false)
-
-const isLoading = ref(true)
-
-const shake = ref<Map<string, boolean>>(new Map())
-
-const editTagModal = ref<{
-  show: boolean;
-  add: boolean;
-  tagId: TagId | undefined;
-}>({
-  show: false,
-  add: false,
-  tagId: undefined,
-})
-
-const editCategoryModal = ref<{
-  show: boolean;
-  add: boolean;
-  categoryId: TagCategoryId | undefined;
-}>({
-  show: false,
-  add: false,
-  categoryId: undefined,
-})
-
 const filterTextCmp = ref<{
   focus: () => void;
     } | null>(null)
-//#endregion Refs
 
-//#region Computeds
+const isFilterTextHasFocus = ref(false)
+
 const hasCategoriesFilter = eagerComputed(() => !!filters.value.categories.size)
 
 const isFiltering = eagerComputed(
   () => !!(hasCategoriesFilter.value || filters.value.text),
 )
 
-const noSelectedTagsText = eagerComputed(() => {
-  return isFiltering.value && !selectedTagsIdsSet.value.size
-    ? 'No tags results'
-    : 'No tags selected'
-})
-
-const noLastUsedTagsText = eagerComputed(() => {
-  return isFiltering.value
-    ? 'No tags results'
-    : 'No last used tags'
-})
-
-const noUnselectedTagsText = eagerComputed(() => {
-  return isFiltering.value
-    ? 'No tags results'
-    : ''
-})
-//#endregion Computeds
-
-//#region Methods
 function onSelectCategory (catId: TagCategoryId) {
   filters.value.categories.add(catId)
 }
@@ -163,6 +105,47 @@ function onUnselectCategory (catId: TagCategoryId) {
   filters.value.categories.delete(catId)
 }
 
+function onFilterTextFocus () {
+  isFilterTextHasFocus.value = true
+}
+
+function onFilterTextBlur () {
+  isFilterTextHasFocus.value = false
+}
+
+function clearFilterText () {
+  filters.value.text = ''
+}
+
+function setFilterTextFocus () {
+  filterTextCmp.value?.focus()
+}
+
+function resetFilters () {
+  filters.value = { text: '', categories: new Set() }
+}
+//#endregion Filtering section
+
+const {
+  selectedTagsMap,
+
+  categoriesMap,
+  filteredCategoriesResultsMap,
+  nbTagsPerCategoryMap,
+
+  lastUsedTagsMap,
+  filteredLastUsedTagsResultsMap,
+
+  unselectedTagsMap,
+  filteredTagsResultsMap,
+} = useTheTagger({
+  selectedTagsIdsSet,
+  isFiltering,
+  filters,
+  sorts,
+})
+
+//#region Methods
 function onTagClick (tagId: TagId) {
   if (selectedTagsIdsSet.value.has(tagId)) {
     selectedTagsIdsSet.value.delete(tagId)
@@ -185,107 +168,15 @@ function onTagClick (tagId: TagId) {
   setFocusRight()
 }
 
-function onFilterTextFocus () {
-  isFilterTextHasFocus.value = true
+function selectRandom () {
+  const randomdTagId = getRandomElement(Array.from(unselectedTagsMap.value.keys()))
+
+  if (randomdTagId) {
+    onTagClick(randomdTagId)
+  }
+
+  setFilterTextFocus()
 }
-
-function onFilterTextBlur () {
-  isFilterTextHasFocus.value = false
-}
-
-async function onDeleteEditTagModal (tagId: TagId) {
-  await taggerStore.deleteTag(tagId)
-
-  updateSelectedTagIdsMap()
-  hideEditTagModal()
-}
-
-async function onConfirmEditTagModal (tagData: TagData) {
-  await (editTagModal.value.add
-    ? taggerStore.addTag(tagData)
-    : taggerStore.updateTag(tagData))
-
-  updateSelectedTagIdsMap()
-  hideEditTagModal()
-}
-
-function onCancelEditTagModal () {
-  hideEditTagModal()
-}
-
-function showAddTagModal () {
-  stopListener()
-  editTagModal.value.add = true
-  editTagModal.value.tagId = undefined
-  editTagModal.value.show = true
-}
-
-function showEditTagModal (tagId: TagId) {
-  stopListener()
-  editTagModal.value.add = false
-  editTagModal.value.tagId = tagId
-  editTagModal.value.show = true
-}
-
-function hideEditTagModal () {
-  editTagModal.value.show = false
-  startListener()
-}
-
-async function onDeleteEditCategoryModal (catId: TagCategoryId) {
-  await taggerStore.deleteCategory(catId)
-
-  hideEditCategoryModal()
-}
-
-async function onConfirmEditCategoryModal (categoryData: TagCategoryData) {
-  await (editCategoryModal.value.add
-    ? taggerStore.addCategory(categoryData)
-    : taggerStore.updateCategory(categoryData))
-
-  hideEditCategoryModal()
-}
-
-function onCancelEditCategoryModal () {
-  hideEditCategoryModal()
-}
-
-function showAddCategoryModal () {
-  stopListener()
-  editCategoryModal.value.add = true
-  editCategoryModal.value.categoryId = undefined
-  editCategoryModal.value.show = true
-}
-
-function showEditCategoryModal (catId: TagCategoryId) {
-  stopListener()
-  editCategoryModal.value.add = false
-  editCategoryModal.value.categoryId = catId
-  editCategoryModal.value.show = true
-}
-
-function hideEditCategoryModal () {
-  editCategoryModal.value.show = false
-  startListener()
-}
-
-function clearFilterText () {
-  filters.value.text = ''
-}
-
-function setFilterTextFocus () {
-  filterTextCmp.value?.focus()
-}
-
-// function selectRandom () {
-//   const randomdTagId = getRandomElement(unselectedTagIds.value)
-
-//   if (randomdTagId) {
-//     onTagClick(randomdTagId)
-//   }
-
-//   setFilterTextFocus()
-// }
 
 function addLastUsedTag (tagId: TagId) {
   taggerStore.addLastUsedTag(tagId)
@@ -295,6 +186,112 @@ function updateSelectedTagIdsMap () {
   selectedTagsIdsSet.value = new Set(props.selected)
 }
 
+function keyboardShortcuts (key: string, e: KeyboardEvent) {
+  let preventDefault = false
+  const stopPropagation = false
+
+  if (e.shiftKey && key !== 'Shift') {
+    switch (key) {
+    case 'Enter':
+      onTagClick(focused.value.id)
+      break
+
+    default:
+    }
+  } else if (e.altKey && key !== 'Alt') {
+    switch (key) {
+    // On windows, Meta + Enter does not trigger a keydown event,
+    // So, set Alt + Enter to validate.
+    case 'Enter':
+      emit('save')
+      preventDefault = true
+      break
+
+    default:
+    }
+  } else if (e.metaKey && key !== 'Meta') {
+    // On windows, Alt + Escape does not trigger a keydown event,
+    // So, set Meta + Escape to cancel.
+    switch (key) {
+    case 'Escape':
+      emit('cancel')
+      preventDefault = true
+      break
+
+    default:
+    }
+  } else {
+    switch (key) {
+    case 'ArrowRight':
+      setFocusRight()
+      break
+
+    case 'ArrowLeft':
+      setFocusLeft()
+      break
+
+    case 'ArrowUp':
+      setFocusUp()
+      preventDefault = true
+      break
+
+    case 'ArrowDown':
+      setFocusDown()
+      preventDefault = true
+      break
+
+    case 'Control':
+      emit('toggleOpacity')
+      preventDefault = true
+      break
+
+    case 'Enter':
+      onTagClick(focused.value.id)
+      clearFilterText()
+      break
+
+    case 'Escape':
+      clearFilterText()
+      break
+
+    default:
+      // Start filtering only if the pressed key is a letter.
+      // Do not focus if pressed key is a control one.
+      if (!isFilterTextHasFocus.value && key.length === 1) {
+        setFilterTextFocus()
+        // filters.value.text += key
+      }
+    }
+  }
+
+  if (preventDefault) {
+    e.preventDefault()
+  }
+  if (stopPropagation) {
+    e.stopPropagation()
+  }
+}
+//#endregion Methods
+
+//#region Focus Management
+const SELECTED_FOCUSED_SECTION_NAME = 'selectedTags'
+const UNSELECTED_FOCUSED_SECTION_NAME = 'unselectedTags'
+const LAST_USED_FOCUSED_SECTION_NAME = 'lastUsedTags'
+
+const sectionsNames = [
+  SELECTED_FOCUSED_SECTION_NAME,
+  LAST_USED_FOCUSED_SECTION_NAME,
+  UNSELECTED_FOCUSED_SECTION_NAME,
+]
+
+const focused = ref({
+  id: '',
+  pos: 0,
+  section: UNSELECTED_FOCUSED_SECTION_NAME,
+})
+
+const shake = ref<Map<string, boolean>>(new Map())
+
 function resetFocus () {
   const sectionName = focused.value.section
   const sectionTagIds = getTagIdsFromSectionName(sectionName);
@@ -302,12 +299,9 @@ function resetFocus () {
   focused.value.pos = 0
 }
 
-function resetFilters () {
-  filters.value = { text: '', categories: new Set() }
-}
-
 function shakeSectionName (name: string) {
   shake.value.set(name, true)
+
   setTimeout(() => {
     shake.value.set(name, false)
   }, SHAKE_ANIMATION_TIME)
@@ -421,114 +415,9 @@ function setFocusDown () {
     shakeSectionName(sectionName)
   }
 }
+//#endregion Focus Management
 
-function keyboardShortcuts (key: string, e: KeyboardEvent) {
-  let preventDefault = false
-  const stopPropagation = false
-
-  if (e.shiftKey && key !== 'Shift') {
-    switch (key) {
-    case 'Enter':
-      onTagClick(focused.value.id)
-      break
-
-    default:
-    }
-  } else if (e.altKey && key !== 'Alt') {
-    switch (key) {
-    // On windows, Meta + Enter does not trigger a keydown event,
-    // So, set Alt + Enter to validate.
-    case 'Enter':
-      emit('save')
-      preventDefault = true
-      break
-
-    default:
-    }
-  } else if (e.metaKey && key !== 'Meta') {
-    // On windows, Alt + Escape does not trigger a keydown event,
-    // So, set Meta + Escape to cancel.
-    switch (key) {
-    case 'Escape':
-      emit('cancel')
-      preventDefault = true
-      break
-
-    default:
-    }
-  } else {
-    switch (key) {
-    case 'ArrowRight':
-      setFocusRight()
-      break
-
-    case 'ArrowLeft':
-      setFocusLeft()
-      break
-
-    case 'ArrowUp':
-      setFocusUp()
-      preventDefault = true
-      break
-
-    case 'ArrowDown':
-      setFocusDown()
-      preventDefault = true
-      break
-
-    case 'Control':
-      emit('toggleOpacity')
-      preventDefault = true
-      break
-
-    case 'Enter':
-      onTagClick(focused.value.id)
-      clearFilterText()
-      break
-
-    case 'Escape':
-      clearFilterText()
-      break
-
-    default:
-      // Start filtering only if the pressed key is a letter.
-      // Do not focus if pressed key is a control one.
-      if (!isFilterTextHasFocus.value && key.length === 1) {
-        setFilterTextFocus()
-        // filters.value.text += key
-      }
-    }
-  }
-
-  if (preventDefault) {
-    e.preventDefault()
-  }
-  if (stopPropagation) {
-    e.stopPropagation()
-  }
-}
-//#endregion Methods
-
-const {
-  selectedTagsMap,
-
-  categoriesMap,
-  filteredCategoriesResultsMap,
-  nbTagsPerCategoryMap,
-
-  lastUsedTagsMap,
-  filteredLastUsedTagsResultsMap,
-
-  unselectedTagsMap,
-  filteredTagsResultsMap,
-} = useTheTagger({
-  selectedTagsIdsSet,
-  isFiltering,
-  filters,
-  sorts,
-})
-
-// Watchers
+//#region Watchers
 watch(unselectedTagsMap, () => {
   if (!focused.value.id) {
     resetFocus()
@@ -547,6 +436,129 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
 
   isLoading.value = false
 }, { immediate: true })
+//#endregion Watchers
+
+//#region Edit/Add Tag Modal
+const editTagModal = ref<{
+  show: boolean;
+  add: boolean;
+  tagId: TagId | undefined;
+}>({
+  show: false,
+  add: false,
+  tagId: undefined,
+})
+
+async function onDeleteEditTagModal (tagId: TagId) {
+  await taggerStore.deleteTag(tagId)
+
+  updateSelectedTagIdsMap()
+  hideEditTagModal()
+}
+
+async function onConfirmEditTagModal (tagData: TagData) {
+  await (editTagModal.value.add
+    ? taggerStore.addTag(tagData)
+    : taggerStore.updateTag(tagData))
+
+  updateSelectedTagIdsMap()
+  hideEditTagModal()
+}
+
+function onCancelEditTagModal () {
+  hideEditTagModal()
+}
+
+function showAddTagModal () {
+  stopListener()
+  editTagModal.value.add = true
+  editTagModal.value.tagId = undefined
+  editTagModal.value.show = true
+}
+
+function showEditTagModal (tagId: TagId) {
+  stopListener()
+  editTagModal.value.add = false
+  editTagModal.value.tagId = tagId
+  editTagModal.value.show = true
+}
+
+function hideEditTagModal () {
+  editTagModal.value.show = false
+  startListener()
+}
+//#endregion Edit/Add Tag Modal
+
+//#region Edit/Add TagCategory Modal
+const editCategoryModal = ref<{
+  show: boolean;
+  add: boolean;
+  categoryId: TagCategoryId | undefined;
+}>({
+  show: false,
+  add: false,
+  categoryId: undefined,
+})
+
+async function onDeleteEditCategoryModal (catId: TagCategoryId) {
+  await taggerStore.deleteCategory(catId)
+
+  hideEditCategoryModal()
+}
+
+async function onConfirmEditCategoryModal (categoryData: TagCategoryData) {
+  await (editCategoryModal.value.add
+    ? taggerStore.addCategory(categoryData)
+    : taggerStore.updateCategory(categoryData))
+
+  hideEditCategoryModal()
+}
+
+function onCancelEditCategoryModal () {
+  hideEditCategoryModal()
+}
+
+function showAddCategoryModal () {
+  stopListener()
+  editCategoryModal.value.add = true
+  editCategoryModal.value.categoryId = undefined
+  editCategoryModal.value.show = true
+}
+
+function showEditCategoryModal (catId: TagCategoryId) {
+  stopListener()
+  editCategoryModal.value.add = false
+  editCategoryModal.value.categoryId = catId
+  editCategoryModal.value.show = true
+}
+
+function hideEditCategoryModal () {
+  editCategoryModal.value.show = false
+  startListener()
+}
+//#endregion Edit/Add TagCategory Modal
+
+const noSelectedTagsText = eagerComputed(() => {
+  return isFiltering.value && !selectedTagsIdsSet.value.size
+    ? 'No tags results'
+    : 'No tags selected'
+})
+
+const noLastUsedTagsText = eagerComputed(() => {
+  return isFiltering.value
+    ? 'No tags results'
+    : 'No last used tags'
+})
+
+const noUnselectedTagsText = eagerComputed(() => {
+  return isFiltering.value
+    ? 'No tags results'
+    : ''
+})
+
+defineExpose({
+  selectRandom,
+})
 </script>
 
 <template>
@@ -567,14 +579,17 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
         :tags="selectedTagsMap"
         :focused="focused.section === SELECTED_FOCUSED_SECTION_NAME ? focused : undefined"
         :edit-mode="!!selectedTagsMap.size && props.editMode"
-        :no-tags-text="noSelectedTagsText"
         :filtered-tags-results="filteredTagsResultsMap"
         closable-tags
         @clickTag="onTagClick"
         @closeTag="onTagClick"
         @addTag="showAddTagModal"
         @editTag="showEditTagModal"
-      />
+      >
+        <template #noTags>
+          {{ noSelectedTagsText }}
+        </template>
+      </TagsList>
     </div>
 
     <v-divider class="separator" />
@@ -624,10 +639,8 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
       </div>
     </div>
 
-    <!-- TODO: Feature: Show latest used tags -->
     <!-- TODO: Feature: on filtering latest used tags, do not hide it but set opacity. -->
 
-    <!-- TODO: Feature: Mask none selected category when at least one category is selected -->
     <div class="categories-list">
       <CategoriesList
         :categories="categoriesMap"
@@ -645,23 +658,25 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
     <v-divider class="separator" />
 
     <div
-      :class="[
-        'last-used-unselected-tags',
-        {
+      class="last-used-tags"
+      :class="[{
           shake: shake.get(LAST_USED_FOCUSED_SECTION_NAME),
-        },
-      ]"
+      }]"
     >
       <TagsList
         :tags="lastUsedTagsMap"
         :focused="focused.section === LAST_USED_FOCUSED_SECTION_NAME ? focused : undefined"
         :filtered-tags-results="filteredLastUsedTagsResultsMap"
         :edit-mode="false"
-        :no-tags-text="noLastUsedTagsText"
+        no-wrap
         @clickTag="onTagClick"
         @addTag="showAddTagModal"
         @editTag="showEditTagModal"
-      />
+      >
+        <template #noTags>
+          {{ noLastUsedTagsText }}
+        </template>
+      </TagsList>
     </div>
 
     <v-divider class="separator" />
@@ -680,11 +695,14 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
         :focused="focused.section === UNSELECTED_FOCUSED_SECTION_NAME ? focused : undefined"
         :filtered-tags-results="filteredTagsResultsMap"
         :edit-mode="!!unselectedTagsMap.size && props.editMode"
-        :no-tags-text="noUnselectedTagsText"
         @clickTag="onTagClick"
         @addTag="showAddTagModal"
         @editTag="showEditTagModal"
-      />
+        >
+        <template #noTags>
+          {{ noUnselectedTagsText }}
+        </template>
+      </TagsList>
     </div>
 
     <EditTagModal
@@ -759,6 +777,12 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
   .shake {
     @include shake-animation;
   }
+}
+.last-used-tags {
+  // height: 40px;
+  // overflow-y: hidden;
+  // overflow-x: auto;
+  // white-space: nowrap;
 }
 .loading {
   position: absolute;

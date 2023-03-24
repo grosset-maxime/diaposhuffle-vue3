@@ -14,19 +14,19 @@ interface Props {
   tags: Map<TagId, Tag>
   filteredTagsResults: Map<TagId, FilteredTagResult>
   focused?: {
-    id?: TagId | undefined;
+    id?: TagId | undefined
   }; // TODO
-  closableTags?: boolean;
-  noTagsText?: string;
-  editMode?: boolean;
+  closableTags?: boolean
+  editMode?: boolean
+  noWrap?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {
   focused: () => ({
     id: undefined,
   }),
   closableTags: false,
-  noTagsText: 'No tags',
   editMode: false,
+  noWrap: false,
 })
 
 // Emits
@@ -56,6 +56,7 @@ function shouldMask (tagId: TagId) {
       'tags-list',
       {
         'edit-mode': editMode,
+        'no-wrap': noWrap
       },
     ]"
   >
@@ -86,7 +87,9 @@ function shouldMask (tagId: TagId) {
     />
 
     <div v-if="!hasTags" class="no-tags">
-      {{ noTagsText }}
+      <slot name="noTags">
+        No tags
+      </slot>
     </div>
   </div>
 </template>
@@ -96,6 +99,12 @@ function shouldMask (tagId: TagId) {
   display: flex;
   flex-wrap: wrap;
   height: 100%;
+
+  &.no-wrap {
+    display: block;
+    white-space: nowrap;
+    @include w-scrollbar(none, auto);
+  }
 
   .add-tag-btn {
     width: $tag-height;
