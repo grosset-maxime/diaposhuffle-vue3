@@ -38,7 +38,7 @@ function onCategoryClick (catId: TagCategoryId) {
 function shouldMask (catId: TagCategoryId) {
   let mask = false
   if (props.filteredCategoriesResults.size) {
-    mask = (props.filteredCategoriesResults.get(catId)?.score || 1) >= 1
+    mask = (props.filteredCategoriesResults.get(catId)?.score ?? 1) >= 1
   }
   return mask
 }

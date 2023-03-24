@@ -82,6 +82,11 @@ function sortTagCategoriesFn (
       sort = catA.id.localeCompare(catB.id)
     }
 
+    // Force the "None" category to be the last.
+    if(catA.id === '0') {
+      sort = 0
+    }
+
     return direction * sort
   }
 }
@@ -129,7 +134,7 @@ function applyTagFiltering ({
 
       filteredMap.set(tag.id, {
         tag,
-        score: r.score || 1,
+        score: r.score ?? 1,
       })
     })
   }
@@ -149,11 +154,11 @@ function applyTagFiltering ({
 function applyCategoryFiltering ({
   isFiltering,
   list,
-  textFilter,
+  nbTagsPerCategory,
 }: {
   isFiltering: boolean
   list: Array<TagCategory>
-  textFilter?: string
+  nbTagsPerCategory: Map<TagCategoryId, number>
 }) {
   const filteredResults: Map<TagCategoryId, FilteredCategoryResult> = new Map()
 
@@ -161,27 +166,13 @@ function applyCategoryFiltering ({
     return filteredResults
   }
 
-  if (textFilter) {
-    const results = applyTextFilter<TagCategory>(textFilter, list)
-
-    results.forEach((r) => {
-      // console.log(r);
-      const category = r.item
-
-      filteredResults.set(category.id, {
-        category,
-        score: r.score || 1,
-      })
-    })
-  }
-
   list.forEach((category) => {
-    if (!filteredResults.has(category.id)) {
-      filteredResults.set(category.id, {
-        category,
-        score: 1,
-      })
-    }
+    filteredResults.set(category.id, {
+      category,
+      score: (nbTagsPerCategory.get(category.id) || 0) > 0
+        ? 0
+        : 1,
+    })
   })
 
   return filteredResults
@@ -230,7 +221,7 @@ export const useTheTagger = ({
 
   const sortedLastUsedTagsList = computed(
     () => [ ...lastUsedTagsList.value ]
-      .sort((tagA, tagB) => tagA.lastUsed - tagB.lastUsed),
+      .sort((tagA, tagB) => tagB.lastUsed - tagA.lastUsed),
   )
   const sortedLastUsedTagsMap = computed(
     () => new Map(sortedLastUsedTagsList.value.map((tag) => [ tag.id, tag ])),
@@ -261,9 +252,7 @@ export const useTheTagger = ({
     () => applyCategoryFiltering({
       isFiltering: isFiltering.value,
       list: sortedCategoriesList.value,
-      textFilter: isFiltering.value
-        ? filters.value.text
-        : undefined,
+      nbTagsPerCategory: nbTagsPerCategoryMap.value,
     }),
   )
   const filteredCategoriesMap = computed(
@@ -317,19 +306,36 @@ export const useTheTagger = ({
       : sortedCategoiesMap.value,
   )
 
-  // TODO
   const nbTagsPerCategoryMap = computed(() => {
     const nbTagsMap: Map<TagCategoryId, number> = new Map()
-    const tagIds = tagsList.value.map((tag) => tag.id)
 
-    Array.from(categoriesMap.value.keys()).forEach((catId) => {
+    function getNbTags (catId: TagCategoryId) {
+      let count = 0
+
+      if (isFiltering.value) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        for(const [ _, tagResult ] of filteredTagsResultsMap.value) {
+          if (tagResult.tag.categoryId === catId && tagResult.score < 1) {
+            count++
+          }
+        }
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        for(const [ _, tag ] of tagsMap.value) {
+          if (tag.categoryId === catId) {
+            count++
+          }
+        }
+      }
+      return count
+    }
+
+    for (const [ catId ] of categoriesMap.value) {
       nbTagsMap.set(
         catId,
-        tagIds.filter(
-          (tagId) => tagsMap.value.get(tagId)?.categoryId === catId,
-        ).length,
+        getNbTags(catId),
       )
-    })
+    }
 
     return nbTagsMap
   })

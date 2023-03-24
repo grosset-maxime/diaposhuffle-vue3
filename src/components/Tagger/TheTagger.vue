@@ -11,14 +11,14 @@ import type { TagCategoryId, TagId, Tag, TagData, TagCategoryData } from '@/mode
 import type { Sort } from '@/logic/TheTagger/theTagger'
 
 // Vendors Libs
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { eagerComputed, whenever } from '@vueuse/shared'
 
 // Stores
 import { useTaggerStore } from '@/stores/tagger'
 
 // Utils
-import { SHAKE_ANIMATION_TIME, isEmptyObj, getRandomElement } from '@/utils/utils'
+import { SHAKE_ANIMATION_TIME, getRandomElement } from '@/utils/utils'
 
 import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
 import { useTheTagger } from '@/logic/TheTagger/theTagger'
@@ -509,7 +509,6 @@ function keyboardShortcuts (key: string, e: KeyboardEvent) {
 }
 //#endregion Methods
 
-// TODO
 const {
   selectedTagsMap,
 

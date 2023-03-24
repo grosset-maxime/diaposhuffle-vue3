@@ -44,7 +44,7 @@ const hasTags = eagerComputed(() => {
 function shouldMask (tagId: TagId) {
   let mask = false
   if (props.filteredTagsResults.size) {
-    mask = (props.filteredTagsResults.get(tagId)?.score || 1) >= 1
+    mask = (props.filteredTagsResults.get(tagId)?.score ?? 1) >= 1
   }
   return mask
 }
