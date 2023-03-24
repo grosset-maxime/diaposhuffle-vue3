@@ -17,12 +17,14 @@ const DEFAULT_COLOR = '#FFFFFF'
 interface Props {
   categoryId?: TagCategoryId;
   selected?: boolean;
+  nbTags?: number;
   masked?: boolean;
   edit?: boolean;
 }
 const props = withDefaults(defineProps<Props>(), {
   categoryId: '',
   selected: false,
+  nbTags: undefined,
   masked: false,
   edit: false,
 })
@@ -36,7 +38,11 @@ const emit = defineEmits<{
 // Computeds
 const category = computed(() => taggerStore.getCategory(props.categoryId))
 const isNoneCategory = computed(() => !!category.value?.isNone())
-const nbTags = computed(() => category.value?.tags.size || 0)
+const nbTags = computed(
+  () => typeof props.nbTags === 'number'
+    ? props.nbTags
+    : category.value?.tags.size || 0,
+)
 
 const categoryColor = computed(() => category.value?.hashColor || DEFAULT_COLOR)
 

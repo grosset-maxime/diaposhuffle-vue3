@@ -27,7 +27,7 @@ export const useTaggerStore = createGlobalState(() => {
   const categoriesFetched = ref(false)
   const categories = ref<Map<TagCategoryId, TagCategory>>(new Map())
 
-  const lastUsedTagIds = reactive<Map<TagId, number>>(new Map())
+  const lastUsedTags = ref<Map<TagId, Tag>>(new Map())
 
   const errors = reactive<Array<{ [key: string]: unknown }>>([])
 
@@ -35,8 +35,7 @@ export const useTaggerStore = createGlobalState(() => {
   const isTaggerReady = computed(() => taggerReady.value)
   const tagsList = computed(() => Array.from(tags.value.values()))
   const categoriesList = computed(() => Array.from(categories.value.values()))
-  const lastUsedTagIdsMap = computed(() => lastUsedTagIds)
-  const lastUsedTagIdsList = computed(() => Array.from(lastUsedTagIds))
+  const lastUsedTagsList = computed(() => Array.from(lastUsedTags.value.values()))
 
   // Getters
   const getTag = (id: TagId) => tags.value.get(id)
@@ -52,8 +51,14 @@ export const useTaggerStore = createGlobalState(() => {
     console.error(actionName, error)
   }
 
-  const addLastUsedTagId = (tagId: TagId) => {
-    lastUsedTagIds.set(tagId, Date.now())
+  const addLastUsedTag = (tagId: Tag | TagId) => {
+    const tag = typeof tagId === 'string'
+      ? getTag(tagId)
+      : tagId
+
+    if (!tag) { return }
+    tag.lastUsed = Date.now()
+    lastUsedTags.value.set(tag.id, tag)
   }
 
   const _setTagsFetched = (val: boolean) => (tagsFetched.value = val)
@@ -292,13 +297,13 @@ export const useTaggerStore = createGlobalState(() => {
     taggerReadyPromise,
     tags,
     categories,
+    lastUsedTags,
 
     // Computeds
     isTaggerReady,
     tagsList,
     categoriesList,
-    lastUsedTagIdsMap,
-    lastUsedTagIdsList,
+    lastUsedTagsList,
 
     // Getters
     getTag,
@@ -307,7 +312,7 @@ export const useTaggerStore = createGlobalState(() => {
 
     // Mutations
     addError,
-    addLastUsedTagId,
+    addLastUsedTag,
 
     // Actions
     addTag,

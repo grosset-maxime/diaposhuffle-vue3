@@ -8,11 +8,11 @@
 
 // Types
 import type { TagCategoryId, TagId, Tag, TagData, TagCategoryData } from '@/models/tag'
+import type { Sort } from '@/logic/TheTagger/theTagger'
 
 // Vendors Libs
 import { ref, computed, watch } from 'vue'
-import { whenever } from '@vueuse/shared'
-import Fuse from 'fuse.js'
+import { eagerComputed, whenever } from '@vueuse/shared'
 
 // Stores
 import { useTaggerStore } from '@/stores/tagger'
@@ -21,6 +21,7 @@ import { useTaggerStore } from '@/stores/tagger'
 import { SHAKE_ANIMATION_TIME, isEmptyObj, getRandomElement } from '@/utils/utils'
 
 import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
+import { useTheTagger } from '@/logic/TheTagger/theTagger'
 
 // Components
 import CategoriesList from './CategoriesList.vue'
@@ -62,10 +63,8 @@ const emit = defineEmits<{
   (e: 'toggleOpacity'): void;
 }>()
 
-// Refs
-const selectedTagIdsSet = ref<Set<TagId>>(new Set(props.selected))
-const selectedCategoryIdsSet = ref<Set<TagCategoryId>>(new Set())
-const tagsFilterInfoMap = new Map()
+//#region Refs
+const selectedTagsIdsSet = ref<Set<TagId>>(new Set(props.selected))
 
 const focused = ref({
   id: '',
@@ -73,29 +72,30 @@ const focused = ref({
   section: UNSELECTED_FOCUSED_SECTION_NAME,
 })
 
-const DEFAULT_FILTERS: {
+const filters = ref<{
   text: string;
-  categories: Map<TagCategoryId, boolean>;
-} = {
+  categories: Set<TagCategoryId>;
+}>({
   text: '',
-  categories: new Map(),
-}
-const filters = ref({ ...DEFAULT_FILTERS })
+  categories: new Set(),
+})
 
-const sorts = ref({
+const sorts = ref<Sort>({
   field: 'name',
   direction: 'asc',
+})
 
+const SORTS_SELECT_OPTS = {
   fieldItems: [
-    { text: 'Name', value: 'name' },
-    { text: 'Category', value: 'category' },
+    { title: 'Name', value: 'name' },
+    { title: 'Category', value: 'category' },
   ],
 
   directionItems: [
-    { text: 'A - Z', value: 'asc' },
-    { text: 'Z - A', value: 'desc' },
+    { title: 'A - Z', value: 'asc' },
+    { title: 'Z - A', value: 'desc' },
   ],
-})
+}
 
 const isFilterTextHasFocus = ref(false)
 
@@ -123,237 +123,31 @@ const editCategoryModal = ref<{
   categoryId: undefined,
 })
 
-// TODO
 const filterTextCmp = ref<{
-  focus: Function;
-} | null>(null)
-
-// Computeds
-const tagsList = taggerStore.tagsList
+  focus: () => void;
+    } | null>(null)
+//#endregion Refs
 
 //#region Computeds
-const sortedTags = computed(() => {
-  return [ ...tagsList.value ].sort((tagA, tagB) => {
-    let sort = 0
-    const direction = sorts.value.direction === 'asc'
-      ? 1
-      : -1
-    const field = sorts.value.field || 'name'
+const hasCategoriesFilter = eagerComputed(() => !!filters.value.categories.size)
 
-    if (field === 'name') {
-      sort = tagA.name.localeCompare(tagB.name)
-    }
-    if (field === 'category') {
-      sort = tagA.categoryId.localeCompare(tagB.categoryId)
-    }
+const isFiltering = eagerComputed(
+  () => !!(hasCategoriesFilter.value || filters.value.text),
+)
 
-    return direction * sort
-  })
-})
-
-const categoriesMap = taggerStore.categories
-const categoriesList = taggerStore.categoriesList
-
-const categoryIds = computed<Array<TagCategoryId>>(() => {
-  return [ ...categoriesList.value ]
-    .sort((catA, catB) => {
-      let sort = 0
-      const direction = sorts.value.direction === 'asc'
-        ? 1
-        : -1
-      const field = sorts.value.field || 'name'
-
-      if (field === 'name') {
-        sort = catA.name.localeCompare(catB.name)
-      }
-      if (field === 'category') {
-        sort = catA.id.localeCompare(catB.id)
-      }
-
-      return direction * sort
-    })
-    .map((cat) => cat.id)
-})
-
-const selectedTagIds = computed(() => {
-  let sortedTagsValue = sortedTags.value
-
-  sortedTagsValue = sortedTagsValue.filter((tag) => selectedTagIdsSet.value.has(tag.id))
-
-  let tagsIds = sortedTagsValue.map((tag) => tag.id)
-
-  if (isFiltering.value) {
-    const filteredTagsIds = filteredTagsList.value
-      .filter((tag) => selectedTagIdsSet.value.has(tag.id))
-      .map((tag) => tag.id)
-
-    const filteredTagsIdsMap = Object.fromEntries(filteredTagsIds.map((id) => [ id, true ]))
-
-    tagsIds = tagsIds.filter((id) => !filteredTagsIdsMap[ id ])
-
-    tagsIds = filteredTagsIds.concat(tagsIds)
-  }
-
-  return tagsIds
-})
-
-const lastUsedTagIdsMap = taggerStore.lastUsedTagIdsMap
-
-/**
- * @returns List of last used tags ids.
- */
-const lastUsedTagIds = computed(() => {
-  let tagsIds = Array.from(lastUsedTagIdsMap.value.keys())
-
-  if (isFiltering.value) {
-    const filteredTagsIds = filteredTagsList.value
-      .filter((tag) => lastUsedTagIdsMap.value.has(tag.id))
-      .map((tag) => tag.id)
-
-    const filteredTagsIdsMap = Object.fromEntries(filteredTagsIds.map((id) => [ id, true ]))
-
-    tagsIds = tagsIds.filter((id) => !filteredTagsIdsMap[ id ])
-
-    tagsIds = filteredTagsIds.concat(tagsIds)
-  }
-
-  return tagsIds.filter((tagId) => !selectedTagIdsSet.value.has(tagId))
-})
-
-/**
- * @returns List of unselected tags ids.
- */
-const unselectedTagIds = computed(() => {
-  let sortedTagsValue = sortedTags.value
-
-  sortedTagsValue = sortedTagsValue.filter((tag) => !selectedTagIdsSet.value.has(tag.id))
-
-  let tagsIds = sortedTagsValue.map((tag) => tag.id)
-
-  if (isFiltering.value) {
-    const filteredTagsIds = filteredTagsList.value
-      .filter((tag) => !selectedTagIdsSet.value.has(tag.id))
-      .map((tag) => tag.id)
-
-    const filteredTagsIdsMap = Object.fromEntries(filteredTagsIds.map((id) => [ id, true ]))
-
-    tagsIds = tagsIds.filter((id) => !filteredTagsIdsMap[ id ])
-
-    tagsIds = filteredTagsIds.concat(tagsIds)
-  }
-
-  return tagsIds
-})
-
-const filteredTagsList = computed(() => {
-  if (!isFiltering.value) {
-    return []
-  }
-
-  let tagsValue = tagsList.value
-
-  if (hasCategoriesFilter.value) {
-    tagsValue = applyCategoriesFilter(tagsList.value)
-  }
-
-  if (filters.value.text) {
-    const results = applyTextFilter<Tag>(tagsList.value)
-
-    // filters.textResults = results;
-
-    tagsValue = results.map((r) => {
-      // console.log(r);
-      const tag = r.item
-      tagsFilterInfoMap.set(tag.id, r)
-
-      return tag
-    })
-  }
-
-  return tagsValue
-})
-
-const filteredTagsMap = computed(() => {
-  return Object.fromEntries(filteredTagsList.value.map((tag) => [ tag.id, tag ]))
-})
-
-const notFilteredSelectedTagIdsMap = computed(() => {
-  if (!isFiltering.value) {
-    return new Map()
-  }
-
-  const notFilteredTagIds = selectedTagIds.value.filter(
-    (tagId) => !(tagId in filteredTagsMap.value),
-  )
-
-  return new Map(notFilteredTagIds.map((tagId) => [ tagId, true ]))
-})
-
-const notFilteredLastUsedTagIdsMap = computed(() => {
-  if (!isFiltering.value) {
-    return new Map()
-  }
-
-  const notFilteredTagIds = lastUsedTagIds.value.filter(
-    (tagId) => !(tagId in filteredTagsMap.value),
-  )
-
-  return new Map(notFilteredTagIds.map((tagId) => [ tagId, true ]))
-})
-
-const notFilteredUnselectedTagIdsMap = computed(() => {
-  if (!isFiltering.value) {
-    return new Map()
-  }
-
-  const notFilteredTagIds = unselectedTagIds.value.filter(
-    (tagId) => !(tagId in filteredTagsMap.value),
-  )
-
-  return new Map(notFilteredTagIds.map((tagId) => [ tagId, true ]))
-})
-
-const notFilteredCategoryIdsMap = computed<Map<TagCategoryId, boolean>>(() => {
-  if (!filters.value.text) {
-    return new Map()
-  }
-
-  const categories = Array.from(categoriesMap.value.values())
-
-  const matchedCategoryIdsMap = Object.fromEntries(
-    applyTextFilter(categories)
-      .filter((r) => (r.score || 0) < 0.5)
-      .map((r) => [ r.item.id, true ]),
-  )
-
-  const notFilteredCategory = Object.keys(categoriesMap.value).filter(
-    (catId) => !matchedCategoryIdsMap[ catId ],
-  )
-
-  return new Map(notFilteredCategory.map((catId) => [ catId, true ]))
-})
-
-const isFiltering = computed(() => {
-  return hasCategoriesFilter.value || filters.value.text
-})
-
-const hasCategoriesFilter = computed(() => {
-  return !isEmptyObj(filters.value.categories)
-})
-
-const noSelectedTagsText = computed(() => {
-  return isFiltering.value && !selectedTagIdsSet.value.size
+const noSelectedTagsText = eagerComputed(() => {
+  return isFiltering.value && !selectedTagsIdsSet.value.size
     ? 'No tags results'
     : 'No tags selected'
 })
 
-const noLastUsedTagsText = computed(() => {
+const noLastUsedTagsText = eagerComputed(() => {
   return isFiltering.value
     ? 'No tags results'
     : 'No last used tags'
 })
 
-const noUnselectedTagsText = computed(() => {
+const noUnselectedTagsText = eagerComputed(() => {
   return isFiltering.value
     ? 'No tags results'
     : ''
@@ -361,34 +155,28 @@ const noUnselectedTagsText = computed(() => {
 //#endregion Computeds
 
 //#region Methods
-function onHide () {
-  stopListener()
-}
-
 function onSelectCategory (catId: TagCategoryId) {
-  selectedCategoryIdsSet.value.add(catId)
-  filters.value.categories.set(catId, true)
+  filters.value.categories.add(catId)
 }
 
 function onUnselectCategory (catId: TagCategoryId) {
-  selectedCategoryIdsSet.value.delete(catId)
   filters.value.categories.delete(catId)
 }
 
 function onTagClick (tagId: TagId) {
-  if (selectedTagIdsSet.value.has(tagId)) {
-    selectedTagIdsSet.value.delete(tagId)
+  if (selectedTagsIdsSet.value.has(tagId)) {
+    selectedTagsIdsSet.value.delete(tagId)
     emit('unselect', tagId)
   } else {
-    selectedTagIdsSet.value.add(tagId)
+    selectedTagsIdsSet.value.add(tagId)
     emit('select', tagId)
 
-    addLastUsedTagId(tagId)
+    addLastUsedTag(tagId)
   }
 
   // TODO: ENH: if focused tag, move/update focused position.
   // TODO: ENH: on select last tag from a section, set focus on upper section.
-  if (focused.value.pos === unselectedTagIds.value.length) {
+  if (focused.value.pos === unselectedTagsMap.value.size) {
     focused.value.pos -= 2
   } else {
     focused.value.pos -= 1
@@ -489,37 +277,22 @@ function setFilterTextFocus () {
   filterTextCmp.value?.focus()
 }
 
-function selectRandom () {
-  const randomdTagId = getRandomElement(unselectedTagIds.value)
+// function selectRandom () {
+//   const randomdTagId = getRandomElement(unselectedTagIds.value)
 
-  if (randomdTagId) {
-    onTagClick(randomdTagId)
-  }
+//   if (randomdTagId) {
+//     onTagClick(randomdTagId)
+//   }
 
-  setFilterTextFocus()
-}
+//   setFilterTextFocus()
+// }
 
-function addLastUsedTagId (tagId: TagId) {
-  taggerStore.addLastUsedTagId(tagId)
-}
-
-function applyCategoriesFilter (tags: Array<Tag>) {
-  return tags.filter((tag) => !!filters.value.categories.get(tag.categoryId))
-}
-
-function applyTextFilter<T> (array: Array<T>, keys: Array<string> = [ 'name' ]) {
-  const options = {
-    includeScore: true,
-    includeMatches: true,
-    keys,
-  }
-
-  const fuse = new Fuse(array, options)
-  return fuse.search(filters.value.text)
+function addLastUsedTag (tagId: TagId) {
+  taggerStore.addLastUsedTag(tagId)
 }
 
 function updateSelectedTagIdsMap () {
-  selectedTagIdsSet.value = new Set(props.selected)
+  selectedTagsIdsSet.value = new Set(props.selected)
 }
 
 function resetFocus () {
@@ -530,10 +303,10 @@ function resetFocus () {
 }
 
 function resetFilters () {
-  filters.value = { ...DEFAULT_FILTERS }
+  filters.value = { text: '', categories: new Set() }
 }
 
-function checkSectionName (name: string) {
+function shakeSectionName (name: string) {
   shake.value.set(name, true)
   setTimeout(() => {
     shake.value.set(name, false)
@@ -544,11 +317,11 @@ function getTagIdsFromSectionName (name: string) {
   let tagsIds: Array<string> = []
 
   if (name === UNSELECTED_FOCUSED_SECTION_NAME) {
-    tagsIds = unselectedTagIds.value
+    tagsIds = Array.from(unselectedTagsMap.value.keys())
   } else if (name === SELECTED_FOCUSED_SECTION_NAME) {
-    tagsIds = selectedTagIds.value
+    tagsIds = Array.from(selectedTagsMap.value.keys())
   } else if (name === LAST_USED_FOCUSED_SECTION_NAME) {
-    tagsIds = lastUsedTagIds.value
+    tagsIds = Array.from(lastUsedTagsMap.value.keys())
   }
   return tagsIds
 }
@@ -629,7 +402,7 @@ function setFocusUp () {
     focused.value.section = upperSectionName
     resetFocus()
   } else {
-    checkSectionName(sectionName)
+    shakeSectionName(sectionName)
   }
 }
 
@@ -645,7 +418,7 @@ function setFocusDown () {
     focused.value.section = downerSectionName
     resetFocus()
   } else {
-    checkSectionName(sectionName)
+    shakeSectionName(sectionName)
   }
 }
 
@@ -722,7 +495,7 @@ function keyboardShortcuts (key: string, e: KeyboardEvent) {
       // Do not focus if pressed key is a control one.
       if (!isFilterTextHasFocus.value && key.length === 1) {
         setFilterTextFocus()
-        filters.value.text += key
+        // filters.value.text += key
       }
     }
   }
@@ -736,8 +509,28 @@ function keyboardShortcuts (key: string, e: KeyboardEvent) {
 }
 //#endregion Methods
 
+// TODO
+const {
+  selectedTagsMap,
+
+  categoriesMap,
+  filteredCategoriesResultsMap,
+  nbTagsPerCategoryMap,
+
+  lastUsedTagsMap,
+  filteredLastUsedTagsResultsMap,
+
+  unselectedTagsMap,
+  filteredTagsResultsMap,
+} = useTheTagger({
+  selectedTagsIdsSet,
+  isFiltering,
+  filters,
+  sorts,
+})
+
 // Watchers
-watch(unselectedTagIds, () => {
+watch(unselectedTagsMap, () => {
   if (!focused.value.id) {
     resetFocus()
   }
@@ -772,11 +565,11 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
       ]"
     >
       <TagsList
-        :tag-ids="selectedTagIds"
+        :tags="selectedTagsMap"
         :focused="focused.section === SELECTED_FOCUSED_SECTION_NAME ? focused : undefined"
-        :edit-mode="!!selectedTagIds.length && props.editMode"
+        :edit-mode="!!selectedTagsMap.size && props.editMode"
         :no-tags-text="noSelectedTagsText"
-        :masked="notFilteredSelectedTagIdsMap"
+        :filtered-tags-results="filteredTagsResultsMap"
         closable-tags
         @clickTag="onTagClick"
         @closeTag="onTagClick"
@@ -791,14 +584,14 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
       <div class="filter-form input-action">
         <v-text-field
           ref="filterTextCmp"
-          :model-value="filters.text"
+          v-model="filters.text"
           label="Filter tags"
           prepend-icon="mdi-magnify"
           clearable
           autofocus
           hide-details
-          color="orange"
-          @input="filters.text = $event || ''"
+          color="primary"
+          variant="underlined"
           @focus="onFilterTextFocus"
           @blur="onFilterTextBlur"
           @click:prepend="setFilterTextFocus"
@@ -808,26 +601,26 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
       <div class="sort-by-field input-action">
         <v-select
           ref="sortByField"
-          :model-value="sorts.field"
-          :items="sorts.fieldItems"
-          color="orange"
+          v-model="sorts.field"
+          :items="SORTS_SELECT_OPTS.fieldItems"
+          color="primary"
           label="Sort By"
           hide-details
           prepend-icon="mdi-sort"
-          @input="sorts.field = $event || ''"
+          variant="underlined"
         />
       </div>
 
       <div class="sort-direction input-action">
         <v-select
           ref="sortDirection"
-          :model-value="sorts.direction"
-          :items="sorts.directionItems"
+          v-model="sorts.direction"
+          :items="SORTS_SELECT_OPTS.directionItems"
           label="Sort Direction"
           hide-details
-          color="orange"
+          color="primary"
           prepend-icon="mdi-sort-alphabetical-variant"
-          @input="sorts.direction = $event || ''"
+          variant="underlined"
         />
       </div>
     </div>
@@ -838,9 +631,10 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
     <!-- TODO: Feature: Mask none selected category when at least one category is selected -->
     <div class="categories-list">
       <CategoriesList
-        :category-ids="categoryIds"
-        :selected="selectedCategoryIdsSet"
-        :masked="notFilteredCategoryIdsMap"
+        :categories="categoriesMap"
+        :selected="filters.categories"
+        :nb-tags="nbTagsPerCategoryMap"
+        :filtered-categories-results="filteredCategoriesResultsMap"
         :edit-mode="props.editMode"
         @select="onSelectCategory"
         @unselect="onUnselectCategory"
@@ -860,10 +654,9 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
       ]"
     >
       <TagsList
-        ref="lastUsedTagsList"
-        :tag-ids="lastUsedTagIds"
+        :tags="lastUsedTagsMap"
         :focused="focused.section === LAST_USED_FOCUSED_SECTION_NAME ? focused : undefined"
-        :masked="notFilteredLastUsedTagIdsMap"
+        :filtered-tags-results="filteredLastUsedTagsResultsMap"
         :edit-mode="false"
         :no-tags-text="noLastUsedTagsText"
         @clickTag="onTagClick"
@@ -884,11 +677,10 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
       ]"
     >
       <TagsList
-        ref="unselectedTagsList"
-        :tag-ids="unselectedTagIds"
+        :tags="unselectedTagsMap"
         :focused="focused.section === UNSELECTED_FOCUSED_SECTION_NAME ? focused : undefined"
-        :masked="notFilteredUnselectedTagIdsMap"
-        :edit-mode="props.editMode"
+        :filtered-tags-results="filteredTagsResultsMap"
+        :edit-mode="!!unselectedTagsMap.size && props.editMode"
         :no-tags-text="noUnselectedTagsText"
         @clickTag="onTagClick"
         @addTag="showAddTagModal"
@@ -947,7 +739,7 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
 
     .sort-by-field,
     .sort-direction {
-      width: 150px;
+      width: 200px;
       opacity: 0.5;
     }
   }

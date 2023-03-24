@@ -1,4 +1,3 @@
-import { computed, type ComputedRef } from 'vue'
 import { useTaggerStore } from '@/stores/tagger'
 
 export type TagCategoryId = string;
@@ -68,6 +67,7 @@ export class Tag {
   readonly categoryId: TagCategoryId
 
   category: TagCategory | undefined
+  lastUsed: number
 
   constructor ({ id, name, categoryId = '0' }: TagData) {
     if (!id) {
@@ -80,6 +80,7 @@ export class Tag {
     this.categoryId = categoryId
 
     this.category = undefined
+    this.lastUsed = 0
   }
 
   hasCategory () {

@@ -1,22 +1,21 @@
 <script setup lang="ts">
 // Types
-import type { TagCategoryId } from '@/models/tag'
+import type { TagCategoryId, TagCategory } from '@/models/tag'
+import type { FilteredCategoryResult } from '@/logic/TheTagger/theTagger'
 
 import CategoryChip from './CategoryChip.vue'
 
 // Props
 interface Props {
-  categoryIds?: Array<TagCategoryId>;
+  categories: Map<TagCategoryId, TagCategory>
+  filteredCategoriesResults: Map<TagCategoryId, FilteredCategoryResult>
   selected?: Set<TagCategoryId>;
   nbTags?: Map<TagCategoryId, number>;
-  masked?: Map<TagCategoryId, boolean>;
   editMode: boolean;
 }
 const props = withDefaults(defineProps<Props>(), {
-  categoryIds: (): Array<TagCategoryId> => [],
   selected: (): Set<TagCategoryId> => new Set(),
   nbTags: (): Map<TagCategoryId, number> => new Map(),
-  masked: (): Map<TagCategoryId, boolean> => new Map(),
   editMode: false,
 })
 
@@ -34,6 +33,14 @@ function onCategoryClick (catId: TagCategoryId) {
   } else {
     emit('select', catId)
   }
+}
+
+function shouldMask (catId: TagCategoryId) {
+  let mask = false
+  if (props.filteredCategoriesResults.size) {
+    mask = (props.filteredCategoriesResults.get(catId)?.score || 1) >= 1
+  }
+  return mask
 }
 </script>
 
@@ -60,12 +67,12 @@ function onCategoryClick (catId: TagCategoryId) {
     </v-btn>
 
     <CategoryChip
-      v-for="catId in categoryIds"
+      v-for="[catId] in categories"
       :key="`cat-${catId}`"
       :category-id="catId"
       :selected="selected.has(catId)"
       :nb-tags="nbTags.get(catId)"
-      :masked="!!masked.get(catId)"
+      :masked="shouldMask(catId)"
       :edit="editMode"
       @click="onCategoryClick"
       @click:edit="emit('editCategory', catId)"

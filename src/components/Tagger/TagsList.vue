@@ -1,30 +1,29 @@
 <script setup lang="ts">
 // Types
-import type { TagId } from '@/models/tag'
+import type { TagId, Tag } from '@/models/tag'
+import type { FilteredTagResult } from '@/logic/TheTagger/theTagger'
 
 // Vendors Libs
-import { computed } from 'vue'
+import { eagerComputed } from '@vueuse/shared'
 
 // Components
 import TagChip from '../TagChip.vue'
 
 // Props
 interface Props {
-  tagIds?: Array<TagId>;
+  tags: Map<TagId, Tag>
+  filteredTagsResults: Map<TagId, FilteredTagResult>
   focused?: {
     id?: TagId | undefined;
   }; // TODO
-  masked?: Map<TagId, boolean>; // TODO
   closableTags?: boolean;
   noTagsText?: string;
   editMode?: boolean;
 }
 const props = withDefaults(defineProps<Props>(), {
-  tagIds: (): Array<TagId> => [],
   focused: () => ({
     id: undefined,
   }),
-  masked: () => new Map(),
   closableTags: false,
   noTagsText: 'No tags',
   editMode: false,
@@ -38,9 +37,17 @@ const emit = defineEmits<{
   (e: 'addTag'): void;
 }>()
 
-const hasTags = computed(() => {
-  return (props.tagIds?.length || 0) > 0
+const hasTags = eagerComputed(() => {
+  return props.tags.size > 0
 })
+
+function shouldMask (tagId: TagId) {
+  let mask = false
+  if (props.filteredTagsResults.size) {
+    mask = (props.filteredTagsResults.get(tagId)?.score || 1) >= 1
+  }
+  return mask
+}
 </script>
 
 <template>
@@ -58,18 +65,18 @@ const hasTags = computed(() => {
       icon
       outlined
       left
-      color="orange"
+      color="primary"
       @click="emit('addTag')"
     >
       <v-icon> mdi-plus </v-icon>
     </v-btn>
 
     <TagChip
-      v-for="tagId in tagIds"
+      v-for="[tagId] in tags"
       :key="`tag-${tagId}`"
       :tag-id="tagId"
       :focused="focused.id === tagId"
-      :masked="!!masked.get(tagId)"
+      :masked="shouldMask(tagId)"
       :edit="editMode"
       :close="closableTags"
       clickable
