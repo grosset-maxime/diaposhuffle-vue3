@@ -3,7 +3,7 @@
 import type { TagCategoryId, TagCategoryData, TagCategory } from '@/models/tag'
 
 // Vendors Libs
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 
 import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
 
@@ -221,6 +221,10 @@ watch(showDeleteModal, (shouldShow) => {
   } else {
     startListener()
   }
+})
+
+onMounted(() => {
+  stopListener()
 })
 </script>
 

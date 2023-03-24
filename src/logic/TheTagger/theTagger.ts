@@ -345,10 +345,10 @@ export const useTheTagger = ({
   const lastUsedTagsMap = computed(() => {
     const tagsMap: Map<TagId, Tag> = new Map()
     const mapToFilter = isFiltering.value
-      ? filteredLastUsedTagsMap
-      : sortedLastUsedTagsMap
+      ? filteredLastUsedTagsMap.value
+      : sortedLastUsedTagsMap.value
 
-    mapToFilter.value.forEach((tag, tagId) => {
+    mapToFilter.forEach((tag, tagId) => {
       if(!selectedTagsIdsSet.value.has(tagId)){
         tagsMap.set(tagId, tag)
       }
@@ -362,10 +362,10 @@ export const useTheTagger = ({
   const unselectedTagsMap = computed(() => {
     const tagsMap: Map<TagId, Tag> = new Map()
     const mapToFilter = isFiltering.value
-      ? filteredTagsMap
-      : sortedTagsMap
+      ? filteredTagsMap.value
+      : sortedTagsMap.value
 
-    mapToFilter.value.forEach((tag, tagId) => {
+    mapToFilter.forEach((tag, tagId) => {
       if(!selectedTagsIdsSet.value.has(tagId)){
         tagsMap.set(tagId, tag)
       }

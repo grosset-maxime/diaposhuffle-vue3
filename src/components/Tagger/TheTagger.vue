@@ -776,12 +776,6 @@ defineExpose({
     @include shake-animation;
   }
 }
-.last-used-tags {
-  // height: 40px;
-  // overflow-y: hidden;
-  // overflow-x: auto;
-  // white-space: nowrap;
-}
 .loading {
   position: absolute;
   height: 100vh;

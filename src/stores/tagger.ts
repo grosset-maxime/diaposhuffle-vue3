@@ -67,10 +67,12 @@ export const useTaggerStore = createGlobalState(() => {
     tags.value = new Map(fetchedTags.map((tag) => [ tag.id, tag ]))
   }
   const _addTag = (tag: Tag) => {
+    tag.update()
     tags.value = (new Map(tags.value)).set(tag.id, tag)
     _updateCategories()
   }
   const _updateTag = (tag: Tag) => {
+    tag.update()
     tags.value = (new Map(tags.value)).set(tag.id, tag)
     _updateCategories()
   }
@@ -85,10 +87,12 @@ export const useTaggerStore = createGlobalState(() => {
     categories.value = new Map(cats.map((cat) => [ cat.id, cat ]))
   }
   const _addCategory = (cat: TagCategory) => {
+    cat.update()
     categories.value = (new Map(categories.value)).set(cat.id, cat)
     _updateTags()
   }
   const _updateCategory = (cat: TagCategory) => {
+    cat.update()
     categories.value = (new Map(categories.value)).set(cat.id, cat)
     _updateTags()
   }

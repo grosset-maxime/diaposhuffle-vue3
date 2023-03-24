@@ -1,9 +1,10 @@
 <script setup lang="ts">
 // Types
+import type { Ref } from 'vue'
 import type { Tag, TagId, TagData } from '@/models/tag'
 
 // Vendors Libs
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 
 import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
 
@@ -54,6 +55,7 @@ const formCmp = ref<{
     valid: boolean
     errors: { id: string | number; errorMessages: string[] }[]
   }>} | null>(null)
+const categorySelectCmp = ref<{ menu: Ref<boolean>, isFocused: Ref<boolean> } | null>(null)
 
 // Computeds
 const tagModel = computed(
@@ -104,18 +106,14 @@ const rules = {
       ? 'Name already exists.'
       : true
   ),
-  isNotSameName: (value: string) => {
-    if (props.add) { return true }
-    return value === tagModel.value?.name
-      ? 'Same name as now...'
-      : true
-  },
 }
 
 async function onConfirm () {
+  if (!formCmp.value) { return }
+
   loading.value = true
 
-  const { valid } = await formCmp.value!.validate()
+  const { valid } = await formCmp.value.validate()
 
   if (valid) {
     emit('confirm', { ...tagData.value })
@@ -138,6 +136,12 @@ function closeConfirmDelete ({ deleteTag }: { deleteTag?: boolean } = {}) {
   if (deleteTag) {
     loading.value = true
     props.tagId && emit('delete', props.tagId)
+  }
+}
+
+function focusCategorySelect () {
+  if (categorySelectCmp.value) {
+    categorySelectCmp.value.menu = true
   }
 }
 
@@ -184,6 +188,11 @@ watch(
   (isShow) => {
     if (isShow) {
       loading.value = false
+
+      if (props.add) {
+        tagData.value = { ...EMPTY_TAG_DATA }
+      }
+
       startListener()
     } else {
       stopListener()
@@ -206,6 +215,8 @@ watch(showDeleteModal, (shouldShow) => {
     startListener()
   }
 })
+
+onMounted(() => stopListener())
 </script>
 
 <template>
@@ -240,7 +251,7 @@ watch(showDeleteModal, (shouldShow) => {
                 <v-text-field
                   v-model="tagData.name"
                   :autofocus="!add"
-                  :rules="[rules.required, rules.isNameNotExists, rules.isNotSameName]"
+                  :rules="[rules.required, rules.isNameNotExists]"
                   label="Name"
                   required
                   variant="underlined"
@@ -249,11 +260,13 @@ watch(showDeleteModal, (shouldShow) => {
 
               <v-col cols="12">
                 <v-autocomplete
+                  ref="categorySelectCmp"
                   v-model="tagData.categoryId"
                   :items="categoriesListSelect"
                   label="Category"
                   hide-selected
                   variant="underlined"
+                  @update:model-value="formCmp!.validate()"
                 >
                   <template v-slot:item="{ props, item }">
                     <v-list-item
@@ -270,7 +283,7 @@ watch(showDeleteModal, (shouldShow) => {
                   </template>
 
                   <template v-slot:prepend v-if="tagDataCategoryColor">
-                    <v-avatar :color="tagDataCategoryColor"/>
+                    <v-avatar :color="tagDataCategoryColor" @click="focusCategorySelect"/>
                   </template>
                 </v-autocomplete>
 
