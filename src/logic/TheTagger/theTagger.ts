@@ -83,7 +83,13 @@ function sortTagCategoriesFn (
     }
 
     // Force the "None" category to be the last.
-    if(catA.id === '0') {
+    if (catA.id === '0') {
+      sort = 1 * direction
+    }
+    if (catB.id === '0') {
+      sort = -1 * direction
+    }
+    if (catA.id === '0' && catB.id === '0') {
       sort = 0
     }
 

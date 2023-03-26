@@ -1,5 +1,14 @@
+// TODO: Enh: On delete a category, make a call to update all tags which was set
+//            to that category to set it the none category.
 // Types
-import type { Tag, TagId, TagCategory, TagCategoryId, TagData, TagCategoryData } from '@/models/tag'
+import type {
+  Tag,
+  TagId,
+  TagData,
+  TagCategory,
+  TagCategoryId,
+  TagCategoryData,
+} from '@/models/tag'
 
 // Vendors Libs
 import { computed, ref, reactive } from 'vue'
@@ -64,7 +73,7 @@ export const useTaggerStore = createGlobalState(() => {
   const _setTagsFetched = (val: boolean) => (tagsFetched.value = val)
   const _setCategoriesFetched = (val: boolean) => (categoriesFetched.value = val)
   const _setTags = (fetchedTags: Array<Tag>) => {
-    tags.value = new Map(fetchedTags.map((tag) => [ tag.id, tag ]))
+    _updateTags(new Map(fetchedTags.map((tag) => [ tag.id, tag ])))
   }
   const _addTag = (tag: Tag) => {
     tag.update()
@@ -84,11 +93,13 @@ export const useTaggerStore = createGlobalState(() => {
     _updateCategories()
   }
   const _setCategories = (cats: Array<TagCategory>) => {
-    categories.value = new Map(cats.map((cat) => [ cat.id, cat ]))
+    _updateCategories(new Map(cats.map((cat) => [ cat.id, cat ])))
   }
   const _addCategory = (cat: TagCategory) => {
     cat.update()
-    categories.value = (new Map(categories.value)).set(cat.id, cat)
+    const newMap = new Map(categories.value)
+    newMap.set(cat.id, cat)
+    categories.value = newMap
     _updateTags()
   }
   const _updateCategory = (cat: TagCategory) => {
@@ -103,11 +114,14 @@ export const useTaggerStore = createGlobalState(() => {
 
     _updateTags()
   }
-  const _updateTags = () => {
+
+  const _updateTags = (tagsMap?: Map<TagId, Tag>) => {
     tags.value.forEach((tag) => tag.update())
+    tags.value = tagsMap || new Map(tags.value)
   }
-  const _updateCategories = () => {
+  const _updateCategories = (categoriesMap?: Map<TagCategoryId, TagCategory>) => {
     categories.value.forEach((cat) => cat.update())
+    categories.value = categoriesMap || new Map(categories.value)
   }
   //#endregion Mutations
 

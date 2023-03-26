@@ -38,7 +38,7 @@ const emit = defineEmits<{
 const tag = computed(() => taggerStore.getTag(props.tagId))
 const category = computed(() => tag.value?.category)
 
-const isNoneCategory = computed(() => !!category.value?.isNone())
+const isNoneCategory = computed(() => !!category.value?.isNone() || !category.value)
 
 const categoryColor = computed(() => category.value?.hashColor || '')
 

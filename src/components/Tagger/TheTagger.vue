@@ -7,6 +7,10 @@
 
 // TODO: Bug: Error on set tag when items come from the bdd. => Already fixed ??
 
+// TODO: Enh: None Category is not the last category in the list after adding a new category
+// TODO: Enh: Delete a catogory should update all tags associated to that category
+// TODO: Bug: Delete a selected catogory make impossible to unselect the filter by category
+
 // Types
 import type { TagCategoryId, TagId, TagData, TagCategoryData } from '@/models/tag'
 import type { Sort } from '@/logic/TheTagger/theTagger'

@@ -93,16 +93,12 @@ const rules = {
       ? 'Name already exists.'
       : true
   ),
-  isNotSameName: (value: string) => {
-    if (props.add) { return true }
-    return value === categoryModel.value?.name
-      ? 'Same name as now...'
-      : true
-  },
 }
 
 async function onConfirm () {
-  const { valid } = await formCmp.value!.validate()
+  if (!formCmp.value) { return }
+
+  const { valid } = await formCmp.value.validate()
 
   if (valid) {
     emit('confirm', { ...categoryData.value })
@@ -168,6 +164,12 @@ function keyboardShortcuts (key: string, e: KeyboardEvent) {
 watch(() => props.show, (isShow) => {
   if (isShow) {
     loading.value = false
+
+    if (props.add) {
+      categoryData.value = { ...EMPTY_CATEGORY_DATA }
+      color.value = ''
+    }
+
     startListener()
   } else {
     stopListener()
@@ -213,6 +215,8 @@ watch(color, (value) => {
   colorWarningMsg.value = isColorAlreadyAssigned
     ? 'Color already assinged.'
     : ''
+
+  formCmp.value?.validate()
 })
 
 watch(showDeleteModal, (shouldShow) => {
@@ -258,7 +262,7 @@ onMounted(() => {
                 <v-text-field
                   v-model="categoryData.name"
                   autofocus
-                  :rules="[rules.required, rules.isNameNotExists, rules.isNotSameName]"
+                  :rules="[rules.required, rules.isNameNotExists]"
                   label="Name"
                   required
                   variant="underlined"
