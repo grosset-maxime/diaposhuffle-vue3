@@ -7,10 +7,6 @@
 
 // TODO: Bug: Error on set tag when items come from the bdd. => Already fixed ??
 
-// TODO: Enh: None Category is not the last category in the list after adding a new category
-// TODO: Enh: Delete a catogory should update all tags associated to that category
-// TODO: Bug: Delete a selected catogory make impossible to unselect the filter by category
-
 // Types
 import type { TagCategoryId, TagId, TagData, TagCategoryData } from '@/models/tag'
 import type { Sort } from '@/logic/TheTagger/theTagger'
@@ -429,6 +425,17 @@ watch(isFiltering, () => {
   resetFocus()
 })
 
+// Remove from categories filter the deleted category.
+watch(taggerStore.categories, (categories) => {
+  if (!hasCategoriesFilter) { return }
+
+  filters.value.categories.forEach((catId) => {
+    if (!categories.has(catId)) {
+      filters.value.categories.delete(catId)
+    }
+  })
+})
+
 whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
   if (!isTaggerReady) { return }
 
@@ -669,7 +676,7 @@ defineExpose({
         :tags="lastUsedTagsMap"
         :focused="focused.section === LAST_USED_FOCUSED_SECTION_NAME ? focused : undefined"
         :filtered-tags-results="filteredLastUsedTagsResultsMap"
-        :edit-mode="false"
+        :edit-mode="!!lastUsedTagsMap.size && props.editMode"
         no-wrap
         @clickTag="onTagClick"
         @addTag="showAddTagModal"

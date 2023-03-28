@@ -1,5 +1,3 @@
-// TODO: Enh: On delete a category, make a call to update all tags which was set
-//            to that category to set it the none category.
 // Types
 import type {
   Tag,
@@ -83,12 +81,19 @@ export const useTaggerStore = createGlobalState(() => {
   const _updateTag = (tag: Tag) => {
     tag.update()
     tags.value = (new Map(tags.value)).set(tag.id, tag)
+
+    _updateLastUsedTags()
     _updateCategories()
   }
   const _deleteTag = (tag: Tag) => {
+    const tagId = tag.id
     const map = new Map(tags.value)
-    map.delete(tag.id)
+    map.delete(tagId)
     tags.value = map
+
+    const newLastUsedTagsMap =  new Map(lastUsedTags.value)
+    newLastUsedTagsMap.delete(tagId)
+    lastUsedTags.value = newLastUsedTagsMap
 
     _updateCategories()
   }
@@ -118,6 +123,10 @@ export const useTaggerStore = createGlobalState(() => {
   const _updateTags = (tagsMap?: Map<TagId, Tag>) => {
     tags.value.forEach((tag) => tag.update())
     tags.value = tagsMap || new Map(tags.value)
+    _updateLastUsedTags()
+  }
+  const _updateLastUsedTags = () => {
+    lastUsedTags.value = new Map(lastUsedTags.value)
   }
   const _updateCategories = (categoriesMap?: Map<TagCategoryId, TagCategory>) => {
     categories.value.forEach((cat) => cat.update())
@@ -234,7 +243,20 @@ export const useTaggerStore = createGlobalState(() => {
     }
 
     try {
-      const success = await deleteCategoryAPI(category)
+
+      const promises = tagsList.value.map((tag) => {
+        if (tag.categoryId !== categoryId) { return Promise.resolve(true) }
+
+        const tagData = tag.getData()
+        tagData.categoryId = '0'
+        return updateTag(tagData).then(() => true).catch(() => false)
+      })
+
+      promises.unshift(deleteCategoryAPI(category))
+
+      const results = await Promise.all(promises)
+
+      const success = results.every((success) => success)
 
       if (!success) {
         throw buildError('Fail to delete category.')

@@ -24,6 +24,7 @@ export interface FilteredCategoryResult {
   score: number
 }
 
+//#region Helpers Methods
 function applyTextFilter<T> (
   query: string,
   array: Array<T>,
@@ -183,6 +184,7 @@ function applyCategoryFiltering ({
 
   return filteredResults
 }
+//#endregion Helpers Methods
 
 interface Filter {
   text: string
@@ -194,7 +196,6 @@ interface UseTheTagger {
   filters: Ref<Filter>
   sorts: Ref<Sort>
 }
-
 export const useTheTagger = ({
   selectedTagsIdsSet,
   isFiltering,
