@@ -1,7 +1,5 @@
 <script setup lang="ts">
 // TODO: Enh: On tag focus change, scroll to the focused tag.
-// TODO: Enh: On filter by category update focused tag position.
-// TODO: Enh: On sort update focused tag position.
 // TODO: Feature: On up/down keydown, focus above/below tags section.
 // TODO: Enh: On up/down left/right keydown set tag focus to right tag.
 
@@ -12,7 +10,7 @@ import type { TagCategoryId, TagId, TagData, TagCategoryData } from '@/models/ta
 import type { Sort } from '@/logic/TheTagger/theTagger'
 
 // Vendors Libs
-import { ref, watch } from 'vue'
+import { ref, watch, reactive } from 'vue'
 import { eagerComputed, whenever } from '@vueuse/shared'
 
 // Stores
@@ -58,7 +56,7 @@ const selectedTagsIdsSet = ref<Set<TagId>>(new Set(props.selected))
 const isLoading = ref(true)
 
 //#region Filtering section
-const filters = ref<{
+const filters = reactive<{
   text: string;
   categories: Set<TagCategoryId>;
 }>({
@@ -66,7 +64,7 @@ const filters = ref<{
   categories: new Set(),
 })
 
-const sorts = ref<Sort>({
+const sorts = reactive<Sort>({
   field: 'name',
   direction: 'asc',
 })
@@ -89,18 +87,18 @@ const filterTextCmp = ref<{
 
 const isFilterTextHasFocus = ref(false)
 
-const hasCategoriesFilter = eagerComputed(() => !!filters.value.categories.size)
+const hasCategoriesFilter = eagerComputed(() => !!filters.categories.size)
 
 const isFiltering = eagerComputed(
-  () => !!(hasCategoriesFilter.value || filters.value.text),
+  () => !!(hasCategoriesFilter.value || filters.text),
 )
 
 function onSelectCategory (catId: TagCategoryId) {
-  filters.value.categories.add(catId)
+  filters.categories.add(catId)
 }
 
 function onUnselectCategory (catId: TagCategoryId) {
-  filters.value.categories.delete(catId)
+  filters.categories.delete(catId)
 }
 
 function onFilterTextFocus () {
@@ -112,7 +110,7 @@ function onFilterTextBlur () {
 }
 
 function clearFilterText () {
-  filters.value.text = ''
+  filters.text = ''
 }
 
 function setFilterTextFocus () {
@@ -120,7 +118,8 @@ function setFilterTextFocus () {
 }
 
 function resetFilters () {
-  filters.value = { text: '', categories: new Set() }
+  filters.text = ''
+  filters.categories = new Set()
 }
 //#endregion Filtering section
 
@@ -416,22 +415,15 @@ function setFocusDown () {
 //#endregion Focus Management
 
 //#region Watchers
-watch(unselectedTagsMap, () => {
-  if (!focused.value.id) {
-    resetFocus()
-  }
-})
-watch(isFiltering, () => {
-  resetFocus()
-})
+watch([ filters, sorts ], () => resetFocus())
 
 // Remove from categories filter the deleted category.
 watch(taggerStore.categories, (categories) => {
   if (!hasCategoriesFilter) { return }
 
-  filters.value.categories.forEach((catId) => {
+  filters.categories.forEach((catId) => {
     if (!categories.has(catId)) {
-      filters.value.categories.delete(catId)
+      filters.categories.delete(catId)
     }
   })
 })

@@ -193,8 +193,8 @@ interface Filter {
 interface UseTheTagger {
   selectedTagsIdsSet: Ref<Set<TagId>>
   isFiltering: Readonly<Ref<boolean>>
-  filters: Ref<Filter>
-  sorts: Ref<Sort>
+  filters: Filter
+  sorts: Sort
 }
 export const useTheTagger = ({
   selectedTagsIdsSet,
@@ -211,7 +211,7 @@ export const useTheTagger = ({
 
   //#region Sorted Tags & Categories & LastUsedTags
   const sortedTagsList = computed(
-    () => [ ...tagsList.value ].sort(sortTagsFn(sorts.value.field, sorts.value.direction)),
+    () => [ ...tagsList.value ].sort(sortTagsFn(sorts.field, sorts.direction)),
   )
   const sortedTagsMap = computed(
     () => new Map(sortedTagsList.value.map((tag) => [ tag.id, tag ])),
@@ -219,7 +219,7 @@ export const useTheTagger = ({
 
   const sortedCategoriesList = computed(
     () => [ ...categoriesList.value ].sort(
-      sortTagCategoriesFn(sorts.value.field, sorts.value.direction),
+      sortTagCategoriesFn(sorts.field, sorts.direction),
     ),
   )
   const sortedCategoiesMap = computed(
@@ -241,10 +241,10 @@ export const useTheTagger = ({
       isFiltering: isFiltering.value,
       list: sortedTagsList.value,
       categoriesFilter: isFiltering.value
-        ? filters.value.categories
+        ? filters.categories
         : undefined,
       textFilter: isFiltering.value
-        ? filters.value.text
+        ? filters.text
         : undefined,
     }),
   )
@@ -274,10 +274,10 @@ export const useTheTagger = ({
       isFiltering: isFiltering.value,
       list: sortedLastUsedTagsList.value,
       categoriesFilter: isFiltering.value
-        ? filters.value.categories
+        ? filters.categories
         : undefined,
       textFilter: isFiltering.value
-        ? filters.value.text
+        ? filters.text
         : undefined,
     }),
   )
