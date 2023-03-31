@@ -8,6 +8,7 @@
 // Types
 import type { TagCategoryId, TagId, TagData, TagCategoryData } from '@/models/tag'
 import type { Sort } from '@/logic/TheTagger/theTagger'
+import type { TagFocused, ShakeSections } from '@/logic/TheTagger/tagFocus'
 
 // Vendors Libs
 import { ref, watch, reactive } from 'vue'
@@ -17,7 +18,7 @@ import { eagerComputed, whenever } from '@vueuse/shared'
 import { useTaggerStore } from '@/stores/tagger'
 
 // Utils
-import { SHAKE_ANIMATION_TIME, getRandomElement } from '@/utils/utils'
+import { getRandomElement } from '@/utils/utils'
 
 import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
 import { useTheTagger } from '@/logic/TheTagger/theTagger'
@@ -28,6 +29,7 @@ import CircularLoading from '../CircularLoading.vue'
 import TagsList from './TagsList.vue'
 import EditTagModal from './EditTagModal.vue'
 import EditCategoryModal from './EditCategoryModal.vue'
+import { useTagFocus, TagsSection } from '@/logic/TheTagger/tagFocus'
 
 const taggerStore = useTaggerStore()
 const { startListener, stopListener } = useKeyboardShortcutsListener(keyboardShortcuts)
@@ -142,8 +144,34 @@ const {
   sorts,
 })
 
+//#region Tag Focus
+const tagFocused = reactive<TagFocused>({
+  id: undefined,
+  pos: 0,
+  section: TagsSection.unselected,
+})
+
+const shakeSections = reactive<ShakeSections>(new Map())
+
+const {
+  setFocusLeft,
+  setFocusRight,
+  setFocusDown,
+  setFocusUp,
+  resetFocus,
+} = useTagFocus(
+  tagFocused,
+  shakeSections,
+  selectedTagsMap,
+  lastUsedTagsMap,
+  unselectedTagsMap,
+)
+//#endregion Tag Focus
+
 //#region Methods
-function onTagClick (tagId: TagId) {
+function onTagClick (tagId?: TagId) {
+  if (!tagId) { return }
+
   if (selectedTagsIdsSet.value.has(tagId)) {
     selectedTagsIdsSet.value.delete(tagId)
     emit('unselect', tagId)
@@ -156,10 +184,10 @@ function onTagClick (tagId: TagId) {
 
   // TODO: ENH: if focused tag, move/update focused position.
   // TODO: ENH: on select last tag from a section, set focus on upper section.
-  if (focused.value.pos === unselectedTagsMap.value.size) {
-    focused.value.pos -= 2
+  if (tagFocused.pos === unselectedTagsMap.value.size) {
+    tagFocused.pos -= 2
   } else {
-    focused.value.pos -= 1
+    tagFocused.pos -= 1
   }
 
   setFocusRight()
@@ -190,7 +218,7 @@ function keyboardShortcuts (key: string, e: KeyboardEvent) {
   if (e.shiftKey && key !== 'Shift') {
     switch (key) {
     case 'Enter':
-      onTagClick(focused.value.id)
+      onTagClick(tagFocused.id)
       break
 
     default:
@@ -243,7 +271,7 @@ function keyboardShortcuts (key: string, e: KeyboardEvent) {
       break
 
     case 'Enter':
-      onTagClick(focused.value.id)
+      onTagClick(tagFocused.id)
       clearFilterText()
       break
 
@@ -270,152 +298,8 @@ function keyboardShortcuts (key: string, e: KeyboardEvent) {
 }
 //#endregion Methods
 
-//#region Focus Management
-const SELECTED_FOCUSED_SECTION_NAME = 'selectedTags'
-const UNSELECTED_FOCUSED_SECTION_NAME = 'unselectedTags'
-const LAST_USED_FOCUSED_SECTION_NAME = 'lastUsedTags'
-
-const sectionsNames = [
-  SELECTED_FOCUSED_SECTION_NAME,
-  LAST_USED_FOCUSED_SECTION_NAME,
-  UNSELECTED_FOCUSED_SECTION_NAME,
-]
-
-const focused = ref({
-  id: '',
-  pos: 0,
-  section: UNSELECTED_FOCUSED_SECTION_NAME,
-})
-
-const shake = ref<Map<string, boolean>>(new Map())
-
-function resetFocus () {
-  const sectionName = focused.value.section
-  const sectionTagIds = getTagIdsFromSectionName(sectionName);
-  [ focused.value.id ] = sectionTagIds
-  focused.value.pos = 0
-}
-
-function shakeSectionName (name: string) {
-  shake.value.set(name, true)
-
-  setTimeout(() => {
-    shake.value.set(name, false)
-  }, SHAKE_ANIMATION_TIME)
-}
-
-function getTagIdsFromSectionName (name: string) {
-  let tagsIds: Array<string> = []
-
-  if (name === UNSELECTED_FOCUSED_SECTION_NAME) {
-    tagsIds = Array.from(unselectedTagsMap.value.keys())
-  } else if (name === SELECTED_FOCUSED_SECTION_NAME) {
-    tagsIds = Array.from(selectedTagsMap.value.keys())
-  } else if (name === LAST_USED_FOCUSED_SECTION_NAME) {
-    tagsIds = Array.from(lastUsedTagsMap.value.keys())
-  }
-  return tagsIds
-}
-
-function getUpperSectionFrom (name: string) {
-  let upperSectionName = ''
-  let sectionTagIds
-  let index = 0
-  const indexSectionFrom = sectionsNames.indexOf(name)
-
-  for (let i = 1; i <= sectionsNames.length; i += 1) {
-    index = indexSectionFrom - i
-    if (index < 0) {
-      index = sectionsNames.length + indexSectionFrom - i
-    }
-    upperSectionName = sectionsNames[ index ]
-    sectionTagIds = getTagIdsFromSectionName(upperSectionName)
-    if (sectionTagIds.length) {
-      break
-    }
-  }
-
-  return upperSectionName
-}
-
-function getDownerSectionFrom (name: string) {
-  let downerSectionName = ''
-  let sectionTagIds
-  let index = 0
-  const indexSectionFrom = sectionsNames.indexOf(name)
-
-  for (let i = 1; i <= sectionsNames.length; i += 1) {
-    index = indexSectionFrom + i
-    if (index >= sectionsNames.length) {
-      index = indexSectionFrom + i - sectionsNames.length
-    }
-    downerSectionName = sectionsNames[ index ]
-    sectionTagIds = getTagIdsFromSectionName(downerSectionName)
-    if (sectionTagIds.length) {
-      break
-    }
-  }
-
-  return downerSectionName
-}
-
-function setFocusRight () {
-  const sectionName = focused.value.section
-  const sectionTagIds = getTagIdsFromSectionName(sectionName)
-
-  focused.value.pos += 1
-  if (focused.value.pos >= sectionTagIds.length) {
-    focused.value.pos = 0
-  }
-  focused.value.id = sectionTagIds[ focused.value.pos ]
-}
-
-function setFocusLeft () {
-  const sectionName = focused.value.section
-  const sectionTagIds = getTagIdsFromSectionName(sectionName)
-
-  focused.value.pos -= 1
-  if (focused.value.pos < 0) {
-    focused.value.pos = sectionTagIds.length - 1
-  }
-  focused.value.id = sectionTagIds[ focused.value.pos ]
-}
-
-function setFocusUp () {
-  const sectionName = focused.value.section
-  let upperSectionName = getUpperSectionFrom(sectionName)
-
-  if (!upperSectionName) {
-    upperSectionName = UNSELECTED_FOCUSED_SECTION_NAME
-  }
-
-  if (sectionName !== upperSectionName) {
-    focused.value.section = upperSectionName
-    resetFocus()
-  } else {
-    shakeSectionName(sectionName)
-  }
-}
-
-function setFocusDown () {
-  const sectionName = focused.value.section
-  let downerSectionName = getDownerSectionFrom(sectionName)
-
-  if (!downerSectionName) {
-    downerSectionName = UNSELECTED_FOCUSED_SECTION_NAME
-  }
-
-  if (sectionName !== downerSectionName) {
-    focused.value.section = downerSectionName
-    resetFocus()
-  } else {
-    shakeSectionName(sectionName)
-  }
-}
-//#endregion Focus Management
-
 //#region Watchers
-watch([ filters, sorts ], () => resetFocus())
+watch([ filters, sorts ], () => resetFocus(TagsSection.unselected))
 
 // Remove from categories filter the deleted category.
 watch(taggerStore.categories, (categories) => {
@@ -433,7 +317,7 @@ whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
 
   startListener()
   resetFilters()
-  resetFocus()
+  resetFocus(TagsSection.unselected)
 
   isLoading.value = false
 }, { immediate: true })
@@ -572,13 +456,13 @@ defineExpose({
       :class="[
         'selected-tags',
         {
-          shake: shake.get(SELECTED_FOCUSED_SECTION_NAME),
+          shake: shakeSections.get(TagsSection.selected),
         },
       ]"
     >
       <TagsList
         :tags="selectedTagsMap"
-        :focused="focused.section === SELECTED_FOCUSED_SECTION_NAME ? focused : undefined"
+        :focused="tagFocused.section === TagsSection.selected ? tagFocused : undefined"
         :edit-mode="!!selectedTagsMap.size && props.editMode"
         :filtered-tags-results="filteredTagsResultsMap"
         closable-tags
@@ -661,12 +545,12 @@ defineExpose({
     <div
       class="last-used-tags"
       :class="[{
-          shake: shake.get(LAST_USED_FOCUSED_SECTION_NAME),
+          shake: shakeSections.get(TagsSection.lastUsedTags),
       }]"
     >
       <TagsList
         :tags="lastUsedTagsMap"
-        :focused="focused.section === LAST_USED_FOCUSED_SECTION_NAME ? focused : undefined"
+        :focused="tagFocused.section === TagsSection.lastUsedTags ? tagFocused : undefined"
         :filtered-tags-results="filteredLastUsedTagsResultsMap"
         :edit-mode="!!lastUsedTagsMap.size && props.editMode"
         no-wrap
@@ -687,13 +571,13 @@ defineExpose({
       :class="[
         'unselected-tags',
         {
-          shake: shake.get(UNSELECTED_FOCUSED_SECTION_NAME),
+          shake: shakeSections.get(TagsSection.unselected),
         },
       ]"
     >
       <TagsList
         :tags="unselectedTagsMap"
-        :focused="focused.section === UNSELECTED_FOCUSED_SECTION_NAME ? focused : undefined"
+        :focused="tagFocused.section === TagsSection.unselected ? tagFocused : undefined"
         :filtered-tags-results="filteredTagsResultsMap"
         :edit-mode="!!unselectedTagsMap.size && props.editMode"
         @clickTag="onTagClick"
