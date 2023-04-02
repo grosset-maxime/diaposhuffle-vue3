@@ -1,5 +1,6 @@
 // Types
 import type { TagId } from '@/models/tag'
+import type { FolderPath } from '@/stores/folderBrowser'
 
 import { createGlobalState, useStorage } from '@vueuse/core'
 import { computed } from 'vue'
@@ -19,7 +20,7 @@ export enum FileType {
 }
 
 interface states {
-  folders: Array<string>;
+  folders: Array<FolderPath>;
   tags: Array<TagId>;
   tagsOperator: TagsOperator;
   fileTypes: Array<FileType>;
@@ -36,7 +37,6 @@ export const useSourceOptionsStore = createGlobalState(() => {
     FileType.mkv,
   ]
 
-  // TODO: use set instead of array
   const defaultStates: states = {
     folders: [],
     tags: [],

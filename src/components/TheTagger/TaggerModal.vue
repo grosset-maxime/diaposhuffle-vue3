@@ -6,7 +6,7 @@ import type { TagId } from '@/models/tag'
 import { ref, computed, watch } from 'vue'
 
 // Components
-import TheTagger from '@/components/Tagger/TheTagger.vue'
+import TheTagger from '@/components/TheTagger/TheTagger.vue'
 
 // Props
 interface Props {
@@ -195,8 +195,10 @@ $v-toolbar-height: 48px;
       font-size: 18px;
     }
   }
+
+  .title {
+    max-width: 70px;
+  }
 }
-.title {
-  max-width: 70px;
-}
+
 </style>

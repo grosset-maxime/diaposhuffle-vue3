@@ -5,6 +5,7 @@
 
 // Types
 import type { TagId } from '@/models/tag'
+import type { FolderPath } from '@/stores/folderBrowser'
 
 // Vendors Libs
 import { computed, ref, watch } from 'vue'
@@ -16,56 +17,49 @@ import { useSourceOptionsStore } from '@/stores/playerOptions/sourceOptions'
 import { usePlayerStore } from '@/stores/player'
 
 // Components
-import FolderBrowser from '../FolderBrowser/FolderBrowser.vue'
-import TaggerModal from '../Tagger/TaggerModal.vue'
-import TagChip from '../TagChip.vue'
+import TheFolderBrowser from '@/components/TheFolderBrowser/TheFolderBrowser.vue'
+import TaggerModal from '@/components/TheTagger/TaggerModal.vue'
+import TagChip from '@/components/TagChip.vue'
 
-const { showTagger } = useDiapoShuffleStore()
+const { showTagger, showFolderBrowser } = useDiapoShuffleStore()
 const sourceOptsStore = useSourceOptionsStore()
 const playerStore = usePlayerStore()
 
 //#region Folder Browser
-const folderBrowser = {
-  show: ref(false),
-  selected: ref<Set<string>>(new Set(sourceOptsStore.folders.value)),
-}
-
-const nbSelectedFolders = eagerComputed(() => {
-  return folderBrowser.selected.value.size
-})
+const selectedFolders = ref<Set<FolderPath>>(new Set(sourceOptsStore.folders.value))
+const nbSelectedFolders = eagerComputed(() => selectedFolders.value.size)
 
 watch(
-  folderBrowser.selected,
-  () => (sourceOptsStore.folders.value = folderBrowser.selected.value),
+  selectedFolders,
+  () => (sourceOptsStore.folders.value = selectedFolders.value),
 )
 
-function showFolderBrowser () {
-  folderBrowser.show.value = true
+function showTheFolderBrowser () {
+  showFolderBrowser.value = true
 }
 
-function onCloseFolderBrowser () {
-  folderBrowser.show.value = false
+function onCloseTheFolderBrowser () {
+  showFolderBrowser.value = false
 }
 
-function onSaveFolderBrowser (selectedFolders: Array<string>) {
-  folderBrowser.selected.value = new Set(selectedFolders)
+function onSaveTheFolderBrowser (folders: Set<FolderPath>) {
+  selectedFolders.value = folders
 }
 
 function onUnselectAllFolders () {
-  folderBrowser.selected.value.clear()
+  selectedFolders.value = new Set()
 }
 
-function onUnselectFolder (path: string) {
-  folderBrowser.selected.value.delete(path)
+function onUnselectFolder (path: FolderPath) {
+  const newSet = new Set(selectedFolders.value)
+  newSet.delete(path)
+  selectedFolders.value = newSet
 }
 //#endregion Folder Browser
 
 //#region Tagger
 const selectedTags = ref<Set<TagId>>(new Set(sourceOptsStore.tags.value))
-
-const nbSelectedTags = computed(() => {
-  return selectedTags.value.size
-})
+const nbSelectedTags = computed(() => selectedTags.value.size)
 
 watch(
   selectedTags,
@@ -136,7 +130,7 @@ function clearPineds () {
       <v-col>
         <span class="v-label"> Folder(s) </span>
 
-        <v-btn color="secondary" @click="showFolderBrowser"> Browse... </v-btn>
+        <v-btn color="secondary" @click="showTheFolderBrowser"> Browse... </v-btn>
 
         <v-btn
           v-if="nbSelectedFolders"
@@ -156,16 +150,22 @@ function clearPineds () {
     <v-row align="center" v-if="nbSelectedFolders">
       <v-col>
         <v-chip
-          v-for="path in folderBrowser.selected.value"
+          v-for="path in selectedFolders"
           :key="path"
           class="mr-3 mt-0 mb-2"
-          outlined
-          close
+          variant="outlined"
+          closable
           color="blue"
           @click:close="() => onUnselectFolder(path)"
         >
           {{ path }}
         </v-chip>
+      </v-col>
+    </v-row>
+
+    <v-row>
+      <v-col>
+        <hr class="source-separator"/>
       </v-col>
     </v-row>
 
@@ -178,9 +178,7 @@ function clearPineds () {
         <v-chip
           v-if="nbSelectedTags"
           class="tags-operator-chip ml-5 mr-5 mt-0 mb-0"
-          outlined
           color="primary"
-          filter
           @click="sourceOptsStore.toggleTagsOperator()"
         >
           {{ sourceOptsStore.tagsOperator.value }}
@@ -209,6 +207,12 @@ function clearPineds () {
       </v-col>
     </v-row>
 
+    <v-row>
+      <v-col>
+        <hr class="source-separator"/>
+      </v-col>
+    </v-row>
+
     <v-row align="center">
       <v-col class="d-flex">
         <div class="v-label"> Type(s) : </div>
@@ -218,7 +222,7 @@ function clearPineds () {
               v-for="(type, i) in sourceOptsStore.availableFileTypes.value"
               :key="type"
               class="mr-3 mt-0 mb-0"
-              outlined
+              variant="outlined"
               :color="filterFileTypes.includes(i) ? 'primary' : undefined"
               filter
             >
@@ -226,6 +230,12 @@ function clearPineds () {
             </v-chip>
           </v-chip-group>
         </div>
+      </v-col>
+    </v-row>
+
+    <v-row>
+      <v-col>
+        <hr class="source-separator"/>
       </v-col>
     </v-row>
 
@@ -256,12 +266,12 @@ function clearPineds () {
       </v-col>
     </v-row>
 
-    <!-- <FolderBrowser
-      :show="folderBrowser.show.value"
-      :selected="folderBrowser.selected.value"
-      @close="onCloseFolderBrowser"
-      @save="onSaveFolderBrowser"
-    /> -->
+    <TheFolderBrowser
+      :show="showFolderBrowser"
+      :selected="selectedFolders"
+      @close="onCloseTheFolderBrowser"
+      @save="onSaveTheFolderBrowser"
+    />
 
     <TaggerModal
       :show="showTagger"
@@ -299,5 +309,11 @@ function clearPineds () {
   .v-label {
     margin-right: 20px;
   }
+}
+.source-separator {
+  width: 70%;
+  border-color: $grey-8;
+  border-style: solid;
+  margin: auto;
 }
 </style>
