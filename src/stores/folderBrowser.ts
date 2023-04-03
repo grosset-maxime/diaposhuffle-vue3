@@ -14,7 +14,6 @@ export interface Folder {
   children: Array<FolderPath>
   fetched: boolean
   fetching: boolean
-  selected: boolean
 }
 
 export const useFolderBrowserStore = createGlobalState(() => {
@@ -29,7 +28,6 @@ export const useFolderBrowserStore = createGlobalState(() => {
     children: [],
     fetched: false,
     fetching: false,
-    selected: false,
   })
   const folders = reactive<Map<string, Folder>>(new Map([ [ ROOT_PATH, rootFolder ] ]))
 
@@ -81,7 +79,6 @@ export const useFolderBrowserStore = createGlobalState(() => {
           children: [],
           fetched: false,
           fetching: false,
-          selected: false,
           isRoot: false,
         })
 

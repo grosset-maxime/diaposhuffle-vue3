@@ -3,7 +3,7 @@
 import type { FolderPath } from '@/stores/folderBrowser'
 
 // Vendors Libs
-import { ref, computed, watch, inject } from 'vue'
+import { ref, computed, inject } from 'vue'
 
 // Stores
 import { useFolderBrowserStore } from '@/stores/folderBrowser'
@@ -28,7 +28,7 @@ const {
 const folderBrowserStore = useFolderBrowserStore()
 
 const folderChildren = ref<Array<FolderPath> | undefined>()
-const selected = ref(selectedFolders.value.has(props.path))
+const selected = computed(() => selectedFolders.value.has(props.path))
 const expanded = ref(false)
 
 // Computeds
@@ -45,7 +45,11 @@ async function expandFolder () {
 }
 
 function toggleSelect () {
-  selected.value = !selected.value
+  if (!selected.value) {
+    addSelectedFolder(props.path)
+  } else {
+    removeSelectedFolder(props.path)
+  }
 }
 
 function onFolderItemClick (e: MouseEvent) {
@@ -53,16 +57,6 @@ function onFolderItemClick (e: MouseEvent) {
     toggleSelect()
   }
 }
-
-watch(selected, (isSelected) => {
-  folder.value!.selected = isSelected
-
-  if (isSelected) {
-    addSelectedFolder(props.path)
-  } else {
-    removeSelectedFolder(props.path)
-  }
-})
 </script>
 
 <template>
