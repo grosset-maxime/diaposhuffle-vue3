@@ -3,7 +3,7 @@
 import type { TagCategoryId, TagCategoryData, TagCategory } from '@/models/tag'
 
 // Vendors Libs
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
 
@@ -20,7 +20,7 @@ const EMPTY_CATEGORY_DATA: TagCategoryData = {
   color: '',
 }
 const taggerStore = useTaggerStore()
-const { startListener, stopListener } = useKeyboardShortcutsListener(keyboardShortcuts)
+const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
 // Props
 interface Props {
@@ -170,9 +170,9 @@ watch(() => props.show, (isShow) => {
       color.value = ''
     }
 
-    startListener()
+    startKSListener()
   } else {
-    stopListener()
+    stopKSListener()
   }
 })
 
@@ -221,14 +221,10 @@ watch(color, (value) => {
 
 watch(showDeleteModal, (shouldShow) => {
   if (shouldShow) {
-    stopListener()
+    stopKSListener()
   } else {
-    startListener()
+    startKSListener()
   }
-})
-
-onMounted(() => {
-  stopListener()
 })
 </script>
 

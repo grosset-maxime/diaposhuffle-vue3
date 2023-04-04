@@ -23,7 +23,7 @@ const router = useRouter()
 const { showTheHelp } = useGlobalState()
 const { showThePlayer, showFolderBrowser, showTagger } = useDiapoShuffleStore()
 
-const { startListener, stopListener } = useKeyboardShortcutsListener(keyboardShortcuts)
+const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
 enum TabId {
   source = 'source',
@@ -75,29 +75,29 @@ watch(
   () => showTheHelp,
   (isShow) => {
     if (isShow) {
-      startListener()
+      startKSListener()
     } else if (!showThePlayer.value) {
-      stopListener()
+      stopKSListener()
     }
   },
 )
 
 watch(showThePlayer, (isShow) => {
   isShow
-    ? stopListener()
-    : startListener()
+    ? stopKSListener()
+    : startKSListener()
 })
 
 watch(showFolderBrowser, (isShow) => {
   isShow
-    ? stopListener()
-    : startListener()
+    ? stopKSListener()
+    : startKSListener()
 })
 
 watch(showTagger, (isShow) => {
   isShow
-    ? stopListener()
-    : startListener()
+    ? stopKSListener()
+    : startKSListener()
 })
 
 // Methods

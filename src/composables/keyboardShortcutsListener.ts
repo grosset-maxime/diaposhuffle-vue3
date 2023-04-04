@@ -2,7 +2,6 @@
 import type { Fn } from '@vueuse/core'
 
 // Vendors Libs
-import { onMounted } from 'vue'
 import { useEventListener } from '@vueuse/core'
 
 // Libs
@@ -17,22 +16,20 @@ export const useKeyboardShortcutsListener = (
     shortcuts(getKey(e), e)
   }
 
-  function startListener () {
+  function startKSListener () {
     if (removeListener) {
       return
     }
     removeListener = useEventListener(document, 'keydown', onKeyDown)
   }
 
-  function stopListener () {
+  function stopKSListener () {
     removeListener && removeListener()
     removeListener = null
   }
 
-  onMounted(() => startListener())
-
   return {
-    startListener,
-    stopListener,
+    startKSListener,
+    stopKSListener,
   }
 }

@@ -1,4 +1,4 @@
-export const SHAKE_ANIMATION_TIME = 830;
+export const SHAKE_ANIMATION_TIME = 830
 
 interface WaitOptions<T> {
   response?: T;
@@ -12,38 +12,38 @@ export const wait = async <T>({
   error = undefined,
   time = 50,
   success = true,
-}: WaitOptions<T>): Promise<T | undefined> => {
+}: WaitOptions<T> = {}): Promise<T | undefined> => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       if (success) {
-        resolve(response);
+        resolve(response)
       } else {
-        reject(error);
+        reject(error)
       }
-    }, time);
-  });
-};
+    }, time)
+  })
+}
 
 export const isEmptyObj = (obj: unknown) => {
   if (!obj || typeof obj !== 'object') {
-    return true;
+    return true
   }
-  return Object.keys(obj).length === 0;
-};
+  return Object.keys(obj).length === 0
+}
 
 export const clone = <T>(obj: T): T => {
-  return JSON.parse(JSON.stringify(obj));
-};
+  return JSON.parse(JSON.stringify(obj))
+}
 
 export const getKey = (event: KeyboardEvent): string => {
-  let { key } = event;
-  const { code } = event;
+  let { key } = event
+  const { code } = event
 
   if (code === 'Space') {
-    key = 'Space';
+    key = 'Space'
   }
-  return key;
-};
+  return key
+}
 
 /**
  * Get a random number between min and max (included).
@@ -52,38 +52,38 @@ export const getKey = (event: KeyboardEvent): string => {
  * @returns Random number.
  */
 export const getRandomNum = (a: number, b?: number) => {
-  let min = 0;
-  let max = 0;
+  let min = 0
+  let max = 0
 
   if (!b) {
-    max = a;
+    max = a
   } else {
-    min = a;
-    max = b;
+    min = a
+    max = b
   }
 
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
 
 /**
  * Get a random element of an array and the random index of this element.
  * @param array - Array to get a random element.
  */
 export const getRandomElementWithIndex = <T>(
-  array: Array<T>
+  array: Array<T>,
 ): {
   index: number; // -1 if empty is empty.
   el: T | undefined;
 } => {
-  const index = getRandomNum(array.length - 1);
-  const el = array[index];
+  const index = getRandomNum(array.length - 1)
+  const el = array[ index ]
 
-  return { index, el };
-};
+  return { index, el }
+}
 
 /**
  * Get a random element of an array.
  * @param array - Array to get a random element.
  * @returns Random element.
  */
-export const getRandomElement = <T>(array: Array<T>) => getRandomElementWithIndex(array).el;
+export const getRandomElement = <T>(array: Array<T>) => getRandomElementWithIndex(array).el

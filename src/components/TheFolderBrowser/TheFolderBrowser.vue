@@ -5,8 +5,6 @@
 // TODO: Feature: Add section with 5 or 10 latest selected pathes.
 // TODO: Feature: Allow to search a folder by its name which has not been fetch yet
 //                (Need a new backend API).
-// TODO: Enh: Do not use v-dialog to be able to keep alive the display (expanded)
-//            of folders after closing and reopening the folder browser
 
 // Types
 import type { FolderPath } from '@/stores/folderBrowser'
@@ -36,7 +34,7 @@ const emit = defineEmits<{
   (e: 'save', folders: Set<FolderPath>): void;
 }>()
 
-const { startListener, stopListener } = useKeyboardShortcutsListener(keyboardShortcuts)
+const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
 // Refs
 const selectedFolders = ref<Set<FolderPath>>(new Set(props.selected))
@@ -58,12 +56,12 @@ watch(
 
 //#region Methods
 function onShow () {
-  startListener()
+  startKSListener()
   selectedFolders.value = new Set(props.selected)
 }
 
 function onHide () {
-  stopListener()
+  stopKSListener()
 }
 
 function onConfirm () {
@@ -76,7 +74,6 @@ function onCancel () {
 }
 
 function onClose () {
-  onHide()
   emit('close')
 }
 
@@ -137,15 +134,11 @@ provide(theFolderBrowserKey, {
 </script>
 
 <template>
-  <v-dialog
-    content-class="the-folder-browser"
-    :model-value="show"
-    fullscreen
-    transition="dialog-bottom-transition"
-    persistent
-    no-click-animation
+  <div
+    v-show="show"
+    class="the-folder-browser"
   >
-    <v-card>
+    <v-card height="100%">
       <v-toolbar class="folder-browser-modal-toolbar" density="compact" color="background">
         <v-btn icon @click="onCancel">
           <v-icon>mdi-close</v-icon>
@@ -165,13 +158,20 @@ provide(theFolderBrowserKey, {
         <RootFolderItem />
       </div>
     </v-card>
-  </v-dialog>
+  </div>
 </template>
 
 <style lang="scss">
 $v-toolbar-height: 48px;
 
 .the-folder-browser {
+  position: fixed;
+  height: 100vh;
+  width: 100vw;
+  top: 0;
+  right: 0;
+  z-index: 2000;
+
   .ctn {
     height: calc(100% - #{$v-toolbar-height});
     overflow: auto;

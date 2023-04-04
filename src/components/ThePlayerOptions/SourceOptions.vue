@@ -18,7 +18,7 @@ import { usePlayerStore } from '@/stores/player'
 
 // Components
 import TheFolderBrowser from '@/components/TheFolderBrowser/TheFolderBrowser.vue'
-import TaggerModal from '@/components/TheTagger/TaggerModal.vue'
+import TaggerModal from '@/components/TheTagger/TheTagger.vue'
 import TagChip from '@/components/TagChip.vue'
 
 const { showTagger, showFolderBrowser } = useDiapoShuffleStore()
@@ -266,19 +266,21 @@ function clearPineds () {
       </v-col>
     </v-row>
 
-    <TheFolderBrowser
-      :show="showFolderBrowser"
-      :selected="selectedFolders"
-      @close="onCloseTheFolderBrowser"
-      @save="onSaveTheFolderBrowser"
-    />
+    <Teleport to="body">
+      <TheFolderBrowser
+        :show="showFolderBrowser"
+        :selected="selectedFolders"
+        @close="onCloseTheFolderBrowser"
+        @save="onSaveTheFolderBrowser"
+      />
 
-    <TaggerModal
-      :show="showTagger"
-      :selected="selectedTags"
-      @close="onCloseTaggerModal"
-      @save="onSaveTaggerModal"
-    />
+      <TaggerModal
+        :show="showTagger"
+        :selected="selectedTags"
+        @close="onCloseTaggerModal"
+        @save="onSaveTaggerModal"
+      />
+    </Teleport>
   </v-container>
 </template>
 

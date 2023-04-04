@@ -1,29 +1,29 @@
 <script setup lang="ts">
 // Types
-import type { DefineComponent } from 'vue';
+import type { DefineComponent } from 'vue'
 
 // Vendors Libs
-import { computed, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
 // Libs
-import { routesMap } from '@/router/routes';
-import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener';
+import { routesMap } from '@/router/routes'
+import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
 
 // Components
-import DiapoShuffleHelp from '@/components/Helps/DiapoShuffleHelp.vue';
+import DiapoShuffleHelp from '@/components/Helps/DiapoShuffleHelp.vue'
 
 // Stores
-import { useGlobalState } from '@/stores';
+import { useGlobalState } from '@/stores'
 
-const route = useRoute();
-const { startListener, stopListener } = useKeyboardShortcutsListener(keyboardShortcuts);
+const route = useRoute()
+const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
 const pageHelpCmps: {
   [key: string]: DefineComponent<{}, {}, any>;
 } = {
   '/diaposhuffle': DiapoShuffleHelp,
-};
+}
 
 // Props
 interface Props {
@@ -31,40 +31,40 @@ interface Props {
 }
 const props = withDefaults(defineProps<Props>(), {
   show: false,
-});
+})
 
 // Refs
-const { showTheHelp } = useGlobalState();
+const { showTheHelp } = useGlobalState()
 
 // Computeds
-const routePath = computed((): string => route.path);
-const helpCmp = computed(() => pageHelpCmps[routePath.value || '']);
-const routeTitle = computed((): string => routesMap.get(routePath.value)?.title || '');
+const routePath = computed((): string => route.path)
+const helpCmp = computed(() => pageHelpCmps[ routePath.value || '' ])
+const routeTitle = computed((): string => routesMap.get(routePath.value)?.title || '')
 
 // Watchs
 watch(
   () => props.show,
   (onShow) => {
     if (onShow) {
-      startListener();
+      startKSListener()
     } else {
-      stopListener();
+      stopKSListener()
     }
-  }
-);
+  },
+)
 
 // Methods
-function closeTheHelp() {
-  showTheHelp.value = false;
+function closeTheHelp () {
+  showTheHelp.value = false
 }
 
-function keyboardShortcuts(key: string) {
+function keyboardShortcuts (key: string) {
   switch (key) {
-    case 'Escape':
-    case 'h':
-      closeTheHelp();
-      break;
-    default:
+  case 'Escape':
+  case 'h':
+    closeTheHelp()
+    break
+  default:
   }
 }
 </script>

@@ -32,7 +32,7 @@ import { useTaggerStore } from '@/stores/tagger'
 import TheLoop from './TheLoop.vue'
 import PauseBtn from './PauseBtn.vue'
 import DeleteModal from './DeleteModal.vue'
-import TaggerModal from '@/components/TheTagger/TaggerModal.vue'
+import TaggerModal from '@/components/TheTagger/TheTagger.vue'
 import ItemPathChip from './ItemPathChip.vue'
 import ItemsPlayer from './ItemsPlayer.vue'
 import TagsList from './ThePlayer/TagsList.vue'
@@ -45,7 +45,7 @@ const UNPINED_ANIMATION_DURATION = 1000
 
 let fetchNextItemPromise: Promise<Item> | undefined = undefined
 
-const { startListener: startShortcutsListener, stopListener: stopShortcutsListener }
+const { startKSListener, stopKSListener }
   = useKeyboardShortcutsListener(keyboardShortcuts)
 
 // Stores
@@ -680,7 +680,7 @@ function editHistoryItem (index: number, item: Item) {
 function showDeleteModal ({ item, showOptions = false }: { item: Item; showOptions?: boolean }) {
   showUI()
   pausePlaying()
-  stopShortcutsListener()
+  stopKSListener()
 
   deleteModal.itemData.value = item
   deleteModal.showOptions.value = !!showOptions
@@ -703,7 +703,7 @@ function hideDeleteModal ({
   deleteModal.show.value = false
   deleteModal.itemData.value = undefined
 
-  startShortcutsListener()
+  startKSListener()
 
   if (item && remove) {
     deleteItem({
@@ -723,13 +723,13 @@ function hideDeleteModal ({
 
 function showTaggerModal () {
   pausePlaying({ pauseItem: false })
-  stopShortcutsListener()
+  stopKSListener()
   taggerModal.show.value = true
 }
 
 function hideTaggerModal () {
   taggerModal.show.value = false
-  startShortcutsListener()
+  startKSListener()
   showUIDuring(3000)
 }
 
@@ -972,9 +972,9 @@ function togglePinUI (uiName: string) {
 
 watch(showTheHelp, (isShow) => {
   if (isShow) {
-    stopShortcutsListener()
+    stopKSListener()
   } else {
-    startShortcutsListener()
+    startKSListener()
   }
 })
 </script>
