@@ -79,7 +79,7 @@ function keyboardShortcuts (key: string) {
     transition="dialog-bottom-transition"
   >
     <v-card class="the-help-card">
-      <v-toolbar height="56">
+      <v-toolbar density="compact" color="background">
         <v-toolbar-title> Help - {{ routeTitle }} </v-toolbar-title>
         <v-spacer />
         <v-toolbar-items>
@@ -94,7 +94,7 @@ function keyboardShortcuts (key: string) {
 </template>
 
 <style lang="scss">
-$toolbar-height: 56px;
+$toolbar-height: 48px;
 
 .the-help {
   width: 100vw;
