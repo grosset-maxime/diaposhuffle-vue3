@@ -2,7 +2,10 @@
 // Components
 import ThePlayerOptions from '@/components/ThePlayerOptions.vue'
 
+import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
 import { useTaggerStore } from '@/stores/tagger'
+
+const { showThePlayer } = useDiapoShuffleStore()
 
 // To pre-fetch tags and categories list.
 useTaggerStore()
@@ -11,7 +14,11 @@ useTaggerStore()
 
 <template>
   <v-layout class="pa-2 flex-column" full-height>
-    <ThePlayerOptions />
+    <ThePlayerOptions v-if="!showThePlayer"/>
+
+    <Teleport to="body">
+      <ThePlayer v-if="showThePlayer" />
+    </Teleport>
   </v-layout>
 </template>
 

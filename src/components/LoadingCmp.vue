@@ -10,7 +10,7 @@ const props = withDefaults(defineProps<Props>(), {
   size: 100,
   width: 7,
   color: 'orange',
-});
+})
 </script>
 
 <template>

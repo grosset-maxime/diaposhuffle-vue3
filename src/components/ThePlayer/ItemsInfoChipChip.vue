@@ -2,19 +2,19 @@
 // TODO: Feature: On click on the chip show the list of items and allow to navigate through it with arrow key. Also display an item preview.
 
 // Vendors Libs
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 // Stores
-import { usePlayerStore } from '@/stores/player';
+import { usePlayerStore } from '@/stores/player'
 
 // Refs
-const playerStore = usePlayerStore();
+const playerStore = usePlayerStore()
 
 const emit = defineEmits<{
   (e: 'click'): void;
-}>();
+}>()
 
-const currentItemIndex = computed(() => playerStore.getPlayingIndex() + 1);
+const currentItemIndex = computed(() => playerStore.getPlayingIndex() + 1)
 </script>
 
 <template>

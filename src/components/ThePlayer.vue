@@ -971,11 +971,9 @@ function togglePinUI (uiName: string) {
 }
 
 watch(showTheHelp, (isShow) => {
-  if (isShow) {
-    stopKSListener()
-  } else {
-    startKSListener()
-  }
+  isShow
+    ? stopKSListener()
+    : startKSListener()
 })
 </script>
 
@@ -1195,12 +1193,14 @@ watch(showTheHelp, (isShow) => {
       />
     </PinWrapper>
 
-    <TaggerModal
-      :show="taggerModal.show.value"
-      :selected-tag-ids="playingItemTags"
-      @close="hideTaggerModal"
-      @save="onSaveTaggerModal"
-    />
+    <Teleport to="body">
+      <TaggerModal
+        :show="taggerModal.show.value"
+        :selected-tag-ids="playingItemTags"
+        @close="hideTaggerModal"
+        @save="onSaveTaggerModal"
+      />
+    </Teleport>
   </div>
 </template>
 

@@ -4,7 +4,7 @@ const emit = defineEmits<{
   (e: 'click'): void;
   (e: 'mouseover', event: MouseEvent): void;
   (e: 'mouseout', event: MouseEvent): void;
-}>();
+}>()
 </script>
 
 <template>

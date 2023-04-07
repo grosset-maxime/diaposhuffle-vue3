@@ -2,10 +2,10 @@
 // TODO: Enh: Show pin icon when mouse is moving, else hide them.
 
 // Types
-import { Position } from '@/interfaces/components/PinWrapper';
+import { Position } from '@/interfaces/components/PinWrapper'
 
 // Vendors Libs
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 // Props
 interface Props {
@@ -19,35 +19,35 @@ const props = withDefaults(defineProps<Props>(), {
   iconPosition: Position.topRight,
   iconTop: 0,
   iconLeft: 0,
-});
+})
 
 // Emits
 const emit = defineEmits<{
   (e: 'click'): void;
   (e: 'mouseover', event: MouseEvent): void;
   (e: 'mouseout', event: MouseEvent): void;
-}>();
+}>()
 
 // Computeds
 const positionClasses = computed(() => {
-  const classes = [];
+  const classes = []
   if (props.iconPosition.includes(Position.middle)) {
-    classes.push('pos-center');
+    classes.push('pos-center')
   }
   if (props.iconPosition.includes(Position.top)) {
-    classes.push('pos-top');
+    classes.push('pos-top')
   }
   if (props.iconPosition.includes(Position.bottom)) {
-    classes.push('pos-bottom');
+    classes.push('pos-bottom')
   }
   if (props.iconPosition.includes(Position.right)) {
-    classes.push('pos-right');
+    classes.push('pos-right')
   }
   if (props.iconPosition.includes(Position.left)) {
-    classes.push('pos-left');
+    classes.push('pos-left')
   }
-  return classes;
-});
+  return classes
+})
 </script>
 
 <template>

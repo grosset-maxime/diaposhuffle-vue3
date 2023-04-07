@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { useGlobalState } from '@/stores';
-import { computed } from 'vue';
+import { useGlobalState } from '@/stores'
+import { computed } from 'vue'
 
 const props = defineProps<{
   title?: string;
-}>();
+}>()
 
 const emit = defineEmits<{
   (e: 'toggleMenu'): void;
   (e: 'toggleTheme'): void;
-}>();
+}>()
 
-const { showTheHelp } = useGlobalState();
+const { showTheHelp } = useGlobalState()
 
 // Computeds
-const appTitle = computed(() => props.title || '');
+const appTitle = computed(() => props.title || '')
 </script>
 
 <template>

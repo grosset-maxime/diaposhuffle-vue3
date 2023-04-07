@@ -9,12 +9,12 @@ interface Props {
 withDefaults(defineProps<Props>(), {
   pathStart: '',
   pathEnd: '',
-});
+})
 
 // Emits
 const emit = defineEmits<{
   (e: 'click'): void;
-}>();
+}>()
 </script>
 
 <template>

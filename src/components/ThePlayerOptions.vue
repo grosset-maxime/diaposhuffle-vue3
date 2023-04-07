@@ -72,36 +72,16 @@ watch(tabId, (val) => {
 })
 
 watch(
-  () => showTheHelp,
+  [ showTheHelp, showFolderBrowser, showTagger ],
   (isShow) => {
-    if (isShow) {
-      startKSListener()
-    } else if (!showThePlayer.value) {
-      stopKSListener()
-    }
+    isShow
+      ? stopKSListener()
+      : startKSListener()
   },
 )
 
-watch(showThePlayer, (isShow) => {
-  isShow
-    ? stopKSListener()
-    : startKSListener()
-})
-
-watch(showFolderBrowser, (isShow) => {
-  isShow
-    ? stopKSListener()
-    : startKSListener()
-})
-
-watch(showTagger, (isShow) => {
-  isShow
-    ? stopKSListener()
-    : startKSListener()
-})
-
 // Methods
-function start () {
+function startPlayer () {
   showThePlayer.value = true
 }
 
@@ -109,7 +89,7 @@ function keyboardShortcuts (key: string) {
   switch (key) {
   case 'Space':
   case 'Enter':
-    start()
+    startPlayer()
     break
   case 'b':
     showFolderBrowser.value = true
@@ -126,7 +106,7 @@ function keyboardShortcuts (key: string) {
 </script>
 
 <template>
-  <v-card v-if="!showThePlayer" class="the-player-options">
+  <v-card class="the-player-options">
     <v-tabs
       v-model="tabId"
       class="tabs"
@@ -165,7 +145,7 @@ function keyboardShortcuts (key: string) {
     </v-window>
 
     <div class="start-btn-ctn">
-      <v-btn class="start-btn" color="primary" @click="start">
+      <v-btn class="start-btn" color="primary" @click="startPlayer">
         Start
       </v-btn>
     </div>

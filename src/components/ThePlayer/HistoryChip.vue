@@ -2,38 +2,38 @@
 // TODO: Feature: On click on the chip show the list of history and allow to navigate through it with arrow key. Also display an item preview.
 
 // Types
-import type { Item } from '@/models/item';
+import type { Item } from '@/models/item'
 
 // Vendors Libs
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 // Stores
-import { usePlayerStore } from '@/stores/player';
+import { usePlayerStore } from '@/stores/player'
 
 const emit = defineEmits<{
   (e: 'click'): void;
-}>();
+}>()
 
 // Refs
-const playerStore = usePlayerStore();
+const playerStore = usePlayerStore()
 
 // Computeds
-const historyIndex = computed(() => playerStore.getHistoryIndex() + 1);
+const historyIndex = computed(() => playerStore.getHistoryIndex() + 1)
 
 const currentItemCount = computed(() => {
-  let count = 0;
-  const historyItem = playerStore.getHistoryItemAt(historyIndex.value);
+  let count = 0
+  const historyItem = playerStore.getHistoryItemAt(historyIndex.value)
 
   if (historyItem) {
     playerStore.getHistoryItems().forEach((item: Item) => {
       if (item.src === historyItem.src) {
-        count += 1;
+        count += 1
       }
-    });
+    })
   }
 
-  return count;
-});
+  return count
+})
 </script>
 
 <template>

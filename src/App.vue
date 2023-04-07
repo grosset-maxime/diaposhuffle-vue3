@@ -77,9 +77,6 @@ router.beforeEach((to, from, next) => {
     </v-main>
 
     <TheHelp :show="showTheHelp" />
-
-    <!-- TODO: should be moved to DiapoShuffleView -->
-    <ThePlayer v-if="showThePlayer" />
   </v-app>
 </template>
 
