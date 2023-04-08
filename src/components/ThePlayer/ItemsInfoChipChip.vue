@@ -1,11 +1,12 @@
 <script setup lang="ts">
-// TODO: Feature: On click on the chip show the list of items and allow to navigate through it with arrow key. Also display an item preview.
+// TODO: Feature: On click on the chip show the list of items and allow to navigate
+//                through it with arrow key. Also display an item preview.
 
 // Vendors Libs
 import { computed } from 'vue'
 
 // Stores
-import { usePlayerStore } from '@/stores/player'
+import { usePlayerStore } from '@/stores/ThePlayer/ThePlayer.js'
 
 // Refs
 const playerStore = usePlayerStore()

@@ -13,8 +13,8 @@ import { eagerComputed } from '@vueuse/shared'
 
 // Stores
 import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
-import { useSourceOptionsStore } from '@/stores/playerOptions/sourceOptions'
-import { usePlayerStore } from '@/stores/player'
+import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
+import { usePlayerStore } from '@/stores/ThePlayer/ThePlayer.js'
 
 // Components
 import TheFolderBrowser from '@/components/TheFolderBrowser/TheFolderBrowser.vue'

@@ -22,23 +22,24 @@ import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsLis
 // Stores
 import { useGlobalState } from '@/stores'
 import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
-import { usePlayerOptionsStore } from '@/stores/playerOptions/playerOptions'
-import { useSourceOptionsStore } from '@/stores/playerOptions/sourceOptions'
-import { useUIOptionsStore } from '@/stores/playerOptions/uiOptions'
-import { usePlayerStore, FetchSource } from '@/stores/player'
+import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
+import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
+import { useUIOptionsStore } from '@/stores/ThePlayerOptions/uiOptions'
+import { usePlayerStore, FetchSource } from '@/stores/ThePlayer/ThePlayer.js'
 import { useTaggerStore } from '@/stores/tagger'
 
 // Components
-import TheLoop from './TheLoop.vue'
-import PauseBtn from './PauseBtn.vue'
-import DeleteModal from './DeleteModal.vue'
+import TheLoop from '@/components/ThePlayer/TheLoop.vue'
+import PauseBtn from '@/components/ThePlayer/PauseBtn.vue'
+import ItemsPlayer from '@/components/ThePlayer/ItemsPlayer.vue'
+import TagsList from '@/components/ThePlayer/TagsList.vue'
+import HistoryChip from '@/components/ThePlayer/HistoryChip.vue'
+import ItemsInfoChip from '@/components/ThePlayer/ItemsInfoChipChip.vue'
+import PinWrapper from '@/components/ThePlayer/PinWrapper.vue'
+import ItemPathChip from '@/components/ThePlayer/ItemPathChip.vue'
+
 import TaggerModal from '@/components/TheTagger/TheTagger.vue'
-import ItemPathChip from './ItemPathChip.vue'
-import ItemsPlayer from './ItemsPlayer.vue'
-import TagsList from './ThePlayer/TagsList.vue'
-import HistoryChip from './ThePlayer/HistoryChip.vue'
-import ItemsInfoChip from './ThePlayer/ItemsInfoChipChip.vue'
-import PinWrapper from './ThePlayer/PinWrapper.vue'
+import DeleteModal from '@/components/DeleteModal.vue'
 
 const PINED_ANIMATION_DURATION = 1000
 const UNPINED_ANIMATION_DURATION = 1000

@@ -1,7 +1,7 @@
 // Types
 import type { Item, ItemExtension } from '@/models/item'
 import type { TagId } from '@/models/tag'
-import type { TagsOperator, FileType } from '@/stores/playerOptions/sourceOptions'
+import type { TagsOperator, FileType } from '@/stores/ThePlayerOptions/sourceOptions'
 
 import { createItem } from '@/models/item'
 import { BASE_URL, buildError, fetchJson } from '@/api/api'

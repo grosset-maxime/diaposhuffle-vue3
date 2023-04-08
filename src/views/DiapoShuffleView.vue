@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Components
-import ThePlayerOptions from '@/components/ThePlayerOptions.vue'
+import ThePlayerOptions from '@/components/ThePlayerOptions/ThePlayerOptions.vue'
+import ThePlayer from '@/components/ThePlayer/ThePlayer.vue'
 
 import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
 import { useTaggerStore } from '@/stores/tagger'

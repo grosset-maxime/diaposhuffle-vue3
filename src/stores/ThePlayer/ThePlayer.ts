@@ -1,5 +1,6 @@
 // TODO: Feature: Add fetch items from bdd with tags and types. DONE ?
-// TODO: Bug: Backend: getimagesize raize warning in call response body that trigger json.parse to fail. Should be added to the response object as error.
+// TODO: Bug: Backend: getimagesize raize warning in call response body that
+//            trigger json.parse to fail. Should be added to the response object as error.
 
 // Types
 import type { Item } from '@/models/item'
@@ -19,8 +20,8 @@ import {
 import { Item as ItemClass } from '@/models/item'
 
 // Stores
-import { usePlayerOptionsStore } from '@/stores/playerOptions/playerOptions'
-import { useSourceOptionsStore } from '@/stores/playerOptions/sourceOptions'
+import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
+import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
 
 export enum FetchSource {
   fs = 'random', // Fetch from fs.

@@ -11,7 +11,7 @@ import { routesMap } from '@/router/routes'
 import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
 
 // Components
-import DiapoShuffleHelp from '@/components/Helps/DiapoShuffleHelp.vue'
+import DiapoShuffleHelp from '@/components/TheHelp/DiapoShuffleHelp.vue'
 
 // Stores
 import { useGlobalState } from '@/stores'

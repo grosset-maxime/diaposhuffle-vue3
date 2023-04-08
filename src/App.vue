@@ -6,13 +6,10 @@ import routesMap from '@/router/routes'
 // Components
 import NavigationMenu from '@/components/NavigationMenu.vue'
 import AppBar from '@/components/AppBar.vue'
-import TheHelp from '@/components/TheHelp.vue'
-import ThePlayer from '@/components/ThePlayer.vue'
+import TheHelp from '@/components/TheHelp/TheHelp.vue'
 
 // Stores
 import { useGlobalState } from '@/stores'
-// TODO: should be move to DiapoShuffleView.
-import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
 
 const router = useRouter()
 const route = useRoute()
@@ -24,7 +21,6 @@ const {
   lastVisitedRoute,
   showTheHelp,
 } = useGlobalState()
-const { showThePlayer } = useDiapoShuffleStore()
 
 // Computeds
 const routePath = computed((): string => route.path)

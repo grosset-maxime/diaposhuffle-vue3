@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// TODO: Feature: On click on the chip show the list of history and allow to navigate through it with arrow key. Also display an item preview.
+// TODO: Feature: On click on the chip show the list of history and allow to
+//                navigate through it with arrow key. Also display an item preview.
 
 // Types
 import type { Item } from '@/models/item'
@@ -8,7 +9,7 @@ import type { Item } from '@/models/item'
 import { computed } from 'vue'
 
 // Stores
-import { usePlayerStore } from '@/stores/player'
+import { usePlayerStore } from '@/stores/ThePlayer/ThePlayer.js'
 
 const emit = defineEmits<{
   (e: 'click'): void;
