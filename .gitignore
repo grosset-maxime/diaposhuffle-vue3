@@ -3,6 +3,8 @@
 .env.*.local
 
 # Editor directories and files
+!.vscode/extensions.json
+.vscode/*
 .idea
 *.code-workspace
 *.suo
@@ -33,16 +35,7 @@ dist
 dist-ssr
 coverage
 *.local
+temp.*
 
 /cypress/videos/
 /cypress/screenshots/
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?

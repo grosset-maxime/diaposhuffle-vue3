@@ -53,103 +53,15 @@ export const useFSPlayer = ({
   const errors = ref<Array<{ [key: string]: unknown }>>([])
 
   // const getErrors = () => errors.value
-  const addError = ({ actionName, error }: { actionName: string; error: unknown }) => {
+
+  // #region Methods
+  function addError ({ actionName, error }: { actionName: string; error: unknown }): void {
     errors.value.push({
       [ actionName ]: error,
     })
-    // eslint-disable-next-line no-console
     console.error(actionName, error)
   }
 
-  // #region Mandatory Actions
-  const start = async () => {
-    reset()
-
-    isStopped.value = false
-    theLoopStore.indeterminate.value = true
-
-    isFetching.value = true
-    fetchItemPromise.value = fetchItem()
-    fetchItemPromise.value.then(async (itm) => {
-      item.value = itm
-      isFetching.value = false
-      setNextItem(itm)
-      await showNextItem()
-      thePlayerStore.item.value = itm
-      play()
-    })
-
-    isFetchingNext.value = true
-    fetchNextItemPromise.value = fetchItem()
-    fetchNextItemPromise.value.then(async (itm) => {
-      await fetchItemPromise.value
-      nextItem.value = itm
-      isFetchingNext.value = false
-      // setNextItem(itm)
-    })
-  }
-
-  const stop = () => {
-    isStopped.value = true
-  }
-
-  const play = () => {
-    isPlaying.value = true
-    theLoopStore.indeterminate.value = false
-
-    if (theLoop.isPaused.value) {
-      theLoop.resumeLooping()
-    } else {
-      // showItem()
-      theLoop.startLooping()
-    }
-  }
-
-  const pause = () => {
-    isPlaying.value = false
-  }
-
-  const next = async () => {
-    item.value = nextItem.value
-    // itemIndex.value = nextItemIndex.value
-
-    computeNextItem()
-    computePreviousItem()
-  }
-
-  const previous = async () => {
-    // item.value = previousItem.value
-    // itemIndex.value = previousItemIndex.value
-
-    computePreviousItem()
-    computeNextItem()
-  }
-
-  const reset = () => {
-    isStopped.value = true
-    isPlaying.value = false
-
-    isFetching.value = false
-    isFetchingNext.value = false
-
-    item.value = undefined
-
-    nextItem.value = undefined
-
-    theLoopStore.indeterminate.value = false
-    theLoopStore.value.value = -1
-    theLoopStore.maxValue.value = -1
-
-    errors.value = []
-  }
-  // #endregion Mandatory Actions
-
-  // #region Methods
-  const computeNextItem = () => {}
-  const computePreviousItem = () => {}
-  // #endregion Methods
-
-  // #region Actions
   async function fetchItem (): Promise<Item> {
     let item: Item | undefined
 
@@ -178,7 +90,91 @@ export const useFSPlayer = ({
 
     return item
   }
-  // #endregion Actions
+  // #endregion Methods
+
+  // #region Exposed Actions
+  const start = async () => {
+    reset()
+
+    isStopped.value = false
+    theLoopStore.indeterminate.value = true
+
+    isFetching.value = true
+    fetchItemPromise.value = fetchItem()
+    fetchItemPromise.value.then(async (itm) => {
+      item.value = itm
+      isFetching.value = false
+
+      setNextItem(itm)
+      await showNextItem()
+
+      thePlayerStore.item.value = itm
+      play()
+    })
+
+    isFetchingNext.value = true
+    fetchNextItemPromise.value = fetchItem()
+    fetchNextItemPromise.value.then(async (itm) => {
+      await fetchItemPromise.value
+      nextItem.value = itm
+      isFetchingNext.value = false
+
+      setNextItem(itm)
+    })
+  }
+
+  const stop = () => {
+    isStopped.value = true
+  }
+
+  const play = () => {
+    isPlaying.value = true
+    theLoopStore.indeterminate.value = false
+
+    if (theLoop.isPaused.value) {
+      theLoop.resumeLooping()
+    } else {
+      theLoop.startLooping()
+    }
+  }
+
+  const pause = () => {
+    isPlaying.value = false
+  }
+
+  const next = async () => {
+    item.value = nextItem.value
+
+    computeNextItem()
+    computePreviousItem()
+  }
+
+  const previous = async () => {
+  // item.value = previousItem.value
+
+    computePreviousItem()
+    computeNextItem()
+  }
+
+  const reset = () => {
+    isStopped.value = true
+    isPlaying.value = false
+
+    isFetching.value = false
+    isFetchingNext.value = false
+
+    item.value = undefined
+
+    nextItem.value = undefined
+
+    theLoopStore.enabled.value = true
+    theLoopStore.indeterminate.value = false
+    theLoopStore.value.value = -1
+    theLoopStore.maxValue.value = -1
+
+    errors.value = []
+  }
+  // #endregion Exposed Actions
 
   const player: UsePlayerExpose = {
     isStopped: computed(() => isStopped.value),

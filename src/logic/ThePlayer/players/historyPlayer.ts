@@ -70,7 +70,6 @@ export const useThePlayerStore = createGlobalState(() => {
     errors.value.push({
       [ actionName ]: error,
     })
-    // eslint-disable-next-line no-console
     console.error(actionName, error)
   }
 

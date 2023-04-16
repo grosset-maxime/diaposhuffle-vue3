@@ -110,7 +110,6 @@ export class Item {
     this.isVideo = isVideo ?? VIDEO_EXTENSIONS.includes(this.extension as ItemVideoExt)
 
     if (!this.isImage && !this.isVideo) {
-      // eslint-disable-next-line no-console
       console.error('Item:', this)
       throw new Error(`Invalid item, not an image and not a video. Item extension: ${extension}`)
     }

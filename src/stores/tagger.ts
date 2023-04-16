@@ -54,7 +54,6 @@ export const useTaggerStore = createGlobalState(() => {
     errors.push({
       [ actionName ]: error,
     })
-    // eslint-disable-next-line no-console
     console.error(actionName, error)
   }
 

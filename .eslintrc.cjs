@@ -12,18 +12,14 @@ module.exports = {
     ecmaVersion: 'latest',
   },
   rules: {
-    'max-len': [ 'error', { code: 100, ignoreUrls: true } ],
+    'max-len': [ 'warn', { code: 100, ignoreUrls: true } ],
     'arrow-parens': [ 'error', 'always' ],
     semi: [ 'error', 'never' ],
     'prefer-template': 'error',
     'operator-linebreak': [ 'error', 'before' ],
     'no-warning-comments': 'warn',
-    'no-console': process.env.NODE_ENV === 'production'
-      ? 'warn'
-      : 'warn',
-    'no-debugger': process.env.NODE_ENV === 'production'
-      ? 'error'
-      : 'warn',
+    'no-console': [ 'error', { allow: [ 'warn', 'error' ] } ],
+    'no-debugger': 'warn',
     'comma-dangle': [ 'error', 'always-multiline' ],
     'space-before-function-paren': [ 'error', 'always' ],
     'no-underscore-dangle': [ 'off' ],
