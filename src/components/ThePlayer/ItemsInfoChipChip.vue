@@ -6,21 +6,20 @@
 import { computed } from 'vue'
 
 // Stores
-import { usePlayerStore } from '@/stores/ThePlayer/ThePlayer.js'
-
-// Refs
-const playerStore = usePlayerStore()
+import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer'
 
 const emit = defineEmits<{
   (e: 'click'): void;
 }>()
 
-const currentItemIndex = computed(() => playerStore.getPlayingIndex() + 1)
+const thePlayerStore = useThePlayerStore()
+const itemIndex = computed(() => thePlayerStore.itemIndex.value + 1)
+const itemsCount = computed(() => thePlayerStore.itemsCount.value)
 </script>
 
 <template>
   <v-chip class="history" small @click="emit('click')">
-    {{ currentItemIndex }} / {{ playerStore.getPlayingItemsLength() }}
+    {{ itemIndex }} / {{ itemsCount }}
   </v-chip>
 </template>
 

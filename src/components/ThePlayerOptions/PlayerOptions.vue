@@ -2,7 +2,7 @@
 // TODO: Feature: Add an option to play in infinite loop for video item.
 
 // Stores
-import { usePlayerOptionsStore } from '@/stores/playerOptions/playerOptions'
+import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
 
 const { interval, isMuteVideo, isFetchItemRandomly, resetInterval } = usePlayerOptionsStore()
 </script>

@@ -9,14 +9,14 @@ import type { Item } from '@/models/item'
 import { computed } from 'vue'
 
 // Stores
-import { usePlayerStore } from '@/stores/ThePlayer/ThePlayer.js'
+import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer.js'
 
 const emit = defineEmits<{
   (e: 'click'): void;
 }>()
 
 // Refs
-const playerStore = usePlayerStore()
+const playerStore = useThePlayerStore()
 
 // Computeds
 const historyIndex = computed(() => playerStore.getHistoryIndex() + 1)

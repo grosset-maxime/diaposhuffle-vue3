@@ -3,6 +3,7 @@
 
 // Types
 import { Position } from '@/interfaces/components/PinWrapper'
+import type { CSSProperties } from 'vue'
 
 // Vendors Libs
 import { computed } from 'vue'
@@ -13,12 +14,16 @@ interface Props {
   iconPosition?: Position;
   iconTop?: number;
   iconLeft?: number;
+  iconRight?: number;
+  iconBottom?: number;
 }
 const props = withDefaults(defineProps<Props>(), {
   isPined: false,
   iconPosition: Position.topRight,
-  iconTop: 0,
-  iconLeft: 0,
+  iconTop: NaN,
+  iconLeft: NaN,
+  iconRight: NaN,
+  iconBottom: NaN,
 })
 
 // Emits
@@ -29,8 +34,9 @@ const emit = defineEmits<{
 }>()
 
 // Computeds
-const positionClasses = computed(() => {
+const positionClasses = computed<Array<string>>(() => {
   const classes = []
+
   if (props.iconPosition.includes(Position.middle)) {
     classes.push('pos-center')
   }
@@ -48,6 +54,25 @@ const positionClasses = computed(() => {
   }
   return classes
 })
+
+const positionStyles = computed<CSSProperties>(() => {
+  const styles: CSSProperties = {}
+
+  if (props.iconTop) {
+    styles.top = `${props.iconTop}px`
+  }
+  if (props.iconBottom) {
+    styles.bottom = `${props.iconBottom}px`
+  }
+  if (props.iconLeft) {
+    styles.left = `${props.iconLeft}px`
+  }
+  if (props.iconRight) {
+    styles.right = `${props.iconRight}px`
+  }
+
+  return styles
+})
 </script>
 
 <template>
@@ -62,11 +87,9 @@ const positionClasses = computed(() => {
     @mouseout="emit('mouseout', $event)"
   >
     <v-btn
-      :class="['pin-icon', ...positionClasses]"
-      :style="{
-        top: props.iconTop,
-        left: props.iconLeft,
-      }"
+      class="pin-icon"
+      :class="positionClasses"
+      :style="positionStyles"
       icon
       small
       @click="emit('click')"
@@ -108,6 +131,7 @@ const positionClasses = computed(() => {
     cursor: pointer;
     z-index: 1000;
     opacity: 0.6;
+    background: none;
 
     &:hover {
       opacity: 1;
@@ -118,19 +142,19 @@ const positionClasses = computed(() => {
     }
 
     &.pos-top {
-      top: math.div(-$pin-icon-size, 2);
+      top: -$pin-icon-size;
     }
 
     &.pos-bottom {
-      bottom: math.div(-$pin-icon-size, 2);
+      bottom: -$pin-icon-size;
     }
 
     &.pos-right {
-      right: math.div(-$pin-icon-size, 2);
+      right: -$pin-icon-size;
     }
 
     &.pos-left {
-      left: math.div(-$pin-icon-size, 2);
+      left: -$pin-icon-size;
     }
 
     &.pos-top.pos-right .icon {

@@ -2,14 +2,21 @@
 // Vendors Libs
 import { ref, computed } from 'vue'
 
-import { wait } from '@/utils/utils'
+import { useTheLoopStore } from '@/stores/ThePlayer/TheLoop'
+import { watch } from 'vue'
 
-const LOOP_STEP = 100 // In ms.
 const LOOP_DETERMINATE_COLOR = '#E87B00CC' // $orange-1 + light opacity.
 const LOOP_INDETERMINATE_COLOR = '#2196f3BB' // primary color + ligth opacity.
 const LOOP_DETERMINATE_HEIGHT = 20
 const LOOP_INDETERMINATE_HEIGHT = 4
-const LOOP_ANIMATION_WAIT = 200 // In ms.
+
+// Props
+interface Props {
+  dense?: boolean;
+}
+withDefaults(defineProps<Props>(), {
+  dense: false,
+})
 
 function getTimeText (ms: number, { noMs = false } = {}) {
   const date = new Date(2020, 0, 0)
@@ -36,50 +43,30 @@ function getTimeText (ms: number, { noMs = false } = {}) {
   return text
 }
 
-// Props
-interface Props {
-  duration?: number;
-  dense?: boolean;
-  showRemainingTime?: boolean;
-  showDurationTime?: boolean;
-}
-const props = withDefaults(defineProps<Props>(), {
-  duration: 3000,
-  dense: false,
-  showRemainingTime: false,
-  showDurationTime: false,
-})
-
-// Emits
-const emit = defineEmits<{
-  (e: 'end'): void;
-}>()
+const {
+  indeterminate,
+  value: loopVal,
+  maxValue,
+  showDurationTime,
+  showRemainingTime,
+} = useTheLoopStore()
 
 // Refs
-const id = ref()
-const value = ref(0)
-const indeterminate = ref(true)
 const color = ref(LOOP_INDETERMINATE_COLOR)
 const striped = ref(false)
 const height = ref(LOOP_INDETERMINATE_HEIGHT)
 
-const pause = ref(false)
-const stop = ref(false)
+// #region Computeds
+// const percentage = computed(() => (value.value * 100) / valueMax.value)
 
-const isLooping = ref(false)
-
-const percentage = computed(() => {
-  return (value.value * 100) / props.duration
-})
-
-const text = computed(() => {
+const text = computed<string>(() => {
   let val = ''
 
-  if (props.showRemainingTime) {
+  if (showRemainingTime.value) {
     val = remainingTimeText.value
   }
 
-  if (props.showDurationTime) {
+  if (showDurationTime.value) {
     if (val) {
       val = `${val} / `
     }
@@ -89,149 +76,67 @@ const text = computed(() => {
   return val
 })
 
-const remainingTimeText = computed(() => {
-  return getTimeText(props.duration - value.value)
-})
+const remainingTimeText = computed<string>(
+  () => getTimeText(maxValue.value - loopVal.value),
+)
+const durationTimeText = computed<string>(
+  () => getTimeText(maxValue.value, { noMs: true }),
+)
 
-const durationTimeText = computed(() => {
-  return getTimeText(props.duration, { noMs: true })
-})
+const showText = computed<boolean>(
+  () => !!(!indeterminate.value
+  && (showRemainingTime.value || showDurationTime.value)
+  && text),
+)
+// #endregion Computeds
 
-const showText = computed(() => {
-  return (props.showRemainingTime || props.showDurationTime) && text && !indeterminate.value
-})
-
-function startLooping () {
-  stop.value = false
-  pause.value = false
-
-  clearTimeoutLoop()
-  goToLoopStart()
-  looop()
+function goToLoopStart (): void {
+  loopVal.value = 0
 }
 
-async function stopLooping () {
-  clearTimeoutLoop()
-
-  isLooping.value = false
-  stop.value = true
-
-  await goToLoopStart()
-}
-
-function pauseLooping () {
-  isLooping.value = false
-  pause.value = true
-
-  clearTimeoutLoop()
-}
-
-function resumeLooping () {
-  if (!pause.value) {
-    return
-  }
-
-  pause.value = false
-  stop.value = false
-
-  looop()
-}
-
-function looop () {
-  isLooping.value = true
-  clearTimeoutLoop()
-
-  if (stop.value || pause) {
-    value.value -= LOOP_STEP
-    return
-  }
-
-  id.value = setTimeout(() => {
-    value.value += LOOP_STEP
-
-    // If loop has not yet reach its end, continue to loop.
-    if (value.value <= props.duration) {
-      looop()
-      return
-    }
-
-    // Add timeout to have feeling that loop reach the end.
-    wait({ time: LOOP_ANIMATION_WAIT }).then(() => onLoopEnd())
-  }, LOOP_STEP)
-}
-
-function clearTimeoutLoop () {
-  clearTimeout(id.value)
-  id.value = null
-}
-
-async function goToLoopEnd (options = {}) {
-  const prevValue = value
-
-  clearTimeoutLoop()
-  value.value = props.duration
-
-  if (prevValue.value !== props.duration) {
-    await wait({ time: LOOP_ANIMATION_WAIT })
-  }
-
-  onLoopEnd(options)
-}
-
-async function goToLoopStart () {
-  const prevValue = value
-  value.value = 0
-
-  if (prevValue.value) {
-    await wait({ time: LOOP_ANIMATION_WAIT })
-  }
-}
-
-function setIndeterminate (isIndeterminate: boolean) {
+watch(indeterminate, (isIndeterminate) => {
   if (isIndeterminate) {
-    indeterminate.value = true
     color.value = LOOP_INDETERMINATE_COLOR
     height.value = LOOP_INDETERMINATE_HEIGHT
+    striped.value = true
   } else {
-    indeterminate.value = false
     color.value = LOOP_DETERMINATE_COLOR
     height.value = LOOP_DETERMINATE_HEIGHT
+    striped.value = false
   }
-}
-
-function onLoopEnd ({ noEvent = false } = {}) {
-  isLooping.value = false
-  if (!noEvent) {
-    emit('end')
-  }
-}
+})
 </script>
 
 <template>
-  <v-progress-linear
+  <div
     class="the-loop"
     :style="{
       transform: dense ? `translateY(${height - 2}px)` : 'translateY(0)',
     }"
-    absolute
-    bottom
-    background-opacity="0.3"
-    :model-value="percentage"
-    :color="color"
-    :indeterminate="indeterminate"
-    :striped="striped"
-    :height="height"
-    @click="goToLoopStart"
   >
-    <span v-if="showText" :class="['text', { dense }]">
-      {{ text }}
-    </span>
-  </v-progress-linear>
+    <v-progress-linear
+      absolute
+      location="bottom"
+      bg-opacity="0.3"
+      :max="maxValue"
+      :model-value="loopVal"
+      :color="color"
+      :indeterminate="indeterminate"
+      :striped="striped"
+      :height="height"
+      @click="goToLoopStart"
+    >
+      <span v-if="showText" :class="['text', { dense }]">
+        {{ text }}
+      </span>
+    </v-progress-linear>
+  </div>
 </template>
 
 <style lang="scss" scoped>
 .the-loop {
   z-index: 1000;
+  transition: transform .3s ease-in;
 
   .text {
     font-size: 0.9em;

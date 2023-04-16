@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { eagerComputed } from '@vueuse/shared'
 
-import { useUIOptionsStore } from '@/stores/playerOptions/uiOptions'
+import { useUIOptionsStore } from '@/stores/ThePlayerOptions/uiOptions'
 
 const {
   showHistory,

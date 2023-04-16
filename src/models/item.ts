@@ -81,8 +81,8 @@ export class Item {
     tags = new Set(),
     warning = '',
     useCache = false,
-    isImage = false,
-    isVideo = false,
+    isImage,
+    isVideo,
   }: ItemData) {
     if (!src) {
       throw new Error(`Invalid item, item has no src. Item src: ${src}`)

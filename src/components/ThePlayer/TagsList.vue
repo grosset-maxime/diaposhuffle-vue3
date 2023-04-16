@@ -88,8 +88,8 @@ function getTagStyles (tag?: Tag) {
 function getTagCategoryColor (tag?: Tag) {
   const DEFAULT_COLOR = '#FFF'
 
-  return tag
-    ? tag.category.value?.hashColor || DEFAULT_COLOR
+  return tag && tag.category
+    ? tag.category.hashColor || DEFAULT_COLOR
     : DEFAULT_COLOR
 }
 </script>

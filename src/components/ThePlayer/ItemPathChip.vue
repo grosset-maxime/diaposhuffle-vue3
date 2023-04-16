@@ -1,15 +1,13 @@
 <script setup lang="ts">
 // TODO: Feature: On click add to clipboard the path of the item.
 
-// Props
-interface Props {
-  pathStart?: string;
-  pathEnd?: string;
-}
-withDefaults(defineProps<Props>(), {
-  pathStart: '',
-  pathEnd: '',
-})
+import { computed } from 'vue'
+import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer'
+
+const { item } = useThePlayerStore()
+
+const pathStart = computed(() => item.value?.customFolderPath || '')
+const pathEnd = computed(() => item.value?.randomPublicPath || '')
 
 // Emits
 const emit = defineEmits<{
