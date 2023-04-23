@@ -29,13 +29,12 @@ export interface UsePlayerArg {
   setNextItem: (item: Item) => void
   showNextItem: () => void
   playItem: () => void
+  pauseItem: () => void
 }
 
 export interface UsePlayerExpose {
   isStopped: ComputedRef<boolean>
-  isPlaying: ComputedRef<boolean>
   isPaused: ComputedRef<boolean>
-  isFetching: ComputedRef<boolean>
 
   items?: Array<Item>
   item: ComputedRef<Item | undefined>
@@ -43,10 +42,12 @@ export interface UsePlayerExpose {
 
   start: () => Promise<void>
   stop: () => void
-  play: () => void
   pause: () => void
+  resume: () => void
   next: () => Promise<void>
   previous: () => Promise<void>
+  canNext: () => boolean
+  canPrevious: () => boolean
   reset: () => void
 
   addItem?: (item: Item) => void
@@ -57,17 +58,18 @@ interface UseThePlayer {
   setNextItem: (item: Item) => void
   showNextItem: () => void
   playItem: () => void
+  pauseItem: () => void
 }
 
 export const useThePlayer = ({
   setNextItem,
   showNextItem,
   playItem,
+  pauseItem,
 }: UseThePlayer) => {
 
   const {
     isPaused,
-    isPlaying,
     isStopped,
   } = useThePlayerStore()
 
@@ -86,6 +88,7 @@ export const useThePlayer = ({
       setNextItem,
       showNextItem,
       playItem,
+      pauseItem,
     })
 
     // if (isFromPinedsSource.value) {
@@ -119,18 +122,16 @@ export const useThePlayer = ({
     isStopped.value = false
   }
 
-  const play = () => {
-    player.value.play()
-
-    isPaused.value = false
-    isPlaying.value = true
-  }
-
   const pause = () => {
     player.value.pause()
 
     isPaused.value = true
-    isPlaying.value = false
+  }
+
+  const resume = () => {
+    player.value.resume()
+
+    isPaused.value = false
   }
 
   const stop = () => {
@@ -149,12 +150,12 @@ export const useThePlayer = ({
   // #endregion Actions
 
   return {
-    player: computed(() => player.value),
+    player,
 
     start,
     stop,
-    play,
     pause,
+    resume,
     next,
     previous,
     reset,

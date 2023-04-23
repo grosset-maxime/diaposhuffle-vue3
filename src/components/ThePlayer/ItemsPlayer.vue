@@ -9,8 +9,8 @@ import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
 export interface ItemsPlayerCmpExpose {
   startPlayer: () => void
   stopPlayer: () => void
-  pausePlayer: () => void
-  playPlayer: () => void
+  pausePlayer: (opts?: { pauseItm?: boolean }) => void
+  resumePlayer: (opts?: { resumeItm?: boolean }) => void
 
   goToNextItem: () => void
   goToPreviousItem: () => void
@@ -54,6 +54,7 @@ const thePlayer = useThePlayer({
   setNextItem,
   showNextItem,
   playItem,
+  pauseItem,
 })
 
 onMounted(async () => {
@@ -63,8 +64,20 @@ onMounted(async () => {
 defineExpose<ItemsPlayerCmpExpose>({
   startPlayer: thePlayer.start,
   stopPlayer: thePlayer.stop,
-  pausePlayer: thePlayer.pause,
-  playPlayer: thePlayer.play,
+  pausePlayer: function ({ pauseItm = false }: { pauseItm?: boolean } = {}) {
+    thePlayer.pause()
+
+    if (pauseItm) {
+      pauseItem()
+    }
+  },
+  resumePlayer: function ({ resumeItm = false }: { resumeItm?: boolean } = {}) {
+    thePlayer.resume()
+
+    if (resumeItm) {
+      playItem()
+    }
+  },
 
   goToNextItem: thePlayer.next,
   goToPreviousItem: thePlayer.previous,

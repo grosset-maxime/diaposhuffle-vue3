@@ -20,7 +20,7 @@ export const usePinedPlayerStore = createGlobalState(() => {
   // const sourceOptsStore = useSourceOptionsStore()
 
   const isStopped = ref(true)
-  const isPlaying = ref(false)
+  const isPaused = ref(false)
 
   const isFetching = ref(false)
   const isFetchingNext = ref(false)
@@ -65,12 +65,12 @@ export const usePinedPlayerStore = createGlobalState(() => {
     isStopped.value = true
   }
 
-  const play = () => {
-    isPlaying.value = true
+  const resume = () => {
+    isPaused.value = true
   }
 
   const pause = () => {
-    isPlaying.value = false
+    isPaused.value = false
   }
 
   const next = async () => {
@@ -91,7 +91,7 @@ export const usePinedPlayerStore = createGlobalState(() => {
 
   const reset = () => {
     isStopped.value = true
-    isPlaying.value = false
+    isPaused.value = false
 
     isFetching.value = false
     isFetchingNext.value = false
@@ -220,7 +220,7 @@ export const usePinedPlayerStore = createGlobalState(() => {
 
   const player: Player = {
     isStopped: computed(() => isStopped.value),
-    isPlaying: computed(() => isPlaying.value),
+    isPaused: computed(() => isPaused.value),
 
     isFetching: computed(() => isFetching.value),
     isFetchingNext: computed(() => isFetchingNext.value),
@@ -236,8 +236,8 @@ export const usePinedPlayerStore = createGlobalState(() => {
 
     start,
     stop,
-    play,
     pause,
+    resume,
     next,
     previous,
     reset,

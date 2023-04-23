@@ -17,7 +17,6 @@ export const useTheLoopStore = createGlobalState(() => {
   const maxValue = ref(-1)
   const showDurationTime = ref(false)
   const showRemainingTime = ref(true)
-  const endFn = ref<(() => void) | undefined>()
 
 
   // #region Actions
@@ -35,6 +34,5 @@ export const useTheLoopStore = createGlobalState(() => {
     indeterminate,
     showDurationTime,
     showRemainingTime,
-    endFn,
   }
 })

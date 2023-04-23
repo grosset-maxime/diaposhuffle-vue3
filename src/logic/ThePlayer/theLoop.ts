@@ -12,15 +12,15 @@ const LOOP_STEP = 100 // In ms.
 const LOOP_ANIMATION_WAIT = 200 // In ms.
 
 interface UseTheLoop {
+  endFn: () => Promise<void>
   step?: Ref<number>
 }
-export const useTheLoop = ({ step = ref(LOOP_STEP) }: UseTheLoop = {}) => {
+export const useTheLoop = ({ endFn, step = ref(LOOP_STEP) }: UseTheLoop) => {
 
   const {
     // enabled,
     value,
     maxValue,
-    endFn,
   } = useTheLoopStore()
 
   const getTimeText = (ms: number, { noMs = false } = {}) => {
@@ -105,7 +105,7 @@ export const useTheLoop = ({ step = ref(LOOP_STEP) }: UseTheLoop = {}) => {
     isLooping.value = true
     clearTimeoutLoop()
 
-    if (stop.value || pause) {
+    if (stop.value || pause.value) {
       value.value -= step.value
       return
     }
@@ -153,10 +153,10 @@ export const useTheLoop = ({ step = ref(LOOP_STEP) }: UseTheLoop = {}) => {
     }
   }
 
-  function onLoopEnd ({ noEvent = false } = {}): void {
+  async function onLoopEnd ({ noEvent = false } = {}): Promise<void> {
     isLooping.value = false
     if (!noEvent) {
-      endFn.value?.()
+      await endFn()
     }
   }
 

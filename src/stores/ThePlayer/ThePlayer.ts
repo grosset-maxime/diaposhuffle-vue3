@@ -25,18 +25,19 @@ export enum FetchSource {
 }
 
 export const useThePlayerStore = createGlobalState(() => {
+  // Player states
   const isStopped = ref(true)
-  const isPlaying = ref(false)
   const isPaused = ref(false)
-
   const isFetching = ref(false)
 
   // Item states
   const item = ref<Item | undefined>()
   const itemIndex = ref(NaN)
   const itemsCount = ref(NaN)
-
-  const isPlayingItemVideo = ref(false)
+  const isItemPlaying = ref(false)
+  const isItemPaused = ref(false)
+  const isItemPlayable = ref(false)
+  const isItemVideo = ref(false)
   const isPinedItem = ref(false)
 
   // const fetchSource = ref<FetchSource>(FetchSource.fs)
@@ -104,18 +105,22 @@ export const useThePlayerStore = createGlobalState(() => {
   // #endregion Actions
 
   return {
+    // Player states
     isStopped,
-    isPlaying,
     isPaused,
     isFetching,
 
+    // Item states
     item,
     itemIndex,
     itemsCount,
-
-    isPlayingItemVideo,
+    isItemPlaying,
+    isItemPaused,
+    isItemPlayable,
+    isItemVideo,
     isPinedItem,
 
+    // Actions
     deleteItem,
     setItemTags,
   }

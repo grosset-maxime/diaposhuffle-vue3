@@ -60,7 +60,7 @@ const theLoopStore = useTheLoopStore()
 
 const item = computed(() => thePlayerStore.item.value)
 const isPaused = computed(() => thePlayerStore.isPaused.value)
-const isPlayingItemVideo = computed(() => thePlayerStore.isPlayingItemVideo.value)
+const isItemVideo = computed(() => thePlayerStore.isItemVideo.value)
 const playingItemTags = computed(() => item.value?.tags || new Set<TagId>())
 const isLoopEnabled = computed(() => theLoopStore.enabled.value)
 const isPinedItem = computed(() => thePlayerStore.isPinedItem.value)
@@ -148,7 +148,7 @@ const taggerModal = {
 }
 
 function showTaggerModal (): void {
-  pausePlayer({ pauseItem: false })
+  pausePlayer({ pauseItm: false })
   stopKSListener()
   taggerModal.show.value = true
 }
@@ -197,8 +197,12 @@ function stopPlayer (): void {
   ItemsPlayerCmp.value!.stopPlayer()
   showThePlayer.value = false
 }
-function pausePlayer (): void { ItemsPlayerCmp.value?.pausePlayer() }
-function resumePlayer (): void { ItemsPlayerCmp.value?.playPlayer() }
+function pausePlayer (opts: { pauseItm?: boolean } = {}): void {
+  ItemsPlayerCmp.value?.pausePlayer(opts)
+}
+function resumePlayer (opts: { resumeItm?: boolean } = {}): void {
+  ItemsPlayerCmp.value?.resumePlayer(opts)
+}
 function goToNextItem (): void { ItemsPlayerCmp.value?.goToNextItem() }
 function goToPreviousItem (): void { ItemsPlayerCmp.value?.goToPreviousItem() }
 
@@ -247,9 +251,9 @@ function keyboardShortcuts (key: string): void {
     // infinite loop if wanted.
   case 'ArrowDown':
     if (isPaused.value) {
-      resumePlayer({ resumeItem: false })
+      resumePlayer({ resumeItm: false })
     } else {
-      pausePlayer({ pauseItem: false })
+      pausePlayer({ pauseItm: false })
     }
     break
 
@@ -258,7 +262,8 @@ function keyboardShortcuts (key: string): void {
     break
 
   case 'ArrowRight':
-    goToNextItem({ pausePlayingIfStillInHistory: true })
+    goToNextItem()
+    // goToNextItem({ pausePlayingIfStillInHistory: true }) // TODO: to manage with history player
     break
 
   case 'ArrowLeft':
@@ -275,7 +280,7 @@ function keyboardShortcuts (key: string): void {
     break
 
   case 'p':
-    pausePlayer({ pauseItem: false })
+    pausePlayer({ pauseItm: false })
     // TODO: togglePinItem({ item: item.value! })
     showUIDuring(3000)
     break
@@ -442,7 +447,7 @@ onMounted(async () => {
     :class="[
       'the-player',
       {
-        'video-item': isPlayingItemVideo,
+        'video-item': isItemVideo,
         'show-ui': shouldShowUI,
       },
     ]"
