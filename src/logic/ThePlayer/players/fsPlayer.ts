@@ -1,21 +1,18 @@
-// TODO: Feature: Add fetch items from bdd with tags and types. DONE ?
 // TODO: Bug: Backend: getimagesize raize warning in call response body that
 //            trigger json.parse to fail. Should be added to the response object as error.
 
 // Types
-import type { Ref } from 'vue'
 import type { Item } from '@/models/item'
 import type { UsePlayerArg, UsePlayerExpose } from '@/logic/ThePlayer/thePlayer'
 
 // Vendors Libs
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 
 // import { getRandomElementWithIndex } from '@/utils/utils'
 import { buildError } from '@/api/api'
 import {
   fetchRandomItem as fetchRandomItemAPI,
 } from '@/api/items'
-import { Item as ItemClass } from '@/models/item'
 
 import { useTheLoop } from '@/logic/ThePlayer/theLoop'
 
@@ -30,8 +27,6 @@ export const useFSPlayer = ({
   showNextItem,
   setNextItem,
   getItemDuration,
-  playItem,
-  pauseItem,
 }: UsePlayerArg) => {
 
   const thePlayerStore = useThePlayerStore()
@@ -50,7 +45,13 @@ export const useFSPlayer = ({
 
   const errors = ref<Array<{ [key: string]: unknown }>>([])
 
-  // const getErrors = () => errors.value
+  // #region Methods
+  function addError ({ actionName, error }: { actionName: string; error: unknown }): void {
+    errors.value.push({
+      [ actionName ]: error,
+    })
+    console.error(actionName, error)
+  }
 
   async function fetchNextItem (): Promise<Item> {
     isFetchingNext.value = true
@@ -88,14 +89,6 @@ export const useFSPlayer = ({
   }
 
   const theLoop = useTheLoop({ endFn: onLoopEnd })
-
-  // #region Methods
-  function addError ({ actionName, error }: { actionName: string; error: unknown }): void {
-    errors.value.push({
-      [ actionName ]: error,
-    })
-    console.error(actionName, error)
-  }
 
   async function fetchItem (): Promise<Item> {
     let item: Item | undefined
@@ -176,6 +169,19 @@ export const useFSPlayer = ({
     theLoopStore.indeterminate.value = false
     theLoopStore.value.value = NaN
     theLoopStore.maxValue.value = NaN
+
+    // Player's components/feature enabled/disabled
+    thePlayerStore.itemsInfoEnabled.value = false
+
+    // Item states
+    thePlayerStore.item.value = undefined
+    thePlayerStore.isItemPaused.value = false
+    thePlayerStore.isItemPlayable.value = false
+    thePlayerStore.isItemVideo.value = false
+
+    // Player states
+    thePlayerStore.isPaused.value = false
+    thePlayerStore.isFetching.value = false
 
     errors.value = []
   }

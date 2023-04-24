@@ -43,7 +43,7 @@ const { showThePlayer } = useDiapoShuffleStore()
 // const sourceOptsStore = useSourceOptionsStore()
 const {
   // showHistory,
-  showListIndex,
+  showListIndex: showItemsInfo,
   showLoop,
   showPath,
   showPined,
@@ -63,6 +63,7 @@ const isPaused = computed(() => thePlayerStore.isPaused.value)
 const isItemVideo = computed(() => thePlayerStore.isItemVideo.value)
 const playingItemTags = computed(() => item.value?.tags || new Set<TagId>())
 const isLoopEnabled = computed(() => theLoopStore.enabled.value)
+const isItemsInfoEnabled = computed(() => thePlayerStore.itemsInfoEnabled.value)
 const isPinedItem = computed(() => thePlayerStore.isPinedItem.value)
 // const historyLength = ref(0) // TODO
 const isFromPinedsSource = ref(false) // TODO
@@ -134,7 +135,7 @@ function hideDeleteModal ({
       const error = buildError(e)
 
       pausePlayer()
-      displayAlert(error)
+      displayAlert(error as Partial<Alert>)
 
       throw error
     })
@@ -174,7 +175,7 @@ async function onSaveTaggerModal (selectedTagIds: Set<TagId>): Promise<void> {
     const error = buildError(e)
 
     pausePlayer()
-    displayAlert(error)
+    displayAlert(error as Partial<Alert>)
 
     throw error
   }
@@ -186,7 +187,14 @@ const { startKSListener, stopKSListener }
   = useKeyboardShortcutsListener(keyboardShortcuts)
 
 const showAlert = ref(false)
-const alert = ref({
+
+interface Alert {
+  publicMessage: string
+  severity: 'error'
+  showDeleteBtn: boolean
+  onClose: () => void
+}
+const alert = ref<Alert>({
   publicMessage: '',
   severity: 'error',
   showDeleteBtn: false,
@@ -222,7 +230,7 @@ function displayAlert ({
   severity = 'error',
   showDeleteBtn = false,
   onClose = () => {},
-} = {}): void {
+}: Partial<Alert> = {}): void {
   alert.value = {
     publicMessage,
     severity,
@@ -338,7 +346,7 @@ const showTheTagsList = eagerComputed<boolean>(
   () => !!(showTags.value && item.value),
 )
 const showTheItemsInfoChip = eagerComputed<boolean>(
-  () => !!(showListIndex.value && (isFromPinedsSource.value || isSourceDB)),
+  () => !!(showItemsInfo.value && isItemsInfoEnabled.value),
 )
 // const showTheHistoryChip = computed(() => !!historyLength.value)
 
@@ -468,7 +476,7 @@ onMounted(async () => {
       @mouseout="onMouseOutUI"
     >
       <TheLoop
-        v-if="showTheLoop "
+        v-if="showTheLoop"
         :up="loop.pined.value || shouldShowUI"
       />
     </PinWrapper>
@@ -687,9 +695,15 @@ onMounted(async () => {
     }
   }
 
-  &.video-item {
+  &.show-ui {
+    &.video-item {
+      .the-item-path-chip-pin-wrapper {
+        bottom: 70px; // To not cover the video controls.
+      }
+    }
+
     .the-item-path-chip-pin-wrapper {
-      bottom: 80px; // To not cover the video controls.
+      bottom: 25px; // To not cover the video controls.
     }
   }
 
@@ -800,7 +814,7 @@ onMounted(async () => {
 
   .the-item-path-chip-pin-wrapper {
     position: absolute;
-    bottom: 25px;
+    bottom: 10px;
     right: 5px;
     z-index: 1000;
     transform: translateX(110%);

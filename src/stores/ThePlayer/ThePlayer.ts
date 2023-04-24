@@ -38,6 +38,9 @@ export const useThePlayerStore = createGlobalState(() => {
   const isItemVideo = ref(false)
   const isPinedItem = ref(false)
 
+  // Player's components/feature enabled/disabled
+  const itemsInfoEnabled = ref(false)
+
   // const fetchSource = ref<FetchSource>(FetchSource.fs)
 
   const errors = ref<Array<{ [key: string]: unknown }>>([])
@@ -116,6 +119,9 @@ export const useThePlayerStore = createGlobalState(() => {
     isItemPlayable,
     isItemVideo,
     isPinedItem,
+
+    //
+    itemsInfoEnabled,
 
     // Actions
     deleteItem,

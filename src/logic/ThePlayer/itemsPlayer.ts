@@ -235,8 +235,11 @@ export const useItemsPlayer = ({ itemsRefs }: UseItemsPlayer) => {
 
   function playItem (itemName: ItemName = currentItemName.value): void {
     if (isItemVideo(itemName)) {
+      thePlayerStore.isItemVideo.value = true
       playVideo(itemName)
       thePlayerStore.isItemPaused.value = false
+    } else {
+      thePlayerStore.isItemVideo.value = false
     }
   }
   // #endregion exposed methods
