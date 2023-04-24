@@ -43,6 +43,7 @@ const {
   setNextItem,
   showNextItem,
 
+  getItemDuration,
   playItem,
   pauseItem,
 
@@ -53,6 +54,7 @@ const {
 const thePlayer = useThePlayer({
   setNextItem,
   showNextItem,
+  getItemDuration,
   playItem,
   pauseItem,
 })

@@ -305,7 +305,6 @@ const showPinedAnim = ref(false)
 const showUnpinedAnim = ref(false)
 
 const loop = {
-  duration: ref(0),
   pined: ref(false),
 }
 
@@ -462,14 +461,15 @@ onMounted(async () => {
       ]"
       :is-pined="loop.pined.value"
       :icon-position="Position.middle"
-      icon-position-top="-37px"
+      :icon-top="-52"
+      :show-icon="shouldShowUI"
       @click="togglePinUI('loop')"
       @mouseover="onMouseOverUI"
       @mouseout="onMouseOutUI"
     >
       <TheLoop
         v-if="showTheLoop "
-        :dense="!loop.pined.value && !shouldShowUI"
+        :up="loop.pined.value || shouldShowUI"
       />
     </PinWrapper>
 
@@ -491,6 +491,7 @@ onMounted(async () => {
       ]"
       :is-pined="pinedChip.pined.value"
       :icon-position="Position.topLeft"
+      :show-icon="shouldShowUI"
       @click="togglePinUI('pinedChip')"
       @mouseover="onMouseOverUI"
       @mouseout="onMouseOutUI"
@@ -566,6 +567,7 @@ onMounted(async () => {
       ]"
       :is-pined="itemsInfoChip.pined.value"
       :icon-position="Position.topRight"
+      :show-icon="shouldShowUI"
       @click="togglePinUI('itemsInfoChip')"
       @mouseover="onMouseOverUI"
       @mouseout="onMouseOutUI"
@@ -583,6 +585,7 @@ onMounted(async () => {
       ]"
       :is-pined="tagsList.pined.value"
       :icon-position="Position.topRight"
+      :show-icon="shouldShowUI"
       @click="togglePinUI('tagsList')"
       @mouseover="onMouseOverUI"
       @mouseout="onMouseOutUI"
@@ -633,6 +636,7 @@ onMounted(async () => {
       ]"
       :is-pined="itemPathChip.pined.value"
       :icon-position="Position.topLeft"
+      :show-icon="shouldShowUI"
       @click="togglePinUI('itemPathChip')"
       @mouseover="onMouseOverUI"
       @mouseout="onMouseOutUI"

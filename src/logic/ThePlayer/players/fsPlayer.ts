@@ -29,6 +29,7 @@ import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
 export const useFSPlayer = ({
   showNextItem,
   setNextItem,
+  getItemDuration,
   playItem,
   pauseItem,
 }: UsePlayerArg) => {
@@ -71,13 +72,13 @@ export const useFSPlayer = ({
     setNextItem(nextItem.value)
     await showNextItem()
 
-    item.value = nextItem.value
-    thePlayerStore.item.value = item.value
+    const itm = nextItem.value
+    item.value = itm
+    thePlayerStore.item.value = itm
 
     theLoopStore.indeterminate.value = false
     theLoopStore.value.value = 0
-    // TODO: get video duration here
-    theLoopStore.maxValue.value = playerOptsStore.interval.value * 1000
+    theLoopStore.maxValue.value = getItemDuration() || playerOptsStore.interval.value * 1000
 
     fetchNextItem()
 

@@ -10,12 +10,13 @@ import { computed } from 'vue'
 
 // Props
 interface Props {
-  isPined?: boolean;
-  iconPosition?: Position;
-  iconTop?: number;
-  iconLeft?: number;
-  iconRight?: number;
-  iconBottom?: number;
+  isPined?: boolean
+  iconPosition?: Position
+  iconTop?: number
+  iconLeft?: number
+  iconRight?: number
+  iconBottom?: number
+  showIcon?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {
   isPined: false,
@@ -24,6 +25,7 @@ const props = withDefaults(defineProps<Props>(), {
   iconLeft: NaN,
   iconRight: NaN,
   iconBottom: NaN,
+  showIcon: false,
 })
 
 // Emits
@@ -87,12 +89,14 @@ const positionStyles = computed<CSSProperties>(() => {
     @mouseout="emit('mouseout', $event)"
   >
     <v-btn
+      v-show="showIcon"
       class="pin-icon"
       :class="positionClasses"
       :style="positionStyles"
       icon
       small
       @click="emit('click')"
+      @keyup.prevent
     >
       <v-icon small class="icon">
         {{ props.isPined ? 'mdi-pin-outline' : 'mdi-pin-off-outline' }}

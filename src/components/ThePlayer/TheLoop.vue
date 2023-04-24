@@ -12,10 +12,10 @@ const LOOP_INDETERMINATE_HEIGHT = 4
 
 // Props
 interface Props {
-  dense?: boolean;
+  up?: boolean;
 }
 withDefaults(defineProps<Props>(), {
-  dense: false,
+  up: false,
 })
 
 function getTimeText (ms: number, { noMs = false } = {}) {
@@ -111,7 +111,7 @@ watch(indeterminate, (isIndeterminate) => {
   <div
     class="the-loop"
     :style="{
-      transform: dense ? `translateY(${height - 2}px)` : 'translateY(0)',
+      transform: up ? 'translateY(0)' : `translateY(${height - 2}px)`,
     }"
   >
     <v-progress-linear
@@ -126,7 +126,7 @@ watch(indeterminate, (isIndeterminate) => {
       :height="height"
       @click="goToLoopStart"
     >
-      <span v-if="showText" :class="['text', { dense }]">
+      <span v-if="showText" :class="['text', { up }]">
         {{ text }}
       </span>
     </v-progress-linear>
@@ -136,16 +136,17 @@ watch(indeterminate, (isIndeterminate) => {
 <style lang="scss" scoped>
 .the-loop {
   z-index: 1000;
-  transition: transform .3s ease-in;
+  transition: transform .3s ease;
 
   .text {
     font-size: 0.9em;
     font-weight: bold;
     text-shadow: 0 0 2px black;
-    transition: opacity 0.3s ease;
+    transition: opacity .3s ease;
+    opacity: 0;
 
-    &.dense {
-      opacity: 0;
+    &.up {
+      opacity: 1;
     }
   }
 }

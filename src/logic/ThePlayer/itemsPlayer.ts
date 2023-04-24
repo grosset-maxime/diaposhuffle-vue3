@@ -4,6 +4,7 @@ import type { Item } from '@/models/item'
 
 // Vendors Libs
 import { ref, computed, onMounted } from 'vue'
+import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer'
 
 // import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer'
 
@@ -46,7 +47,7 @@ interface UseItemsPlayer {
 
 export const useItemsPlayer = ({ itemsRefs }: UseItemsPlayer) => {
 
-  // const thePlayerStore = useThePlayerStore()
+  const thePlayerStore = useThePlayerStore()
 
   const ITEM_1_NAME: ItemName = 'item1'
   const ITEM_2_NAME: ItemName = 'item2'
@@ -106,6 +107,17 @@ export const useItemsPlayer = ({ itemsRefs }: UseItemsPlayer) => {
 
   function isItemVideo (itemName: ItemName = currentItemName.value): boolean {
     return !!getItemData(itemName)?.isVideo
+  }
+
+  function getItemDuration (itemName = currentItemName.value): number {
+    let duration = NaN
+
+    if (isItemVideo(itemName)) {
+      const videoEl = getVideoEl(itemName)
+      duration = (videoEl.duration || 0) * 1000
+    }
+
+    return duration
   }
 
   function createLoadItemPromise (itemName: ItemName = currentItemName.value): Promise<void> {
@@ -211,22 +223,20 @@ export const useItemsPlayer = ({ itemsRefs }: UseItemsPlayer) => {
 
     resetItem(nextItemName.value)
 
-    // if (item.isLoaded) {
-    //   emit('currentItem:loaded', currentItemName.value)
-    // } else if (item.isError) {
-    //   emit('currentItem:error', { item: item.data.value! })
-    // }
+    playItem()
   }
 
   function pauseItem (itemName: ItemName = currentItemName.value): void {
     if (isItemVideo(itemName)) {
       pauseVideo(itemName)
+      thePlayerStore.isItemPaused.value = true
     }
   }
 
   function playItem (itemName: ItemName = currentItemName.value): void {
     if (isItemVideo(itemName)) {
       playVideo(itemName)
+      thePlayerStore.isItemPaused.value = false
     }
   }
   // #endregion exposed methods
@@ -239,6 +249,7 @@ export const useItemsPlayer = ({ itemsRefs }: UseItemsPlayer) => {
     setNextItem,
     showNextItem,
 
+    getItemDuration,
     playItem,
     pauseItem,
 

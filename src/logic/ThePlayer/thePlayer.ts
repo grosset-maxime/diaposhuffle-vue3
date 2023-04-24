@@ -28,6 +28,7 @@ import { useFSPlayer } from '@/logic/ThePlayer/players/fsPlayer'
 export interface UsePlayerArg {
   setNextItem: (item: Item) => void
   showNextItem: () => void
+  getItemDuration: () => number
   playItem: () => void
   pauseItem: () => void
 }
@@ -57,6 +58,7 @@ export interface UsePlayerExpose {
 interface UseThePlayer {
   setNextItem: (item: Item) => void
   showNextItem: () => void
+  getItemDuration: () => number
   playItem: () => void
   pauseItem: () => void
 }
@@ -64,6 +66,7 @@ interface UseThePlayer {
 export const useThePlayer = ({
   setNextItem,
   showNextItem,
+  getItemDuration,
   playItem,
   pauseItem,
 }: UseThePlayer) => {
@@ -87,6 +90,7 @@ export const useThePlayer = ({
     return useFSPlayer({
       setNextItem,
       showNextItem,
+      getItemDuration,
       playItem,
       pauseItem,
     })

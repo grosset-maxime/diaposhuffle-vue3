@@ -1,5 +1,5 @@
 // Types
-import type { ComputedRef, Ref } from 'vue'
+import type { Ref } from 'vue'
 
 // Vendors Libs
 import { ref, computed } from 'vue'
@@ -18,7 +18,6 @@ interface UseTheLoop {
 export const useTheLoop = ({ endFn, step = ref(LOOP_STEP) }: UseTheLoop) => {
 
   const {
-    // enabled,
     value,
     maxValue,
   } = useTheLoopStore()

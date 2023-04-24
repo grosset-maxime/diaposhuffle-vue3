@@ -3,11 +3,10 @@
 //            trigger json.parse to fail. Should be added to the response object as error.
 
 // Types
-import type { Ref, ComputedRef } from 'vue'
 import type { Item } from '@/models/item'
 
 // Vendors Libs
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { createGlobalState } from '@vueuse/core'
 
 import { buildError } from '@/api/api'
@@ -34,7 +33,6 @@ export const useThePlayerStore = createGlobalState(() => {
   const item = ref<Item | undefined>()
   const itemIndex = ref(NaN)
   const itemsCount = ref(NaN)
-  const isItemPlaying = ref(false)
   const isItemPaused = ref(false)
   const isItemPlayable = ref(false)
   const isItemVideo = ref(false)
@@ -114,7 +112,6 @@ export const useThePlayerStore = createGlobalState(() => {
     item,
     itemIndex,
     itemsCount,
-    isItemPlaying,
     isItemPaused,
     isItemPlayable,
     isItemVideo,
