@@ -46,7 +46,7 @@ export interface ItemData {
   height?: number;
   randomPublicPath?: string;
   customFolderPath?: string;
-  tags?: Set<TagId>;
+  tags?: Set<TagId> | Array<TagId>;
   warning?: string;
   useCache?: boolean;
   isImage?: boolean;
@@ -101,7 +101,7 @@ export class Item {
     this.customFolderPath = customFolderPath
     this.randomPublicPath = randomPublicPath ?? this.path
 
-    this.tags = tags
+    this.tags = new Set(tags)
 
     this.warning = warning
     this.useCache = useCache

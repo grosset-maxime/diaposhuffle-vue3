@@ -168,7 +168,7 @@ export const setItemTags = async ({ item }: { item: Item }) => {
     const url = `${BASE_URL}/api/setTags`
     const opts = {
       method: 'POST',
-      body: JSON.stringify({ name, path, tags }),
+      body: JSON.stringify({ name, path, tags: Array.from(tags) }),
     }
 
     response = await fetchJson(url, opts)
