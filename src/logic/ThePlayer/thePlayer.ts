@@ -1,24 +1,15 @@
-// TODO: Feature: Add fetch items from bdd with tags and types. DONE ?
-// TODO: Bug: Backend: getimagesize raize warning in call response body that
-//            trigger json.parse to fail. Should be added to the response object as error.
-
 // Types
-import type { Ref, ComputedRef } from 'vue'
+import type { ComputedRef } from 'vue'
 import type { Item } from '@/models/item'
 
 // Vendors Libs
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 
-import { getRandomElementWithIndex } from '@/utils/utils'
-import { buildError } from '@/api/api'
-import {
-  fetchRandomItem as fetchRandomItemAPI,
-} from '@/api/items'
+// import { buildError } from '@/api/api'
 // import { Item as ItemClass } from '@/models/item'
 
 // Stores
-import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer'
-import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
+import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
 
 // Players
@@ -68,8 +59,6 @@ export const useThePlayer = ({
   setNextItem,
   showNextItem,
   getItemDuration,
-  playItem,
-  pauseItem,
 }: UseThePlayer) => {
 
   const {

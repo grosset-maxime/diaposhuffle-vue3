@@ -21,8 +21,8 @@ import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsLis
 import { useGlobalState } from '@/stores'
 import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
 import { useUIOptionsStore } from '@/stores/ThePlayerOptions/uiOptions'
-import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer'
-import { useTheLoopStore } from '@/stores/ThePlayer/TheLoop'
+import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
+import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 
 // Components
 import TheLoop from '@/components/ThePlayer/TheLoop.vue'

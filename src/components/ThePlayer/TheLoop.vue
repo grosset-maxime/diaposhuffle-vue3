@@ -2,7 +2,7 @@
 // Vendors Libs
 import { ref, computed } from 'vue'
 
-import { useTheLoopStore } from '@/stores/ThePlayer/TheLoop'
+import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { watch } from 'vue'
 
 const LOOP_DETERMINATE_COLOR = '#E87B00CC' // $orange-1 + light opacity.

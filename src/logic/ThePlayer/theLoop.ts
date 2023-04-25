@@ -6,7 +6,7 @@ import { ref, computed } from 'vue'
 
 import { wait } from '@/utils/utils'
 
-import { useTheLoopStore } from '@/stores/ThePlayer/TheLoop'
+import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 
 const LOOP_STEP = 100 // In ms.
 const LOOP_ANIMATION_WAIT = 200 // In ms.

@@ -2,7 +2,7 @@
 // TODO: Feature: On click add to clipboard the path of the item.
 
 import { computed } from 'vue'
-import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer'
+import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 
 const { item } = useThePlayerStore()
 

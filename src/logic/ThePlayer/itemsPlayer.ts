@@ -3,8 +3,8 @@ import { type Ref, type CSSProperties, reactive } from 'vue'
 import type { Item } from '@/models/item'
 
 // Vendors Libs
-import { ref, computed, onMounted } from 'vue'
-import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer'
+import { ref, computed } from 'vue'
+import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 
 // import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer'
 

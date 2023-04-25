@@ -14,7 +14,6 @@ import { eagerComputed } from '@vueuse/shared'
 // Stores
 import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
 import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
-import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer'
 
 // Components
 import TheFolderBrowser from '@/components/TheFolderBrowser/TheFolderBrowser.vue'
@@ -23,7 +22,6 @@ import TagChip from '@/components/TagChip.vue'
 
 const { showTagger, showFolderBrowser } = useDiapoShuffleStore()
 const sourceOptsStore = useSourceOptionsStore()
-const playerStore = useThePlayerStore()
 
 //#region Folder Browser
 const selectedFolders = ref<Set<FolderPath>>(new Set(sourceOptsStore.folders.value))

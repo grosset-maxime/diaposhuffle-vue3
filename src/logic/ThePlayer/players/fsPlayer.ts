@@ -14,10 +14,10 @@ import {
 import { useTheLoop } from '@/logic/ThePlayer/theLoop'
 
 // Stores
-import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer'
+import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 // import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
 import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
-import { useTheLoopStore } from '@/stores/ThePlayer/TheLoop'
+import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
 
 export const useFSPlayer = ({

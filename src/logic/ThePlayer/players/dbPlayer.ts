@@ -16,8 +16,8 @@ import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
 import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
 import type { UsePlayerArg, UsePlayerExpose } from '../thePlayer'
 import { useTheLoop } from '../theLoop'
-import { useTheLoopStore } from '@/stores/ThePlayer/TheLoop'
-import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer'
+import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
+import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 
 export const useDBPlayer = ({
   showNextItem,

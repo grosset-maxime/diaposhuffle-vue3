@@ -6,7 +6,7 @@
 import { computed } from 'vue'
 
 // Stores
-import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer'
+import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 
 const emit = defineEmits<{
   (e: 'click'): void;
