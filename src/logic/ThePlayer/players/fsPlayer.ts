@@ -1,6 +1,3 @@
-// TODO: Bug: Backend: getimagesize raize warning in call response body that
-//            trigger json.parse to fail. Should be added to the response object as error.
-
 // Types
 import type { Item } from '@/models/item'
 import type { UsePlayerArg, UsePlayerExpose } from '@/logic/ThePlayer/thePlayer'
@@ -59,15 +56,17 @@ export const useFSPlayer = ({
     fetchNextItemPromise.value = fetchItem()
     const itm = await fetchNextItemPromise.value
 
-    nextItem.value = itm
     isFetchingNext.value = false
     return itm
   }
 
-  async function onLoopEnd () {
+  async function onLoopEnd (): Promise<void> {
     theLoopStore.indeterminate.value = true
 
-    if (!nextItem.value) { await fetchNextItem() }
+    if (!nextItem.value) {
+      nextItem.value = await fetchNextItem()
+    }
+
     if (!nextItem.value) { throw new Error('No next item found.') }
 
     setNextItem(nextItem.value)
@@ -82,6 +81,7 @@ export const useFSPlayer = ({
     theLoopStore.maxValue.value = getItemDuration() || playerOptsStore.interval.value * 1000
 
     fetchNextItem()
+      .then((itm) => nextItem.value = itm)
 
     if (!isPaused.value) {
       theLoop.startLooping()
@@ -123,9 +123,7 @@ export const useFSPlayer = ({
   // #region Exposed Actions
   async function start (): Promise<void> {
     reset()
-
     isStopped.value = false
-
     await onLoopEnd()
   }
 

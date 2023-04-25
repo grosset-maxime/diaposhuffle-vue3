@@ -64,12 +64,12 @@ export const useTheLoop = ({ endFn, step = ref(LOOP_STEP) }: UseTheLoop) => {
     () => getTimeText(maxValue.value, { noMs: true }),
   )
 
-  function startLooping (): void {
+  async function startLooping (): Promise<void> {
     stop.value = false
     pause.value = false
 
     clearTimeoutLoop()
-    goToLoopStart()
+    await goToLoopStart()
     looop()
   }
 

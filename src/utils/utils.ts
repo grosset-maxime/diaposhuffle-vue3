@@ -72,8 +72,8 @@ export const getRandomNum = (a: number, b?: number) => {
 export const getRandomElementWithIndex = <T>(
   array: Array<T>,
 ): {
-  index: number; // -1 if empty is empty.
-  el: T | undefined;
+  index: number // -1 if empty is empty.
+  el: T | undefined
 } => {
   const index = getRandomNum(array.length - 1)
   const el = array[ index ]

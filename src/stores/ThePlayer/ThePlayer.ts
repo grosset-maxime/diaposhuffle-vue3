@@ -40,6 +40,7 @@ export const useThePlayerStore = createGlobalState(() => {
 
   // Player's components/feature enabled/disabled
   const itemsInfoEnabled = ref(false)
+  const historyEnabled = ref(false)
 
   // const fetchSource = ref<FetchSource>(FetchSource.fs)
 
@@ -120,8 +121,9 @@ export const useThePlayerStore = createGlobalState(() => {
     isItemVideo,
     isPinedItem,
 
-    //
+    // Player's components/feature enabled/disabled
     itemsInfoEnabled,
+    historyEnabled,
 
     // Actions
     deleteItem,

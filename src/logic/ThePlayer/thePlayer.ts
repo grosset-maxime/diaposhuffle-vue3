@@ -23,14 +23,15 @@ import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
 
 // Players
 import { useFSPlayer } from '@/logic/ThePlayer/players/fsPlayer'
+import { useDBPlayer } from './players/dbPlayer'
 // import { usePinedPlayerStore } from '@/stores/ThePlayer/players/pinedPlayer'
 
 export interface UsePlayerArg {
   setNextItem: (item: Item) => void
   showNextItem: () => void
   getItemDuration: () => number
-  playItem: () => void
-  pauseItem: () => void
+  playItem?: () => void
+  pauseItem?: () => void
 }
 
 export interface UsePlayerExpose {
@@ -76,7 +77,7 @@ export const useThePlayer = ({
     isStopped,
   } = useThePlayerStore()
 
-  const playerOptsStore = usePlayerOptionsStore()
+  // const playerOptsStore = usePlayerOptionsStore()
   const sourceOptsStore = useSourceOptionsStore()
 
 
@@ -87,33 +88,26 @@ export const useThePlayer = ({
     // player = useFSPlayerStore()
     // }
 
-    return useFSPlayer({
-      setNextItem,
-      showNextItem,
-      getItemDuration,
-      playItem,
-      pauseItem,
-    })
+    if (sourceOptsStore.tags.value.size
+      || sourceOptsStore.fileTypes.value.length
+    ) {
+      return useDBPlayer({
+        setNextItem,
+        showNextItem,
+        getItemDuration,
+      })
+    } else {
+      return useFSPlayer({
+        setNextItem,
+        showNextItem,
+        getItemDuration,
+      })
+    }
 
     // if (isFromPinedsSource.value) {
     //   await playerStore.fetchItemsFromPineds()
     // } else if (hasTagsSource.value || hasFileTypesSource) {
-    //   setLoopIndeterminate(true)
-
-    //   try {
     //     await playerStore.fetchItemsFromDB()
-    //   } catch (e) {
-    //     const error = buildError(e)
-
-    //     setLoopIndeterminate(false)
-    //     displayAlert({ ...error, onClose: stopPlaying })
-
-    //     if (error.severity === ERROR_SEVERITY_INFO) {
-    //       return Promise.resolve()
-    //     }
-
-    //     throw error
-    //   }
     // } else {
     //   await playerStore.fetchItemsFromFS()
     // }

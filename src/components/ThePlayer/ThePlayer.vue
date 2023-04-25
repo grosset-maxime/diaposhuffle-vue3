@@ -29,7 +29,7 @@ import TheLoop from '@/components/ThePlayer/TheLoop.vue'
 import PauseBtn from '@/components/ThePlayer/PauseBtn.vue'
 import ItemsPlayer, { type ItemsPlayerCmpExpose } from '@/components/ThePlayer/ItemsPlayer.vue'
 import TagsList from '@/components/ThePlayer/TagsList.vue'
-// import HistoryChip from '@/components/ThePlayer/HistoryChip.vue'
+import HistoryChip from '@/components/ThePlayer/HistoryChip.vue'
 import ItemsInfoChip from '@/components/ThePlayer/ItemsInfoChipChip.vue'
 import PinWrapper from '@/components/ThePlayer/PinWrapper.vue'
 import ItemPathChip from '@/components/ThePlayer/ItemPathChip.vue'
@@ -42,7 +42,7 @@ const { showTheHelp } = useGlobalState()
 const { showThePlayer } = useDiapoShuffleStore()
 // const sourceOptsStore = useSourceOptionsStore()
 const {
-  // showHistory,
+  showHistory,
   showListIndex: showItemsInfo,
   showLoop,
   showPath,
@@ -64,6 +64,7 @@ const isItemVideo = computed(() => thePlayerStore.isItemVideo.value)
 const playingItemTags = computed(() => item.value?.tags || new Set<TagId>())
 const isLoopEnabled = computed(() => theLoopStore.enabled.value)
 const isItemsInfoEnabled = computed(() => thePlayerStore.itemsInfoEnabled.value)
+const isHistoryEnabled = computed(() => thePlayerStore.historyEnabled.value)
 const isPinedItem = computed(() => thePlayerStore.isPinedItem.value)
 // const historyLength = ref(0) // TODO
 const isFromPinedsSource = ref(false) // TODO
@@ -348,7 +349,9 @@ const showTheTagsList = eagerComputed<boolean>(
 const showTheItemsInfoChip = eagerComputed<boolean>(
   () => !!(showItemsInfo.value && isItemsInfoEnabled.value),
 )
-// const showTheHistoryChip = computed(() => !!historyLength.value)
+const showTheHistoryChip = eagerComputed<boolean>(
+  () => !!(showHistory.value && isHistoryEnabled.value),
+)
 
 function onMouseOverUI (): void {
   preventHideUI.value = true
@@ -547,9 +550,8 @@ onMounted(async () => {
       </v-row>
     </v-alert>
 
-    <!-- <PinWrapper
-      v-if="showHistory"
-      v-show="showTheHistoryChip"
+    <PinWrapper
+      v-if="showTheHistoryChip"
       :class="[
         'the-history-chip-pin-wrapper',
         {
@@ -563,7 +565,7 @@ onMounted(async () => {
       @mouseout="onMouseOutUI"
     >
       <HistoryChip class="the-history-chip" @click="pausePlayer" />
-    </PinWrapper> -->
+    </PinWrapper>
 
     <PinWrapper
       v-if="showTheItemsInfoChip"

@@ -24,7 +24,8 @@ const emit = defineEmits<{
 
 <style lang="scss" scoped>
 .pause-btn {
-  color: $grey-0;
+  // color: #{$grey-0 + 'BB'};
+  background-color: #{$grey-7 + '30'};
 
   .pause-icon {
     display: flex;
@@ -35,8 +36,8 @@ const emit = defineEmits<{
       width: 5px;
       height: 16px;
       margin: auto 1px;
-      background: $grey-0;
-      border: 1px solid $grey-7;
+      background: #{$grey-0 + 'EE'};
+      border: 1px solid #{$grey-7 + 'EE'};
     }
   }
 }
