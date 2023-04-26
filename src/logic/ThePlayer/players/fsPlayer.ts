@@ -76,9 +76,9 @@ export const useFSPlayer = ({
     item.value = itm
     thePlayerStore.item.value = itm
 
-    theLoopStore.indeterminate.value = false
     theLoopStore.value.value = 0
     theLoopStore.maxValue.value = getItemDuration() || playerOptsStore.interval.value * 1000
+    theLoopStore.indeterminate.value = false
 
     fetchNextItem()
       .then((itm) => nextItem.value = itm)
@@ -158,28 +158,17 @@ export const useFSPlayer = ({
     isStopped.value = true
     isPaused.value = false
 
-    isFetchingNext.value = false
-
     item.value = undefined
     nextItem.value = undefined
+    fetchNextItemPromise.value = undefined
+    isFetchingNext.value = false
 
+    theLoopStore.reset()
     theLoopStore.enabled.value = true
-    theLoopStore.indeterminate.value = false
-    theLoopStore.value.value = NaN
-    theLoopStore.maxValue.value = NaN
+    theLoopStore.showRemainingTime.value = true
 
-    // Player's components/feature enabled/disabled
+    thePlayerStore.reset()
     thePlayerStore.itemsInfoEnabled.value = false
-
-    // Item states
-    thePlayerStore.item.value = undefined
-    thePlayerStore.isItemPaused.value = false
-    thePlayerStore.isItemPlayable.value = false
-    thePlayerStore.isItemVideo.value = false
-
-    // Player states
-    thePlayerStore.isPaused.value = false
-    thePlayerStore.isFetching.value = false
 
     errors.value = []
   }

@@ -3,7 +3,7 @@ import type { TagId } from '@/models/tag'
 import type { FolderPath } from '@/stores/folderBrowser'
 
 import { createGlobalState, useStorage } from '@vueuse/core'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 export enum TagsOperator {
   or = 'OR',
@@ -24,7 +24,6 @@ interface states {
   tags: Array<TagId>;
   tagsOperator: TagsOperator;
   fileTypes: Array<FileType>;
-  isFromPined: boolean;
 }
 
 export const useSourceOptionsStore = createGlobalState(() => {
@@ -42,13 +41,13 @@ export const useSourceOptionsStore = createGlobalState(() => {
     tags: [],
     tagsOperator: TagsOperator.and,
     fileTypes: [],
-    isFromPined: false,
   }
 
   // States
   const states = useStorage('ds3-playerOpts-sourceOpts', defaultStates, localStorage, {
     mergeDefaults: true,
   })
+  const isFromPined = ref<boolean>(false)
 
   //#region Computeds
   // List of selected folder path.
@@ -72,12 +71,6 @@ export const useSourceOptionsStore = createGlobalState(() => {
   const fileTypes = computed({
     get: () => states.value.fileTypes,
     set: (val) => (states.value.fileTypes = val),
-  })
-
-  // Should use pineds items as fetch items source.
-  const isFromPined = computed({
-    get: () => states.value.isFromPined,
-    set: (val) => (states.value.isFromPined = !!val),
   })
 
   const availableFileTypes = computed(() => [ ...AVAILABLE_FILE_TYPES ])

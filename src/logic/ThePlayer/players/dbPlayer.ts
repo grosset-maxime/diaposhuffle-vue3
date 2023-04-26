@@ -122,6 +122,8 @@ export const useDBPlayer = ({
   }
 
   async function onLoopEnd (): Promise<void> {
+    theLoopStore.indeterminate.value = true
+
     if (!nextItem.value) {
       const { itm, index } = getNextItem()
       nextItem.value = itm
@@ -139,9 +141,9 @@ export const useDBPlayer = ({
     thePlayerStore.item.value = item.value
     thePlayerStore.itemIndex.value = itemIndex.value
 
-    theLoopStore.indeterminate.value = false
     theLoopStore.value.value = 0
     theLoopStore.maxValue.value = getItemDuration() || playerOptsStore.interval.value * 1000
+    theLoopStore.indeterminate.value = false
 
     nextItem.value = undefined
     nextItemIndex.value = -1
@@ -167,8 +169,6 @@ export const useDBPlayer = ({
     if (!items.value.length) {
       throw onError('Items are empty.')
     }
-
-    theLoopStore.indeterminate.value = false
 
     await onLoopEnd()
   }
@@ -223,24 +223,13 @@ export const useDBPlayer = ({
     nextItem.value = undefined
     nextItemIndex.value = -1
 
+    theLoopStore.reset()
     theLoopStore.enabled.value = true
-    theLoopStore.indeterminate.value = false
-    theLoopStore.value.value = NaN
-    theLoopStore.maxValue.value = NaN
+    theLoopStore.showRemainingTime.value = true
 
+    thePlayerStore.reset()
     // Player's components/feature enabled/disabled
     thePlayerStore.itemsInfoEnabled.value = true
-
-    // Item states
-    thePlayerStore.item.value = undefined
-    thePlayerStore.itemIndex.value = NaN
-    thePlayerStore.isItemPaused.value = false
-    thePlayerStore.isItemPlayable.value = false
-    thePlayerStore.isItemVideo.value = false
-    thePlayerStore.itemsCount.value = NaN
-
-    // Player states
-    thePlayerStore.isPaused.value = false
 
     errors.value = []
   }

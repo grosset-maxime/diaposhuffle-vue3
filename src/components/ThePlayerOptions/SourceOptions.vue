@@ -19,9 +19,11 @@ import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
 import TheFolderBrowser from '@/components/TheFolderBrowser/TheFolderBrowser.vue'
 import TaggerModal from '@/components/TheTagger/TheTagger.vue'
 import TagChip from '@/components/TagChip.vue'
+import { useThePinedStore } from '@/stores/ThePlayer/ThePinedStore'
 
 const { showTagger, showFolderBrowser } = useDiapoShuffleStore()
 const sourceOptsStore = useSourceOptionsStore()
+const thePinedStore = useThePinedStore()
 
 //#region Folder Browser
 const selectedFolders = ref<Set<FolderPath>>(new Set(sourceOptsStore.folders.value))
@@ -111,13 +113,13 @@ const isFromPinedComputed = computed({
   },
 })
 
-const pinedsLength = eagerComputed(() => {
-  return 0 // TODO: playerStore.getPinedLength()
-})
+const pinedsLength = eagerComputed<number>(
+  () => thePinedStore.items.value.length,
+)
 
 function clearPineds () {
   isFromPinedComputed.value = false
-  // TODO: playerStore.clearPineds()
+  thePinedStore.reset()
 }
 //#endregion Pineds
 </script>
@@ -240,21 +242,20 @@ function clearPineds () {
     <v-row align="center">
       <v-col class="pineds-col">
         <v-switch
-          class="ma-0 pa-0"
+          class="pineds-switch ma-0 pa-0"
           v-model="isFromPinedComputed"
-          :label="`Pined items - ${pinedsLength}`"
           :disabled="!pinedsLength"
           color="primary"
           hide-details
           inset
         />
+        <label class="pined-label v-label" @click="isFromPinedComputed = !isFromPinedComputed">
+          Pined items - {{ pinedsLength }}
+        </label>
         <v-btn
-          :class="[
-            'ml-2',
-            {
-              'clear-pineds-hide': !pinedsLength,
-            },
-          ]"
+          :class="[{
+            'clear-pineds-hide': !pinedsLength,
+          }]"
           :disabled="!pinedsLength"
           icon
           @click="clearPineds"
@@ -300,6 +301,10 @@ function clearPineds () {
   .pineds-col {
     display: flex;
     align-items: center;
+
+    .pineds-switch {
+      max-width: 70px;
+    }
   }
 
   .clear-pineds-hide {

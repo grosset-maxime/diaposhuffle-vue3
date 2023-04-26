@@ -3,13 +3,21 @@ import { ref } from 'vue'
 import { createGlobalState } from '@vueuse/core'
 
 export const useTheLoopStore = createGlobalState(() => {
-  // Loop states
-  const enabled = ref(true)
+  const enabled = ref(false)
   const indeterminate = ref(false)
-  const value = ref(-1)
-  const maxValue = ref(-1)
+  const value = ref(NaN)
+  const maxValue = ref(NaN)
   const showDurationTime = ref(false)
-  const showRemainingTime = ref(true)
+  const showRemainingTime = ref(false)
+
+  function reset (): void {
+    enabled.value = false
+    indeterminate.value = false
+    value.value = NaN
+    maxValue.value = NaN
+    showDurationTime.value = false
+    showRemainingTime.value = false
+  }
 
   return {
     enabled,
@@ -18,5 +26,7 @@ export const useTheLoopStore = createGlobalState(() => {
     indeterminate,
     showDurationTime,
     showRemainingTime,
+
+    reset,
   }
 })

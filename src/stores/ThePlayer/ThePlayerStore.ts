@@ -15,19 +15,10 @@ import {
   setItemTags as setItemTagsAPI,
 } from '@/api/items'
 
-
-export enum FetchSource {
-  fs = 'random', // Fetch from fs.
-  db = 'items', // Fetch from Items list returned by data base.
-  pineds = 'pineds', // Fetch from pined items list.
-  history = 'history', // Last shown items.
-}
-
 export const useThePlayerStore = createGlobalState(() => {
   // Player states
   const isStopped = ref(true)
   const isPaused = ref(false)
-  const isFetching = ref(false)
 
   // Item states
   const item = ref<Item | undefined>()
@@ -36,22 +27,16 @@ export const useThePlayerStore = createGlobalState(() => {
   const isItemPaused = ref(false)
   const isItemPlayable = ref(false)
   const isItemVideo = ref(false)
-  const isPinedItem = ref(false)
 
   // Player's components/feature enabled/disabled
   const itemsInfoEnabled = ref(false)
   const historyEnabled = ref(false)
 
-  // const fetchSource = ref<FetchSource>(FetchSource.fs)
-
   const errors = ref<Array<{ [key: string]: unknown }>>([])
-
-  // const getFetchSource = () => fetchSource.value
   // const getErrors = () => errors.value
 
 
   // Mutations
-  // const setFetchSource = (val: FetchSource) => (fetchSource.value = val)
   const addError = ({ actionName, error }: { actionName: string; error: unknown }) => {
     errors.value.push({
       [ actionName ]: error,
@@ -104,13 +89,25 @@ export const useThePlayerStore = createGlobalState(() => {
 
     return result
   }
+
+  function reset (): void {
+    item.value = undefined
+    itemIndex.value = NaN
+    isItemPaused.value = false
+    isItemPlayable.value = false
+    isItemVideo.value = false
+    itemsCount.value = NaN
+
+    // Player's components/feature enabled/disabled
+    itemsInfoEnabled.value = false
+    historyEnabled.value = false
+  }
   // #endregion Actions
 
   return {
     // Player states
     isStopped,
     isPaused,
-    isFetching,
 
     // Item states
     item,
@@ -119,7 +116,6 @@ export const useThePlayerStore = createGlobalState(() => {
     isItemPaused,
     isItemPlayable,
     isItemVideo,
-    isPinedItem,
 
     // Player's components/feature enabled/disabled
     itemsInfoEnabled,
@@ -128,5 +124,6 @@ export const useThePlayerStore = createGlobalState(() => {
     // Actions
     deleteItem,
     setItemTags,
+    reset,
   }
 })

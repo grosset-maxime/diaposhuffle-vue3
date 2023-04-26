@@ -3,10 +3,7 @@ import type { ComputedRef } from 'vue'
 import type { Item } from '@/models/item'
 
 // Vendors Libs
-import { computed } from 'vue'
-
-// import { buildError } from '@/api/api'
-// import { Item as ItemClass } from '@/models/item'
+import { ref, computed } from 'vue'
 
 // Stores
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
@@ -14,8 +11,15 @@ import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
 
 // Players
 import { useFSPlayer } from '@/logic/ThePlayer/players/fsPlayer'
-import { useDBPlayer } from './players/dbPlayer'
-// import { usePinedPlayerStore } from '@/stores/ThePlayer/players/pinedPlayer'
+import { useDBPlayer } from '@/logic/ThePlayer/players/dbPlayer'
+import { usePinedPlayer } from '@/logic/ThePlayer/players/pinedPlayer'
+
+export enum PlayerName {
+  fs = 'fsPlayer',
+  db = 'dbPlayer',
+  pined = 'pinedPlayer',
+  history = 'historyPlayer'
+}
 
 export interface UsePlayerArg {
   setNextItem: (item: Item) => void
@@ -66,40 +70,44 @@ export const useThePlayer = ({
     isStopped,
   } = useThePlayerStore()
 
-  // const playerOptsStore = usePlayerOptionsStore()
   const sourceOptsStore = useSourceOptionsStore()
 
+  function getPlayerName (): PlayerName {
+    let playerName: PlayerName
 
-  const player = computed<UsePlayerExpose>(() => {
-    // let player
-
-    // if (sourceOptionsStore.isFromPined) {
-    // player = useFSPlayerStore()
-    // }
-
-    if (sourceOptsStore.tags.value.size
+    if (sourceOptsStore.isFromPined.value) {
+      playerName = PlayerName.pined
+    } else if (sourceOptsStore.tags.value.size
       || sourceOptsStore.fileTypes.value.length
     ) {
-      return useDBPlayer({
-        setNextItem,
-        showNextItem,
-        getItemDuration,
-      })
+      playerName = PlayerName.db
     } else {
-      return useFSPlayer({
-        setNextItem,
-        showNextItem,
-        getItemDuration,
-      })
+      playerName = PlayerName.fs
     }
 
-    // if (isFromPinedsSource.value) {
-    //   await playerStore.fetchItemsFromPineds()
-    // } else if (hasTagsSource.value || hasFileTypesSource) {
-    //     await playerStore.fetchItemsFromDB()
-    // } else {
-    //   await playerStore.fetchItemsFromFS()
-    // }
+    return playerName
+  }
+
+  const playerName = ref<PlayerName>(getPlayerName())
+  const previousPlayerName = ref<PlayerName>(playerName.value)
+
+  const player = computed<UsePlayerExpose>(() => {
+    const playerArg: UsePlayerArg = {
+      setNextItem,
+      showNextItem,
+      getItemDuration,
+    }
+
+    if (playerName.value === PlayerName.db) {
+      return useDBPlayer(playerArg)
+    } else if (playerName.value === PlayerName.pined) {
+      return usePinedPlayer(playerArg)
+    } else if (playerName.value === PlayerName.history) {
+      // TODO
+      return useFSPlayer(playerArg)
+    } else {
+      return useFSPlayer(playerArg)
+    }
   })
 
   // #region Actions
@@ -137,6 +145,7 @@ export const useThePlayer = ({
   // #endregion Actions
 
   return {
+    playerName,
     player,
 
     start,

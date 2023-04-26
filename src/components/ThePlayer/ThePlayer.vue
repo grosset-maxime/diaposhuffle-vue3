@@ -23,6 +23,7 @@ import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
 import { useUIOptionsStore } from '@/stores/ThePlayerOptions/uiOptions'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
+import { useThePinedStore } from '@/stores/ThePlayer/ThePinedStore'
 
 // Components
 import TheLoop from '@/components/ThePlayer/TheLoop.vue'
@@ -57,6 +58,7 @@ const {
 } = useUIOptionsStore()
 const thePlayerStore = useThePlayerStore()
 const theLoopStore = useTheLoopStore()
+const thePinedStore = useThePinedStore()
 
 const item = computed(() => thePlayerStore.item.value)
 const isPaused = computed(() => thePlayerStore.isPaused.value)
@@ -65,26 +67,10 @@ const playingItemTags = computed(() => item.value?.tags || new Set<TagId>())
 const isLoopEnabled = computed(() => theLoopStore.enabled.value)
 const isItemsInfoEnabled = computed(() => thePlayerStore.itemsInfoEnabled.value)
 const isHistoryEnabled = computed(() => thePlayerStore.historyEnabled.value)
-const isPinedItem = computed(() => thePlayerStore.isPinedItem.value)
-// const historyLength = ref(0) // TODO
-const isFromPinedsSource = ref(false) // TODO
-const isSourceDB = ref(false) // TODO
+const isPinedItem = eagerComputed(() => thePinedStore.has(item.value))
 
 // Refs to Components element in template.
 const ItemsPlayerCmp = ref<ItemsPlayerCmpExpose | null>(null)
-
-// Computeds
-// const isFromPinedsSource = sourceOptsStore.isFromPined
-// const isSourceDB = computed(() => playerStore.getFetchSource() === FetchSource.db)
-// const historyLength = computed(() => playerStore.getHistoryLength())
-// const historyIndex = computed({
-//   get () {
-//     return playerStore.getHistoryIndex()
-//   },
-//   set (index) {
-//     playerStore.setHistoryIndex(index)
-//   },
-// })
 
 // #region Delete Item Modal
 const deleteModal = {
@@ -215,8 +201,17 @@ function resumePlayer (opts: { resumeItm?: boolean } = {}): void {
 function goToNextItem (): void { ItemsPlayerCmp.value?.goToNextItem() }
 function goToPreviousItem (): void { ItemsPlayerCmp.value?.goToPreviousItem() }
 
-// TODO
-function togglePinItem (item: Item): void {}
+function togglePinItem (): void {
+  if (!item.value) { return }
+
+  if (thePinedStore.has(item.value)) {
+    thePinedStore.remove(item.value)
+    triggerUnpinedAnim()
+  } else {
+    thePinedStore.add(item.value)
+    triggerPinedAnim()
+  }
+}
 
 function onItemsPlayerClick () {
   if (isPaused.value) {
@@ -290,7 +285,7 @@ function keyboardShortcuts (key: string): void {
 
   case 'p':
     pausePlayer({ pauseItm: false })
-    // TODO: togglePinItem({ item: item.value! })
+    togglePinItem()
     showUIDuring(3000)
     break
 
@@ -351,6 +346,9 @@ const showTheItemsInfoChip = eagerComputed<boolean>(
 )
 const showTheHistoryChip = eagerComputed<boolean>(
   () => !!(showHistory.value && isHistoryEnabled.value),
+)
+const showPinedChip = eagerComputed<boolean>(
+  () => !!(showPined.value && isPinedItem.value),
 )
 
 function onMouseOverUI (): void {
@@ -447,9 +445,9 @@ onMounted(async () => {
   loop.pined.value = pinLoop.value
 
   startKSListener()
-})
 
-// onBeforeUnmount(() => { stop() })
+  thePlayerStore.isPaused.value = false
+})
 </script>
 
 <template>
@@ -493,7 +491,7 @@ onMounted(async () => {
     />
 
     <PinWrapper
-      v-if="showPined && isPinedItem"
+      v-if="showPinedChip"
       :class="[
         'the-pined-chip-pin-wrapper',
         {
@@ -501,7 +499,7 @@ onMounted(async () => {
         },
       ]"
       :is-pined="pinedChip.pined.value"
-      :icon-position="Position.topLeft"
+      :icon-position="Position.bottomLeft"
       :show-icon="shouldShowUI"
       @click="togglePinUI('pinedChip')"
       @mouseover="onMouseOverUI"
@@ -509,11 +507,11 @@ onMounted(async () => {
     >
       <v-chip
         class="is-pined-item pl-1 pr-1"
-        color="orange"
-        outlined
-        x-small
+        color="primary"
+        variant="outlined"
+        density="compact"
         label
-        @click="item && togglePinItem(item)"
+        @click="togglePinItem()"
       >
         Pined
       </v-chip>
@@ -711,8 +709,8 @@ onMounted(async () => {
 
   .the-pined-chip-pin-wrapper {
     position: absolute;
-    top: 10px;
-    right: 40px;
+    top: 15px;
+    right: 60px;
     z-index: 1000;
     transform: translateY(-150%);
     transition: transform 0.3s ease;
