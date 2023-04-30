@@ -13,18 +13,23 @@ const emit = defineEmits<{
 }>()
 
 const thePlayerStore = useThePlayerStore()
-const itemIndex = computed(() => thePlayerStore.itemIndex.value + 1)
-const itemsCount = computed(() => thePlayerStore.itemsCount.value)
+const itemIndex = computed<number>(() => thePlayerStore.itemIndex.value + 1)
+const itemsCount = computed<number>(() => thePlayerStore.itemsCount.value)
 </script>
 
 <template>
-  <v-chip class="history" small @click="emit('click')">
+  <v-chip
+    v-if="itemsCount && itemIndex"
+    class="items-info-chip"
+    small
+    @click="emit('click')"
+  >
     {{ itemIndex }} / {{ itemsCount }}
   </v-chip>
 </template>
 
 <style lang="scss" scoped>
-.history {
+.items-info-chip {
   padding: 0 6px;
   color: $grey-3;
   transition: color 0.3 ease;

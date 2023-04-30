@@ -189,6 +189,9 @@ export const usePinedPlayer = ({
     return !isFetchItemRandomly.value
   }
 
+  function canPause (): boolean { return true }
+  function canResume (): boolean { return true }
+
   const reset = (): void => {
     isStopped.value = true
     isPaused.value = false
@@ -212,11 +215,6 @@ export const usePinedPlayer = ({
   // #endregion Exposed Actions
 
   const player: UsePlayerExpose = {
-    isStopped: computed(() => isStopped.value),
-    isPaused: computed(() => isPaused.value),
-
-    item: computed(() => item.value),
-
     start,
     stop,
     pause,
@@ -225,6 +223,8 @@ export const usePinedPlayer = ({
     previous,
     canNext,
     canPrevious,
+    canPause,
+    canResume,
     reset,
   }
 

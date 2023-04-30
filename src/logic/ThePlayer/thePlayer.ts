@@ -1,5 +1,4 @@
 // Types
-import type { ComputedRef } from 'vue'
 import type { Item } from '@/models/item'
 
 // Vendors Libs
@@ -13,6 +12,7 @@ import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
 import { useFSPlayer } from '@/logic/ThePlayer/players/fsPlayer'
 import { useDBPlayer } from '@/logic/ThePlayer/players/dbPlayer'
 import { usePinedPlayer } from '@/logic/ThePlayer/players/pinedPlayer'
+import { useHistoryPlayer } from '@/logic/ThePlayer/players/historyPlayer'
 
 export enum PlayerName {
   fs = 'fsPlayer',
@@ -30,13 +30,6 @@ export interface UsePlayerArg {
 }
 
 export interface UsePlayerExpose {
-  isStopped: ComputedRef<boolean>
-  isPaused: ComputedRef<boolean>
-
-  items?: Array<Item>
-  item: ComputedRef<Item | undefined>
-  itemIndex?: ComputedRef<number>
-
   start: () => Promise<void>
   stop: () => void
   pause: () => void
@@ -45,10 +38,9 @@ export interface UsePlayerExpose {
   previous: () => Promise<void>
   canNext: () => boolean
   canPrevious: () => boolean
+  canPause: () => boolean
+  canResume: () => boolean
   reset: () => void
-
-  addItem?: (item: Item) => void
-  removeItem?: (index: number) => void
 }
 
 interface UseThePlayer {
@@ -103,45 +95,51 @@ export const useThePlayer = ({
     } else if (playerName.value === PlayerName.pined) {
       return usePinedPlayer(playerArg)
     } else if (playerName.value === PlayerName.history) {
-      // TODO
-      return useFSPlayer(playerArg)
+      return useHistoryPlayer(playerArg)
     } else {
       return useFSPlayer(playerArg)
     }
   })
 
   // #region Actions
-  const start = () => {
+  const start = (): void => {
     player.value.start()
-
     isStopped.value = false
   }
 
-  const pause = () => {
+  const pause = (): void => {
     player.value.pause()
-
     isPaused.value = true
   }
 
-  const resume = () => {
+  const resume = (): void => {
     player.value.resume()
-
     isPaused.value = false
   }
 
-  const stop = () => {
+  const stop = (): void => {
     player.value.stop()
-
     isStopped.value = true
   }
 
-  const next = async () => player.value.next()
-
-  const previous = async () => player.value.previous()
-
-  const reset = () => {
-    player.value.reset()
+  const next = async (): Promise<void> => {
+    if (canNext()) {
+      player.value.next()
+    }
   }
+  const previous = async (): Promise<void> => {
+    if (canPrevious()) {
+      player.value.previous()
+    }
+  }
+
+  const canNext = (): boolean => player.value.canNext()
+  const canPrevious = (): boolean => player.value.canPrevious()
+
+  const canPause = (): boolean => player.value.canPause()
+  const canResume = (): boolean => player.value.canResume()
+
+  const reset = (): void => player.value.reset()
   // #endregion Actions
 
   return {
@@ -154,6 +152,10 @@ export const useThePlayer = ({
     resume,
     next,
     previous,
+    canNext,
+    canPrevious,
+    canPause,
+    canResume,
     reset,
   }
 }

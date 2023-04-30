@@ -147,10 +147,15 @@ provide(theFolderBrowserKey, {
         <v-spacer />
         <div v-if="!!nbSelected" class="nb-selected">Selected: {{ nbSelected }}</div>
         <v-toolbar-items>
-          <v-btn v-if="!!nbSelected" class="unselect-all-btn" text @click="onUnselectAll">
+          <v-btn
+            v-if="!!nbSelected"
+            class="unselect-all-btn"
+            variant="text"
+            @click="onUnselectAll"
+          >
             Unselect All
           </v-btn>
-          <v-btn text @click="onConfirm">Save</v-btn>
+          <v-btn variant="text" @click="onConfirm">Save</v-btn>
         </v-toolbar-items>
       </v-toolbar>
 

@@ -1,9 +1,12 @@
 // Types
 import type { Item } from '@/models/item'
-import type { UsePlayerArg, UsePlayerExpose } from '@/logic/ThePlayer/thePlayer'
+import type {
+  UsePlayerArg,
+  UsePlayerExpose,
+} from '@/logic/ThePlayer/thePlayer'
 
 // Vendors Libs
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 
 // import { getRandomElementWithIndex } from '@/utils/utils'
 import { buildError } from '@/api/api'
@@ -154,6 +157,9 @@ export const useFSPlayer = ({
   function canNext (): boolean { return true }
   function canPrevious (): boolean { return false }
 
+  function canPause (): boolean { return true }
+  function canResume (): boolean { return true }
+
   const reset = (): void => {
     isStopped.value = true
     isPaused.value = false
@@ -175,11 +181,6 @@ export const useFSPlayer = ({
   // #endregion Exposed Actions
 
   const player: UsePlayerExpose = {
-    isStopped: computed(() => isStopped.value),
-    isPaused: computed(() => isPaused.value),
-
-    item: computed(() => item.value),
-
     start,
     stop,
     pause,
@@ -188,6 +189,8 @@ export const useFSPlayer = ({
     previous,
     canNext,
     canPrevious,
+    canPause,
+    canResume,
     reset,
   }
 

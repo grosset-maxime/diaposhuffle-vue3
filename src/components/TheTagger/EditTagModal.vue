@@ -269,7 +269,7 @@ watch(showDeleteModal, (shouldShow) => {
                   <template v-slot:item="{ props, item }">
                     <v-list-item
                       v-bind="props"
-                      :title="item?.name"
+                      :title="item?.title"
                     >
                       <template v-slot:prepend>
                         <v-avatar :color="item.raw.color" size="30"/>

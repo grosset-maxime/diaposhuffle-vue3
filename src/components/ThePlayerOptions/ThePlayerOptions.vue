@@ -165,7 +165,8 @@ $start-btn-bottom: 8px;
   flex-direction: column;
 }
 .tabs {
-  min-height: #{settings.$tabs-height}
+  min-height: #{settings.$tabs-height};
+  box-shadow: rgb(85, 85, 85) 0px 0px 2px 0px inset;
 }
 .tabs-content-ctn {
   height: 100%;

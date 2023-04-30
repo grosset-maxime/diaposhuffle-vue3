@@ -120,11 +120,11 @@ const positionStyles = computed<CSSProperties>(() => {
     .pin-icon {
       display: block;
       transform: scale(0.7);
-      color: $grey-6;
+      color: $grey-5;
 
       &:hover {
         transform: scale(1);
-        color: $grey-5;
+        color: $grey-4;
       }
     }
   }
@@ -134,8 +134,8 @@ const positionStyles = computed<CSSProperties>(() => {
     position: absolute;
     cursor: pointer;
     z-index: 1000;
-    opacity: 0.6;
-    background: none;
+    opacity: 0.7;
+    background: #{$grey-8 + '55'};
 
     &:hover {
       opacity: 1;

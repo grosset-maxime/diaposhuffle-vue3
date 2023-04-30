@@ -28,6 +28,8 @@ import { useThePinedStore } from '@/stores/ThePlayer/ThePinedStore'
 // Components
 import TheLoop from '@/components/ThePlayer/TheLoop.vue'
 import PauseBtn from '@/components/ThePlayer/PauseBtn.vue'
+import HistoryBtn from '@/components/ThePlayer/HistoryBtn.vue'
+import SettingsBtn from '@/components/ThePlayer/SettingsBtn.vue'
 import ItemsPlayer, { type ItemsPlayerCmpExpose } from '@/components/ThePlayer/ItemsPlayer.vue'
 import TagsList from '@/components/ThePlayer/TagsList.vue'
 import HistoryChip from '@/components/ThePlayer/HistoryChip.vue'
@@ -452,13 +454,11 @@ onMounted(async () => {
 
 <template>
   <div
-    :class="[
-      'the-player',
-      {
-        'video-item': isItemVideo,
-        'show-ui': shouldShowUI,
-      },
-    ]"
+    class="the-player"
+    :class="[{
+      'video-item': isItemVideo,
+      'show-ui': shouldShowUI,
+    }]"
     @mousemove="showUIDuring()"
   >
     <PinWrapper
@@ -490,14 +490,26 @@ onMounted(async () => {
       @mouseout="onMouseOutUI"
     />
 
+    <HistoryBtn
+      class="the-history-btn ui-right"
+      @click="pausePlayer"
+      @mouseover="onMouseOverUI"
+      @mouseout="onMouseOutUI"
+    />
+
+    <SettingsBtn
+      class="the-settings-btn ui-right"
+      @click="pausePlayer"
+      @mouseover="onMouseOverUI"
+      @mouseout="onMouseOutUI"
+    />
+
     <PinWrapper
       v-if="showPinedChip"
-      :class="[
-        'the-pined-chip-pin-wrapper',
-        {
-          pined: pinedChip.pined.value,
-        },
-      ]"
+      class="the-pined-chip-pin-wrapper ui-top"
+      :class="[{
+        pined: pinedChip.pined.value,
+      }]"
       :is-pined="pinedChip.pined.value"
       :icon-position="Position.bottomLeft"
       :show-icon="shouldShowUI"
@@ -518,13 +530,11 @@ onMounted(async () => {
     </PinWrapper>
 
     <div
-      :class="[
-        'pined-unpined-anim',
-        {
-          'pined-anim': showPinedAnim,
-          'unpined-anim': showUnpinedAnim,
-        },
-      ]"
+      class="pined-unpined-anim"
+      :class="[{
+        'pined-anim': showPinedAnim,
+        'unpined-anim': showUnpinedAnim,
+      }]"
     />
 
     <v-alert
@@ -550,12 +560,10 @@ onMounted(async () => {
 
     <PinWrapper
       v-if="showTheHistoryChip"
-      :class="[
-        'the-history-chip-pin-wrapper',
-        {
-          pined: historyChip.pined.value,
-        },
-      ]"
+      class="the-history-chip-pin-wrapper ui-left"
+      :class="[{
+        pined: historyChip.pined.value,
+      }]"
       :is-pined="historyChip.pined.value"
       :icon-position="Position.topRight"
       @click="togglePinUI('historyChip')"
@@ -567,12 +575,10 @@ onMounted(async () => {
 
     <PinWrapper
       v-if="showTheItemsInfoChip"
-      :class="[
-        'the-items-info-chip-pin-wrapper',
-        {
-          pined: itemsInfoChip.pined.value,
-        },
-      ]"
+      class="the-items-info-chip-pin-wrapper ui-left"
+      :class="[{
+        pined: itemsInfoChip.pined.value,
+      }]"
       :is-pined="itemsInfoChip.pined.value"
       :icon-position="Position.topRight"
       :show-icon="shouldShowUI"
@@ -585,12 +591,10 @@ onMounted(async () => {
 
     <PinWrapper
       v-if="showTheTagsList"
-      :class="[
-        'the-tags-list-pin-wrapper',
-        {
-          pined: tagsList.pined.value,
-        },
-      ]"
+      class="the-tags-list-pin-wrapper ui-left"
+      :class="[{
+        pined: tagsList.pined.value,
+      }]"
       :is-pined="tagsList.pined.value"
       :icon-position="Position.topRight"
       :show-icon="shouldShowUI"
@@ -636,12 +640,10 @@ onMounted(async () => {
 
     <PinWrapper
       v-if="showTheItemPathChip"
-      :class="[
-        'the-item-path-chip-pin-wrapper',
-        {
-          pined: itemPathChip.pined.value,
-        },
-      ]"
+      class="the-item-path-chip-pin-wrapper ui-right"
+      :class="[{
+        pined: itemPathChip.pined.value,
+      }]"
       :is-pined="itemPathChip.pined.value"
       :icon-position="Position.topLeft"
       :show-icon="shouldShowUI"
@@ -680,17 +682,33 @@ onMounted(async () => {
   background-color: $surface;
   cursor: none;
 
+  .ui-left, .ui-right, .ui-top, .ui-bottom {
+    transition: transform 0.3s ease;
+    position: absolute;
+    z-index: 1000;
+  }
+  .ui-left {
+    transform: translateX(-150%);
+    left: 5px;
+  }
+  .ui-right {
+    transform: translateX(150%);
+    right: 5px;
+  }
+  .ui-top {
+    transform: translateY(-150%);
+  }
+  .ui-bottom {
+    transform: translateY(150%);
+  }
   &.show-ui {
     cursor: default;
 
-    .the-history-chip-pin-wrapper,
-    .the-items-info-chip-pin-wrapper,
-    .the-tags-list-pin-wrapper,
-    .the-item-path-chip-pin-wrapper {
+    .ui-left, .ui-right {
       transform: translateX(0);
     }
 
-    .the-pined-chip-pin-wrapper {
+    .ui-top, .ui-bottom {
       transform: translateY(0);
     }
   }
@@ -708,12 +726,8 @@ onMounted(async () => {
   }
 
   .the-pined-chip-pin-wrapper {
-    position: absolute;
     top: 15px;
     right: 60px;
-    z-index: 1000;
-    transform: translateY(-150%);
-    transition: transform 0.3s ease;
 
     &.pined {
       transform: none;
@@ -751,6 +765,14 @@ onMounted(async () => {
     z-index: 1000;
   }
 
+  .the-history-btn {
+    top: calc(50% - 66px);
+  }
+
+  .the-settings-btn {
+    top: calc(50% - 11px);
+  }
+
   .alert {
     $margin: 10px;
     z-index: 2000;
@@ -770,12 +792,7 @@ onMounted(async () => {
   }
 
   .the-history-chip-pin-wrapper {
-    position: absolute;
     top: 5px;
-    left: 5px;
-    z-index: 1000;
-    transform: translateX(-150%);
-    transition: transform 0.3s ease;
 
     &.pined {
       transform: none;
@@ -783,12 +800,7 @@ onMounted(async () => {
   }
 
   .the-items-info-chip-pin-wrapper {
-    position: absolute;
     top: 35px;
-    left: 5px;
-    z-index: 1000;
-    transform: translateX(-150%);
-    transition: transform 0.3s ease;
 
     &.pined {
       transform: none;
@@ -796,12 +808,7 @@ onMounted(async () => {
   }
 
   .the-tags-list-pin-wrapper {
-    position: absolute;
     top: 80px;
-    left: 5px;
-    z-index: 1000;
-    transform: translateX(-150%);
-    transition: transform 0.3s ease;
 
     &.pined {
       transform: none;
@@ -813,12 +820,7 @@ onMounted(async () => {
   }
 
   .the-item-path-chip-pin-wrapper {
-    position: absolute;
     bottom: 10px;
-    right: 5px;
-    z-index: 1000;
-    transform: translateX(110%);
-    transition: transform 0.3s ease;
 
     &.pined {
       transform: none;

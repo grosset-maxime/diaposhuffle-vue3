@@ -1,59 +1,35 @@
-// TODO: Feature: Add fetch items from bdd with tags and types. DONE ?
-// TODO: Bug: Backend: getimagesize raize warning in call response body that
-//            trigger json.parse to fail. Should be added to the response object as error.
-
 // Types
 import type { Item } from '@/models/item'
 
 // Vendors Libs
 import { ref } from 'vue'
-import { createGlobalState } from '@vueuse/core'
 
-// import { getRandomElementWithIndex } from '@/utils/utils'
 import { buildError } from '@/api/api'
-import { Item as ItemClass } from '@/models/item'
 
 // Stores
-// import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
-// import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
+import type { UsePlayerArg, UsePlayerExpose } from '../thePlayer'
+import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
+import { useTheHistoryStore } from '@/stores/ThePlayer/TheHistoryStore'
 
-export const useThePlayerStore = createGlobalState(() => {
-  // const playerOptsStore = usePlayerOptionsStore()
-  // const sourceOptsStore = useSourceOptionsStore()
+export const useHistoryPlayer = ({
+  showNextItem,
+  setNextItem,
+}: UsePlayerArg) => {
+  const theHistoryStore = useTheHistoryStore()
+  const thePlayerStore = useThePlayerStore()
 
-  // State
+  const isStopped = ref(true)
+  const isPaused = ref(false)
+
   const items = ref<Array<Item>>([])
-  const itemIndex = ref(-1)
+  const item = ref<Item | undefined>()
+  const itemIndex = ref<number>(-1)
 
-  // const historyItems = ref<Array<Item>>([])
-  // const historyItemIndex = ref(0)
+  const nextItem = ref<Item | undefined>()
+  const nextItemIndex = ref<number>(NaN)
 
-  const errors = ref<Array<{ [key: string]: unknown }>>([])
-
-  // Getters
-  const getItems = () => items.value
-  const getItemIndex = () => itemIndex.value
-  const getItemsLength = () => items.value.length
-  const getItemAt = (index: number) => items.value[ index ]
-
-  // const getHistoryItems = () => historyItems.value
-  // const getHistoryLength = () => historyItems.value.length
   // const getHistoryItemAt = (index: number) => historyItems.value[ index ]
   // const getHistoryIndex = () => historyItemIndex.value
-
-  const getErrors = () => errors.value
-
-  // Mutations
-  const setItems = (itemsToSet: Array<Item>) => {
-    items.value = itemsToSet
-    itemIndex.value = -1
-  }
-  const clearItems = () => {
-    items.value = []
-    itemIndex.value = -1
-  }
-  const setItemIndex = (val: number) => (itemIndex.value = val)
-  const setCurrentItemIndex = (val: number) => (itemIndex.value = val)
 
   // const setHistoryIndex = (val: number) => (historyItemIndex.value = val)
   // const addHistoryItem = (item: Item) => historyItems.value.push(item)
@@ -66,70 +42,158 @@ export const useThePlayerStore = createGlobalState(() => {
   //   historyItems.value = historyItems.value.filter((i: Item) => i.src !== src)
   // }
 
-  const addError = ({ actionName, error }: { actionName: string; error: unknown }) => {
+  // State
+  const errors = ref<Array<{ [key: string]: unknown }>>([])
+
+  // #region Methods
+  function addError ({ actionName, error }: { actionName: string; error: unknown }): void {
     errors.value.push({
       [ actionName ]: error,
     })
     console.error(actionName, error)
   }
 
-  // Actions
-  async function fetchNextItem (): Promise<Item> {
-    let item: Item | undefined
-
-    const onError = (e: unknown) => {
-      const error = buildError(e)
-      addError({
-        actionName: 'PLAYER_A_FETCH_NEXT',
-        error,
-      })
-      return error
-    }
-
-    if (!item) {
-      throw onError('No item found.')
-    }
-
-    return item
+  const onError = (e: unknown) => {
+    const error = buildError(e)
+    addError({
+      actionName: 'PLAYER_A_FETCH_PREV',
+      error,
+    })
+    return error
   }
 
-  async function fetchPreviousItem () {
-    let item: Item | undefined
+  function getNextItem (): { itm: Item, index: number } {
+    let index = itemIndex.value + 1
 
-    const onError = (e: unknown) => {
-      const error = buildError(e)
-      addError({
-        actionName: 'PLAYER_A_FETCH_PREV',
-        error,
-      })
-      return error
+    if (index >= items.value.length) { // TODO: do it if itemsLoopFeature enabled.
+      index = 0
     }
 
-    if (!item) {
-      throw onError('No item found.')
+    const itm = items.value[ index ]
+
+    if (!itm) { throw new Error('No next item found.') }
+
+    return { itm, index }
+  }
+
+  function getPreviousItem (): { itm: Item, index: number } {
+    let index = itemIndex.value - 1
+
+    if (index < 0) { // TODO: do it if itemsLoopFeature enabled.
+      index = items.value.length - 1
     }
 
-    return item
+    const itm = items.value[ index ]
+
+    if (!itm) { throw new Error('No next item found.') }
+
+    return { itm, index }
   }
 
-  return {
-    // Getters
-    getItems,
-    getItemIndex,
-    getItemsLength,
-    getItemAt,
+  async function onEnd (): Promise<void> {
+    if (!nextItem.value) {
+      const { itm, index } = getNextItem()
+      nextItem.value = itm
+      nextItemIndex.value = index
+    }
 
-    getErrors,
+    if (!nextItem.value) { throw new Error('No next item found.') }
 
-    // Mutations
-    setItems,
-    clearItems,
-    setItemIndex,
-    setCurrentItemIndex,
-    addError,
+    setNextItem(nextItem.value)
+    await showNextItem()
 
-    // Actions
-    fetchNextItem,
-    fetchPreviousItem,
+    item.value = nextItem.value
+    itemIndex.value = nextItemIndex.value
+
+    thePlayerStore.item.value = item.value
+    thePlayerStore.itemIndex.value = itemIndex.value
+
+    nextItem.value = undefined
+    nextItemIndex.value = -1
   }
-})
+  // #endregion Methods
+
+  // #region Exposed Actions
+  async function start (): Promise<void> {
+    reset()
+
+    isStopped.value = false
+
+    items.value = theHistoryStore.items.value
+    thePlayerStore.itemsCount.value = items.value.length
+
+    if (!items.value.length) {
+      throw onError('Pined items are empty.')
+    }
+
+    await onEnd()
+  }
+
+  function stop (): void {
+    isStopped.value = true
+  }
+
+  function pause (): void {}
+
+  function resume (): void {}
+
+  async function next (): Promise<void> {
+    const { itm, index } = getNextItem()
+    nextItem.value = itm
+    nextItemIndex.value = index
+
+    await onEnd()
+  }
+
+  async function previous (): Promise<void> {
+    const { itm, index } = getPreviousItem()
+    nextItem.value = itm
+    nextItemIndex.value = index
+
+    await onEnd()
+  }
+
+  function canNext (): boolean {
+    return itemIndex.value < (items.value.length - 1)
+  }
+  function canPrevious (): boolean {
+    return itemIndex.value > 0
+  }
+
+  function canPause (): boolean { return false }
+  function canResume (): boolean { return false }
+
+  const reset = (): void => {
+    isStopped.value = true
+    isPaused.value = false
+
+    items.value = []
+    itemIndex.value = -1
+    item.value = undefined
+    nextItem.value = undefined
+    nextItemIndex.value = -1
+
+    thePlayerStore.reset()
+    // Player's components/feature enabled/disabled
+    thePlayerStore.itemsInfoEnabled.value = true
+
+    errors.value = []
+  }
+  // #endregion Exposed Actions
+
+  const player: UsePlayerExpose = {
+    start,
+    stop,
+    pause,
+    resume,
+    next,
+    previous,
+    canNext,
+    canPrevious,
+    canPause,
+    canResume,
+    reset,
+  }
+
+  return player
+}

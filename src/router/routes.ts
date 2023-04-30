@@ -1,6 +1,6 @@
-import type { IRoute } from '@/interfaces/route';
+import type { IRoute } from '@/interfaces/route'
 
-import DiapoShuffleView from '@/views/DiapoShuffleView.vue';
+import DiapoShuffleView from '@/views/DiapoShuffleView.vue'
 
 const routes: IRoute[] = [
   {
@@ -24,11 +24,11 @@ const routes: IRoute[] = [
     icon: 'mdi-cog',
     component: () => import('@/views/SettingsView.vue'),
   },
-];
+]
 
-export const routesMap = new Map<string, IRoute>();
+export const routesMap = new Map<string, IRoute>()
 routes.forEach((i: IRoute) => {
-  routesMap.set(i.path, i);
-});
+  routesMap.set(i.path, i)
+})
 
-export default routesMap;
+export default routesMap

@@ -135,8 +135,14 @@ watch(
         <v-spacer />
 
         <v-toolbar-items>
-          <v-btn class="cancel-btn" text @click="onCancel"> Cancel </v-btn>
-          <v-btn text @click="onSave"> Save </v-btn>
+          <v-btn
+            class="cancel-btn"
+            variant="text"
+            @click="onCancel"
+          >
+            Cancel
+          </v-btn>
+          <v-btn variant="text" @click="onSave">Save</v-btn>
         </v-toolbar-items>
       </v-toolbar>
 

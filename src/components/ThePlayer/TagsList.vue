@@ -96,16 +96,14 @@ function getTagCategoryColor (tag?: Tag) {
 
 <template>
   <div
-    :class="[
-      'tags-list',
-      {
-        'no-tags': !hasTags,
-      },
-    ]"
+    class="tags-list"
+    :class="[{
+      'no-tags': !hasTags,
+    }]"
     @click="emit('click')"
   >
     <template v-if="hasTags">
-      <div v-for="tag in tags" :key="tag.id" class="tag" :style="getTagStyles(tag)">
+      <div v-for="tag, index in tags" :key="index" class="tag" :style="getTagStyles(tag)">
         {{ tag.name }}
       </div>
     </template>
