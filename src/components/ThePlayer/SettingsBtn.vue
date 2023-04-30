@@ -22,7 +22,7 @@ const emit = defineEmits<{
 <style lang="scss" scoped>
 .settings-btn {
   color: #{$grey-0 + '88'};
-  background-color: #{$grey-7 + '30'};
+  background-color: #11111188;
 
   &:hover {
     color: $grey-0;

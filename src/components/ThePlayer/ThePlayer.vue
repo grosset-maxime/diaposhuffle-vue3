@@ -32,7 +32,6 @@ import HistoryBtn from '@/components/ThePlayer/HistoryBtn.vue'
 import SettingsBtn from '@/components/ThePlayer/SettingsBtn.vue'
 import ItemsPlayer, { type ItemsPlayerCmpExpose } from '@/components/ThePlayer/ItemsPlayer.vue'
 import TagsList from '@/components/ThePlayer/TagsList.vue'
-import HistoryChip from '@/components/ThePlayer/HistoryChip.vue'
 import ItemsInfoChip from '@/components/ThePlayer/ItemsInfoChipChip.vue'
 import PinWrapper from '@/components/ThePlayer/PinWrapper.vue'
 import ItemPathChip from '@/components/ThePlayer/ItemPathChip.vue'
@@ -40,10 +39,10 @@ import ItemPathChip from '@/components/ThePlayer/ItemPathChip.vue'
 import TaggerModal from '@/components/TheTagger/TheTagger.vue'
 import DeleteModal from '@/components/DeleteModal.vue'
 import { eagerComputed } from '@vueuse/shared'
+import { useTheHistoryStore } from '@/stores/ThePlayer/TheHistoryStore'
 
 const { showTheHelp } = useGlobalState()
 const { showThePlayer } = useDiapoShuffleStore()
-// const sourceOptsStore = useSourceOptionsStore()
 const {
   showHistory,
   showListIndex: showItemsInfo,
@@ -61,6 +60,7 @@ const {
 const thePlayerStore = useThePlayerStore()
 const theLoopStore = useTheLoopStore()
 const thePinedStore = useThePinedStore()
+const theHistoryStore = useTheHistoryStore()
 
 const item = computed(() => thePlayerStore.item.value)
 const isPaused = computed(() => thePlayerStore.isPaused.value)
@@ -70,6 +70,7 @@ const isLoopEnabled = computed(() => theLoopStore.enabled.value)
 const isItemsInfoEnabled = computed(() => thePlayerStore.itemsInfoEnabled.value)
 const isHistoryEnabled = computed(() => thePlayerStore.historyEnabled.value)
 const isPinedItem = eagerComputed(() => thePinedStore.has(item.value))
+const historyCount = theHistoryStore.count
 
 // Refs to Components element in template.
 const ItemsPlayerCmp = ref<ItemsPlayerCmpExpose | null>(null)
@@ -190,8 +191,12 @@ const alert = ref<Alert>({
   onClose: () => {},
 })
 
+function toggleHistoryPlayer (): void {
+  ItemsPlayerCmp.value?.toggleHistoryPlayer()
+}
+
 function stopPlayer (): void {
-  ItemsPlayerCmp.value!.stopPlayer()
+  ItemsPlayerCmp.value?.stopPlayer()
   showThePlayer.value = false
 }
 function pausePlayer (opts: { pauseItm?: boolean } = {}): void {
@@ -483,6 +488,7 @@ onMounted(async () => {
     </PinWrapper>
 
     <PauseBtn
+      v-if="thePlayerStore.pauseEnabled.value"
       v-show="isPaused"
       class="the-pause-btn"
       @click="resumePlayer"
@@ -491,8 +497,10 @@ onMounted(async () => {
     />
 
     <HistoryBtn
+      v-if="thePlayerStore.historyEnabled.value"
       class="the-history-btn ui-right"
-      @click="pausePlayer"
+      :disabled="historyCount <= 0"
+      @click="toggleHistoryPlayer"
       @mouseover="onMouseOverUI"
       @mouseout="onMouseOutUI"
     />
@@ -559,28 +567,15 @@ onMounted(async () => {
     </v-alert>
 
     <PinWrapper
-      v-if="showTheHistoryChip"
-      class="the-history-chip-pin-wrapper ui-left"
-      :class="[{
-        pined: historyChip.pined.value,
-      }]"
-      :is-pined="historyChip.pined.value"
-      :icon-position="Position.topRight"
-      @click="togglePinUI('historyChip')"
-      @mouseover="onMouseOverUI"
-      @mouseout="onMouseOutUI"
-    >
-      <HistoryChip class="the-history-chip" @click="pausePlayer" />
-    </PinWrapper>
-
-    <PinWrapper
       v-if="showTheItemsInfoChip"
       class="the-items-info-chip-pin-wrapper ui-left"
       :class="[{
         pined: itemsInfoChip.pined.value,
       }]"
       :is-pined="itemsInfoChip.pined.value"
-      :icon-position="Position.topRight"
+      :icon-position="Position.right"
+      :icon-top="-7"
+      :icon-right="-31"
       :show-icon="shouldShowUI"
       @click="togglePinUI('itemsInfoChip')"
       @mouseover="onMouseOverUI"
@@ -800,7 +795,7 @@ onMounted(async () => {
   }
 
   .the-items-info-chip-pin-wrapper {
-    top: 35px;
+    top: 5px;
 
     &.pined {
       transform: none;
@@ -808,7 +803,7 @@ onMounted(async () => {
   }
 
   .the-tags-list-pin-wrapper {
-    top: 80px;
+    top: 55px;
 
     &.pined {
       transform: none;

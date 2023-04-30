@@ -2,7 +2,7 @@
 import type { Item } from '@/models/item'
 
 // Vendors Libs
-import { ref, computed } from 'vue'
+import { ref, computed, watch, type ComputedRef } from 'vue'
 
 // Stores
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
@@ -13,6 +13,7 @@ import { useFSPlayer } from '@/logic/ThePlayer/players/fsPlayer'
 import { useDBPlayer } from '@/logic/ThePlayer/players/dbPlayer'
 import { usePinedPlayer } from '@/logic/ThePlayer/players/pinedPlayer'
 import { useHistoryPlayer } from '@/logic/ThePlayer/players/historyPlayer'
+import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 
 export enum PlayerName {
   fs = 'fsPlayer',
@@ -30,6 +31,8 @@ export interface UsePlayerArg {
 }
 
 export interface UsePlayerExpose {
+  isStopped: ComputedRef<boolean>
+  isPaused: ComputedRef<boolean>
   start: () => Promise<void>
   stop: () => void
   pause: () => void
@@ -63,6 +66,10 @@ export const useThePlayer = ({
   } = useThePlayerStore()
 
   const sourceOptsStore = useSourceOptionsStore()
+  const thePlayerStore = useThePlayerStore()
+  const theLoopStore = useTheLoopStore()
+
+  const canSwitchPlayer = ref<boolean>(false)
 
   function getPlayerName (): PlayerName {
     let playerName: PlayerName
@@ -101,25 +108,44 @@ export const useThePlayer = ({
     }
   })
 
+  watch(player, () => {
+    if (!canSwitchPlayer.value) { return }
+
+    // TODO: create a store per player to store items and states like paused etc...
+    if (player.value.isStopped.value) {
+      start()
+    }
+  })
+
   // #region Actions
   const start = (): void => {
+    reset()
+
     player.value.start()
     isStopped.value = false
+
+    // Allow to switch player after the first start.
+    canSwitchPlayer.value = true
   }
 
   const pause = (): void => {
-    player.value.pause()
-    isPaused.value = true
+    if (player.value.canPause()) {
+      player.value.pause()
+      isPaused.value = true
+    }
   }
 
   const resume = (): void => {
-    player.value.resume()
-    isPaused.value = false
+    if (player.value.canResume()) {
+      player.value.resume()
+      isPaused.value = false
+    }
   }
 
   const stop = (): void => {
     player.value.stop()
     isStopped.value = true
+    canSwitchPlayer.value = false
   }
 
   const next = async (): Promise<void> => {
@@ -139,7 +165,29 @@ export const useThePlayer = ({
   const canPause = (): boolean => player.value.canPause()
   const canResume = (): boolean => player.value.canResume()
 
-  const reset = (): void => player.value.reset()
+  const reset = (): void => {
+    theLoopStore.reset()
+    thePlayerStore.reset()
+    player.value.reset()
+  }
+
+  const toggleHistoryPlayer = (): void => {
+    if (!canSwitchPlayer.value) { return }
+
+    if (canPause()) {
+      player.value.pause()
+    } else {
+      player.value.stop()
+    }
+
+    if (playerName.value === PlayerName.history) {
+      playerName.value = previousPlayerName.value
+      previousPlayerName.value = PlayerName.history
+    } else {
+      previousPlayerName.value = playerName.value
+      playerName.value = PlayerName.history
+    }
+  }
   // #endregion Actions
 
   return {
@@ -157,5 +205,6 @@ export const useThePlayer = ({
     canPause,
     canResume,
     reset,
+    toggleHistoryPlayer,
   }
 }

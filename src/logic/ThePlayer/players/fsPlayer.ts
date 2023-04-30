@@ -6,7 +6,7 @@ import type {
 } from '@/logic/ThePlayer/thePlayer'
 
 // Vendors Libs
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 // import { getRandomElementWithIndex } from '@/utils/utils'
 import { buildError } from '@/api/api'
@@ -18,10 +18,10 @@ import { useTheLoop } from '@/logic/ThePlayer/theLoop'
 
 // Stores
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
-// import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
 import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
+import { useTheHistoryStore } from '@/stores/ThePlayer/TheHistoryStore'
 
 export const useFSPlayer = ({
   showNextItem,
@@ -33,6 +33,7 @@ export const useFSPlayer = ({
   const playerOptsStore = usePlayerOptionsStore()
   const sourceOptsStore = useSourceOptionsStore()
   const theLoopStore = useTheLoopStore()
+  const theHistoryStore = useTheHistoryStore()
 
   const isStopped = ref(true)
   const isPaused = ref(false)
@@ -72,6 +73,8 @@ export const useFSPlayer = ({
 
     if (!nextItem.value) { throw new Error('No next item found.') }
 
+    theHistoryStore.add(nextItem.value)
+
     setNextItem(nextItem.value)
     await showNextItem()
 
@@ -86,7 +89,7 @@ export const useFSPlayer = ({
     fetchNextItem()
       .then((itm) => nextItem.value = itm)
 
-    if (!isPaused.value) {
+    if (!thePlayerStore.isPaused.value) {
       theLoop.startLooping()
     }
   }
@@ -125,7 +128,6 @@ export const useFSPlayer = ({
 
   // #region Exposed Actions
   async function start (): Promise<void> {
-    reset()
     isStopped.value = false
     await onLoopEnd()
   }
@@ -169,18 +171,22 @@ export const useFSPlayer = ({
     fetchNextItemPromise.value = undefined
     isFetchingNext.value = false
 
-    theLoopStore.reset()
+    // Loop's components/feature enabled/disabled
     theLoopStore.enabled.value = true
     theLoopStore.showRemainingTime.value = true
 
-    thePlayerStore.reset()
-    thePlayerStore.itemsInfoEnabled.value = false
+    // Player's components/feature enabled/disabled
+    thePlayerStore.historyEnabled.value = true
+    thePlayerStore.pauseEnabled.value = true
 
     errors.value = []
   }
   // #endregion Exposed Actions
 
   const player: UsePlayerExpose = {
+    isStopped: computed<boolean>(() => isStopped.value),
+    isPaused: computed<boolean>(() => isPaused.value),
+
     start,
     stop,
     pause,

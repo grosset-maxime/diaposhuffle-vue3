@@ -31,6 +31,7 @@ export const useThePlayerStore = createGlobalState(() => {
   // Player's components/feature enabled/disabled
   const itemsInfoEnabled = ref(false)
   const historyEnabled = ref(false)
+  const pauseEnabled = ref(false)
 
   const errors = ref<Array<{ [key: string]: unknown }>>([])
   // const getErrors = () => errors.value
@@ -101,6 +102,7 @@ export const useThePlayerStore = createGlobalState(() => {
     // Player's components/feature enabled/disabled
     itemsInfoEnabled.value = false
     historyEnabled.value = false
+    pauseEnabled.value = false
   }
   // #endregion Actions
 
@@ -120,6 +122,7 @@ export const useThePlayerStore = createGlobalState(() => {
     // Player's components/feature enabled/disabled
     itemsInfoEnabled,
     historyEnabled,
+    pauseEnabled,
 
     // Actions
     deleteItem,

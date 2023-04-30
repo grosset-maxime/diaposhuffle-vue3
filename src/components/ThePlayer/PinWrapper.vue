@@ -155,31 +155,34 @@ const positionStyles = computed<CSSProperties>(() => {
 
     &.pos-right {
       right: -$pin-icon-size;
+      .icon {
+        transform: rotate(90deg);
+      }
     }
 
     &.pos-left {
       left: -$pin-icon-size;
     }
 
-    &.pos-top.pos-right .icon {
-      transform: rotate(45deg);
+    &.pos-top {
+      &.pos-right .icon {
+        transform: rotate(45deg);
+      }
+
+      &.pos-left .icon {
+        transform: rotate(-45deg);
+      }
     }
 
-    &.pos-top.pos-left .icon {
-      transform: rotate(-45deg);
-    }
 
-    &.pos-bottom.pos-left .icon {
-      transform: rotate(225deg);
-    }
+    &.pos-bottom {
+      &.pos-left .icon {
+        transform: rotate(225deg);
+      }
 
-    &.pos-bottom.pos-right .icon {
-      transform: rotate(135deg);
-    }
-
-    &.pose .icon {
-      transform: rotate(45deg);
-      color: $grey-5;
+      &.pos-right .icon {
+        transform: rotate(135deg);
+      }
     }
   }
 }

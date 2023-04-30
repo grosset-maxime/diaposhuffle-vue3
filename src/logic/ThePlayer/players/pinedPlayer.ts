@@ -1,3 +1,5 @@
+// TODO: Bug: Manage unpin on playing pined items.
+
 // Types
 import type { Item } from '@/models/item'
 
@@ -124,7 +126,7 @@ export const usePinedPlayer = ({
     nextItem.value = undefined
     nextItemIndex.value = -1
 
-    if (!isPaused.value) {
+    if (!thePlayerStore.isPaused.value) {
       theLoop.startLooping()
     }
   }
@@ -140,7 +142,10 @@ export const usePinedPlayer = ({
     isStopped.value = false
 
     items.value = thePinedStore.items.value
+    itemIndex.value = -1
+
     thePlayerStore.itemsCount.value = items.value.length
+    thePlayerStore.itemIndex.value = itemIndex.value
 
     if (!items.value.length) {
       throw onError('Pined items are empty.')
@@ -197,24 +202,27 @@ export const usePinedPlayer = ({
     isPaused.value = false
 
     items.value = []
-    itemIndex.value = -1
+    itemIndex.value = NaN
     item.value = undefined
     nextItem.value = undefined
-    nextItemIndex.value = -1
+    nextItemIndex.value = NaN
 
-    theLoopStore.reset()
+    // Loop's components/feature enabled/disabled
     theLoopStore.enabled.value = true
     theLoopStore.showRemainingTime.value = true
 
-    thePlayerStore.reset()
     // Player's components/feature enabled/disabled
     thePlayerStore.itemsInfoEnabled.value = true
+    thePlayerStore.pauseEnabled.value = true
 
     errors.value = []
   }
   // #endregion Exposed Actions
 
   const player: UsePlayerExpose = {
+    isStopped: computed<boolean>(() => isStopped.value),
+    isPaused: computed<boolean>(() => isPaused.value),
+
     start,
     stop,
     pause,

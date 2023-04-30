@@ -2,11 +2,13 @@
 import type { Item } from '@/models/item'
 
 // Vendors Libs
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { createGlobalState } from '@vueuse/core'
 
 export const useTheHistoryStore = createGlobalState(() => {
   const items = ref<Array<Item>>([])
+
+  const count = computed<number>(() => items.value.length)
 
   function has (item?: Item): boolean {
     if (!item) { return false }
@@ -27,6 +29,7 @@ export const useTheHistoryStore = createGlobalState(() => {
 
   return {
     items,
+    count,
 
     has,
     add,

@@ -1,13 +1,13 @@
 // Types
 import type { Item } from '@/models/item'
+import type { UsePlayerArg, UsePlayerExpose } from '@/logic/ThePlayer/thePlayer'
 
 // Vendors Libs
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import { buildError } from '@/api/api'
 
 // Stores
-import type { UsePlayerArg, UsePlayerExpose } from '../thePlayer'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 import { useTheHistoryStore } from '@/stores/ThePlayer/TheHistoryStore'
 
@@ -23,24 +23,10 @@ export const useHistoryPlayer = ({
 
   const items = ref<Array<Item>>([])
   const item = ref<Item | undefined>()
-  const itemIndex = ref<number>(-1)
+  const itemIndex = ref<number>(NaN)
 
   const nextItem = ref<Item | undefined>()
   const nextItemIndex = ref<number>(NaN)
-
-  // const getHistoryItemAt = (index: number) => historyItems.value[ index ]
-  // const getHistoryIndex = () => historyItemIndex.value
-
-  // const setHistoryIndex = (val: number) => (historyItemIndex.value = val)
-  // const addHistoryItem = (item: Item) => historyItems.value.push(item)
-  // const setHistoryItemIndex = (index: number, item: Item) => (historyItems.value[ index ] = item)
-  // const deleteHistoryItem = (itemSrc: string | Item) => {
-  //   const src = itemSrc instanceof ItemClass
-  //     ? itemSrc.src
-  //     : itemSrc
-  //   historyItemIndex.value -= 1
-  //   historyItems.value = historyItems.value.filter((i: Item) => i.src !== src)
-  // }
 
   // State
   const errors = ref<Array<{ [key: string]: unknown }>>([])
@@ -115,18 +101,19 @@ export const useHistoryPlayer = ({
 
   // #region Exposed Actions
   async function start (): Promise<void> {
-    reset()
-
     isStopped.value = false
 
     items.value = theHistoryStore.items.value
+    itemIndex.value = 0
+
     thePlayerStore.itemsCount.value = items.value.length
+    thePlayerStore.itemIndex.value = itemIndex.value
 
     if (!items.value.length) {
-      throw onError('Pined items are empty.')
+      throw onError('History items are empty.')
     }
 
-    await onEnd()
+    await previous()
   }
 
   function stop (): void {
@@ -153,12 +140,8 @@ export const useHistoryPlayer = ({
     await onEnd()
   }
 
-  function canNext (): boolean {
-    return itemIndex.value < (items.value.length - 1)
-  }
-  function canPrevious (): boolean {
-    return itemIndex.value > 0
-  }
+  function canNext (): boolean { return true }
+  function canPrevious (): boolean { return true }
 
   function canPause (): boolean { return false }
   function canResume (): boolean { return false }
@@ -168,12 +151,11 @@ export const useHistoryPlayer = ({
     isPaused.value = false
 
     items.value = []
-    itemIndex.value = -1
+    itemIndex.value = NaN
     item.value = undefined
     nextItem.value = undefined
-    nextItemIndex.value = -1
+    nextItemIndex.value = NaN
 
-    thePlayerStore.reset()
     // Player's components/feature enabled/disabled
     thePlayerStore.itemsInfoEnabled.value = true
 
@@ -182,6 +164,9 @@ export const useHistoryPlayer = ({
   // #endregion Exposed Actions
 
   const player: UsePlayerExpose = {
+    isStopped: computed<boolean>(() => isStopped.value),
+    isPaused: computed<boolean>(() => isPaused.value),
+
     start,
     stop,
     pause,

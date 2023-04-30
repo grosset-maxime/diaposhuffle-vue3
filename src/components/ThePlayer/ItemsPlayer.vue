@@ -17,6 +17,8 @@ export interface ItemsPlayerCmpExpose {
 
   playItem: () => void
   pauseItem: () => void
+
+  toggleHistoryPlayer: () => void
 }
 
 // Emits
@@ -83,6 +85,7 @@ defineExpose<ItemsPlayerCmpExpose>({
 
   goToNextItem: thePlayer.next,
   goToPreviousItem: thePlayer.previous,
+  toggleHistoryPlayer: thePlayer.toggleHistoryPlayer,
 
   playItem,
   pauseItem,

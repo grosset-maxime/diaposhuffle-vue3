@@ -18,6 +18,7 @@ import type { UsePlayerArg, UsePlayerExpose } from '../thePlayer'
 import { useTheLoop } from '../theLoop'
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
+import { useTheHistoryStore } from '@/stores/ThePlayer/TheHistoryStore'
 
 export const useDBPlayer = ({
   showNextItem,
@@ -28,6 +29,7 @@ export const useDBPlayer = ({
   const playerOptsStore = usePlayerOptionsStore()
   const sourceOptsStore = useSourceOptionsStore()
   const theLoopStore = useTheLoopStore()
+  const theHistoryStore = useTheHistoryStore()
 
   const isStopped = ref(true)
   const isPaused = ref(false)
@@ -132,6 +134,8 @@ export const useDBPlayer = ({
 
     if (!nextItem.value) { throw new Error('No next item found.') }
 
+    theHistoryStore.add(nextItem.value)
+
     setNextItem(nextItem.value)
     await showNextItem()
 
@@ -148,7 +152,7 @@ export const useDBPlayer = ({
     nextItem.value = undefined
     nextItemIndex.value = -1
 
-    if (!isPaused.value) {
+    if (!thePlayerStore.isPaused.value) {
       theLoop.startLooping()
     }
   }
@@ -158,13 +162,14 @@ export const useDBPlayer = ({
 
   // #region Exposed Actions
   async function start (): Promise<void> {
-    reset()
-
     theLoopStore.indeterminate.value = true
     isStopped.value = false
 
     items.value = await fetchItems()
+    itemIndex.value = -1
+
     thePlayerStore.itemsCount.value = items.value.length
+    thePlayerStore.itemIndex.value = itemIndex.value
 
     if (!items.value.length) {
       throw onError('Items are empty.')
@@ -221,24 +226,28 @@ export const useDBPlayer = ({
     isPaused.value = false
 
     items.value = []
-    itemIndex.value = -1
+    itemIndex.value = NaN
     item.value = undefined
     nextItem.value = undefined
-    nextItemIndex.value = -1
+    nextItemIndex.value = NaN
 
-    theLoopStore.reset()
+    // Loop's components/feature enabled/disabled
     theLoopStore.enabled.value = true
     theLoopStore.showRemainingTime.value = true
 
-    thePlayerStore.reset()
     // Player's components/feature enabled/disabled
     thePlayerStore.itemsInfoEnabled.value = true
+    thePlayerStore.historyEnabled.value = true
+    thePlayerStore.pauseEnabled.value = true
 
     errors.value = []
   }
   // #endregion Exposed Actions
 
   const player: UsePlayerExpose = {
+    isStopped: computed<boolean>(() => isStopped.value),
+    isPaused: computed<boolean>(() => isPaused.value),
+
     start,
     stop,
     pause,
