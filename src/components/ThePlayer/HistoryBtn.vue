@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onBeforeUnmount, ref } from 'vue'
 import { useTheHistoryStore } from '@/stores/ThePlayer/TheHistoryStore'
 
 // Props
@@ -16,7 +17,21 @@ const emit = defineEmits<{
   (e: 'mouseout', event: MouseEvent): void;
 }>()
 
+const isMouseOver = ref(false)
 const { count } = useTheHistoryStore()
+
+function onMouseOver (e: MouseEvent): void {
+  isMouseOver.value = true
+  emit('mouseover', e)
+}
+function onMouseOut (e: MouseEvent): void {
+  isMouseOver.value = false
+  emit('mouseout', e)
+}
+
+onBeforeUnmount(() => {
+  isMouseOver.value && onMouseOut(new MouseEvent('mouseout'))
+})
 </script>
 
 <template>
@@ -27,8 +42,8 @@ const { count } = useTheHistoryStore()
     }"
     icon
     @click="!disabled && emit('click')"
-    @mouseover="emit('mouseover', $event)"
-    @mouseout="emit('mouseout', $event)"
+    @mouseover="onMouseOver"
+    @mouseout="onMouseOut"
   >
     <v-icon class="history-icon">mdi-history</v-icon>
     <span class="count-badge">{{ count }}</span>

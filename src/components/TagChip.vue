@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Types
-import type { TagId } from '@/models/tag'
+import { createTag, TagCategory, type Tag, type TagId } from '@/models/tag'
 
 // Vendors Libs
 import { computed } from 'vue'
@@ -35,27 +35,34 @@ const emit = defineEmits<{
   (e: 'click:edit', tagId: TagId): void;
 }>()
 
-const tag = computed(() => taggerStore.getTag(props.tagId))
-const category = computed(() => tag.value?.category)
+const tag = computed<Tag>(
+  () => taggerStore.getTag(props.tagId) || createTag({ id: props.tagId }),
+)
+const tagName = computed<string>(() => tag.value.name || tag.value.id)
+const category = computed<TagCategory | undefined>(() => tag.value.category)
 
-const isNoneCategory = computed(() => !!category.value?.isNone() || !category.value)
+const isNoneCategory = computed<boolean>(
+  () => !!category.value?.isNone() || !category.value,
+)
 
-const categoryColor = computed(() => category.value?.hashColor || '')
+const categoryColor = computed<string>(() => category.value?.hashColor || '')
 
-const tagColor = eagerComputed(() => {
-  let color
+const tagColor = eagerComputed<string>(() => {
+  let color: string | undefined
 
   if (!isNoneCategory.value) {
     color = props.focused
       ? `${categoryColor.value}FF`
       : `${categoryColor.value}FF`
+  } else {
+    color = '#FFFFFF'
   }
 
   return color
 })
 
-const tagBgColor = eagerComputed(() => {
-  let color
+const tagBgColor = eagerComputed<string | undefined>(() => {
+  let color: string | undefined
 
   if (!isNoneCategory.value) {
     color = props.focused
@@ -68,8 +75,8 @@ const tagBgColor = eagerComputed(() => {
   return color
 })
 
-const tagBoxShadow = eagerComputed(() => {
-  let boxShadow
+const tagBoxShadow = eagerComputed<string | undefined>(() => {
+  let boxShadow: string | undefined
 
   if (props.focused) {
     if (!isNoneCategory.value) {
@@ -103,7 +110,7 @@ const tagBoxShadow = eagerComputed(() => {
     @click="emit('click', tagId)"
   >
     <span class="tag-content">
-      <span class="name">{{ tag?.name }}</span>
+      <span class="name">{{ tagName }}</span>
 
       <v-btn
         v-if="edit"

@@ -12,7 +12,9 @@ import { BASE_URL, buildError, fetchJson } from '@/api/api'
  * @param folders - Custom folders list.
  * @returns Promise with fetched item from FS.
  */
-export const fetchRandomItem = async ({ folders }: { folders?: Array<string> } = {}) => {
+export const fetchRandomItem = async (
+  { folders }: { folders?: Array<string> } = {},
+): Promise<Item> => {
   let item: Item
 
   try {
@@ -60,7 +62,11 @@ export const fetchItemsFromBdd = async ({
   tags,
   tagsOperator,
   types,
-}: { tags?: Array<TagId>; types?: Array<FileType>; tagsOperator?: TagsOperator } = {}) => {
+}: {
+  tags?: Array<TagId>
+  types?: Array<FileType>
+  tagsOperator?: TagsOperator
+} = {}): Promise<Array<Item>> => {
   let items: Array<Item> = []
 
   try {
@@ -105,21 +111,13 @@ export const fetchItemsFromBdd = async ({
  * Delete an item.
  * @param options - Options.
  * @param itemSrc - Item src.
- * @param ignoreIfNotExist - Continue delete script if item
- *                           doesn't exist in file system.
- * @param fromBddOnly - Delete item only from the bdd,
- *                      do not remove it from file system.
  * @returns Promise with success
  */
 export const deleteItem = async ({
   item,
-  ignoreIfNotExist = false,
-  fromBddOnly = false,
 }: {
   item: Item;
-  ignoreIfNotExist?: boolean;
-  fromBddOnly?: boolean;
-}) => {
+}): Promise<{ success: boolean }> => {
   if (!item || !item.src) {
     throw buildError('Missing mandatory options.')
   }
@@ -134,8 +132,6 @@ export const deleteItem = async ({
       method: 'POST',
       body: JSON.stringify({
         picPath: item.src,
-        continueIfNotExist: ignoreIfNotExist,
-        deleteOnlyFromBdd: fromBddOnly,
       }),
     }
 
@@ -153,7 +149,9 @@ export const deleteItem = async ({
  * @param options.item - Item.
  * @returns Promise with success
  */
-export const setItemTags = async ({ item }: { item: Item }) => {
+export const setItemTags = async (
+  { item }: { item: Item },
+): Promise<{ success: boolean }> => {
   const { name, path, tags } = item
 
   if (!name || !path) {

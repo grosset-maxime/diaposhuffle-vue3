@@ -49,9 +49,9 @@ export const useHistoryPlayer = ({
   }
 
   function getNextItem (): { itm: Item, index: number } {
-    let index = itemIndex.value + 1
+    let index: number = itemIndex.value + 1
 
-    if (index >= items.value.length) { // TODO: do it if itemsLoopFeature enabled.
+    if (index >= items.value.length) { // TODO: do it if canLoop.
       index = 0
     }
 
@@ -63,13 +63,13 @@ export const useHistoryPlayer = ({
   }
 
   function getPreviousItem (): { itm: Item, index: number } {
-    let index = itemIndex.value - 1
+    let index: number = itemIndex.value - 1
 
-    if (index < 0) { // TODO: do it if itemsLoopFeature enabled.
+    if (index < 0) { // TODO: do it if canLoop.
       index = items.value.length - 1
     }
 
-    const itm = items.value[ index ]
+    const itm: Item = items.value[ index ]
 
     if (!itm) { throw new Error('No next item found.') }
 
@@ -146,7 +146,7 @@ export const useHistoryPlayer = ({
   function canPause (): boolean { return false }
   function canResume (): boolean { return false }
 
-  const reset = (): void => {
+  function reset (): void {
     isStopped.value = true
     isPaused.value = false
 
@@ -160,6 +160,33 @@ export const useHistoryPlayer = ({
     thePlayerStore.itemsInfoEnabled.value = true
 
     errors.value = []
+  }
+
+  function onDeleteItem (itm: Item): void {
+    const itms: Array<Item> = items.value
+    let itmIndex: number = itemIndex.value
+    let itemFound = false
+
+    for (let i = itms.length - 1; i >= 0; i--) {
+      if (itms[ i ].src === itm.src) {
+        itemFound = true
+        itms.splice(i, 1) // Remove the item from the array by its index.
+
+        if (i <= itmIndex)
+          itmIndex = itmIndex - 1
+      }
+    }
+
+    if (itemFound) {
+      items.value = itms.slice() // Clone the array (FASTEST).
+      itemIndex.value = itmIndex
+
+      // TODO: do it only if it is active player
+      thePlayerStore.itemsCount.value = items.value.length
+      thePlayerStore.itemIndex.value = itemIndex.value
+    }
+
+    next()
   }
   // #endregion Exposed Actions
 
@@ -178,6 +205,8 @@ export const useHistoryPlayer = ({
     canPause,
     canResume,
     reset,
+
+    onDeleteItem,
   }
 
   return player

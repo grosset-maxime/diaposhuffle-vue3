@@ -11,11 +11,10 @@ import TaggerView from '@/components/TheTagger/TaggerView.vue'
 // Props
 interface Props {
   show?: boolean;
-  selected?: Set<TagId>;
+  selected: Set<TagId>;
 }
 const props = withDefaults(defineProps<Props>(), {
   show: false,
-  selected: (): Set<TagId> => new Set(),
 })
 
 // Emits

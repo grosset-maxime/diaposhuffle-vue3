@@ -58,20 +58,28 @@ export const useFSPlayer = ({
     isFetchingNext.value = true
 
     fetchNextItemPromise.value = fetchItem()
-    const itm = await fetchNextItemPromise.value
+    const itm: Item = await fetchNextItemPromise.value
 
+    fetchNextItemPromise.value = undefined
     isFetchingNext.value = false
+
     return itm
   }
 
   async function onLoopEnd (): Promise<void> {
     theLoopStore.indeterminate.value = true
 
-    if (!nextItem.value) {
+    if (isFetchingNext.value) {
+      await fetchNextItemPromise.value
+
+    } else if (!nextItem.value) {
       nextItem.value = await fetchNextItem()
     }
 
-    if (!nextItem.value) { throw new Error('No next item found.') }
+    if (!nextItem.value) {
+      stop()
+      throw new Error('No next item found.')
+    }
 
     theHistoryStore.add(nextItem.value)
 
@@ -162,7 +170,7 @@ export const useFSPlayer = ({
   function canPause (): boolean { return true }
   function canResume (): boolean { return true }
 
-  const reset = (): void => {
+  function reset (): void {
     isStopped.value = true
     isPaused.value = false
 
@@ -181,6 +189,18 @@ export const useFSPlayer = ({
 
     errors.value = []
   }
+
+  async function onDeleteItem (itm: Item): Promise<void> {
+    if (isFetchingNext.value) {
+      await fetchNextItemPromise.value
+    }
+
+    if (nextItem.value && itm.src === nextItem.value.src) {
+      nextItem.value = undefined
+    }
+
+    next()
+  }
   // #endregion Exposed Actions
 
   const player: UsePlayerExpose = {
@@ -198,6 +218,8 @@ export const useFSPlayer = ({
     canPause,
     canResume,
     reset,
+
+    onDeleteItem,
   }
 
   return player

@@ -4,13 +4,11 @@ import { eagerComputed } from '@vueuse/shared'
 import { useUIOptionsStore } from '@/stores/ThePlayerOptions/uiOptions'
 
 const {
-  showHistory,
   showListIndex,
   showLoop,
   showPath,
   showPined,
   showTags,
-  pinHistory,
   pinListIndex,
   pinLoop,
   pinPath,
@@ -25,7 +23,6 @@ const showHideAll = eagerComputed(
   () =>
     showPath.value
     && showTags.value
-    && showHistory.value
     && showPined.value
     && showListIndex.value
     && showLoop.value,
@@ -34,7 +31,6 @@ const pinUnpinAll = eagerComputed(
   () =>
     pinPath.value
     && pinTags.value
-    && pinHistory.value
     && pinPined.value
     && pinListIndex.value
     && pinLoop.value,
@@ -57,10 +53,10 @@ const pinUnpinAll = eagerComputed(
         />
       </v-col>
       <v-col class="col d-flex">
-        <span class="v-label">Hide all</span>
+        <span class="v-label">Unpin all</span>
         <v-switch
           :model-value="pinUnpinAll"
-          label="Show all"
+          label="Pin all"
           color="blue"
           hide-details
           inset
@@ -117,29 +113,6 @@ const pinUnpinAll = eagerComputed(
         <v-switch
           v-model="pinTags"
           label="Pin tags"
-          color="primary"
-          hide-details
-          inset
-          density="compact"
-        />
-      </v-col>
-    </v-row>
-
-    <v-row align="center">
-      <v-col class="col">
-        <v-switch
-          v-model="showHistory"
-          label="Show history"
-          color="primary"
-          hide-details
-          inset
-          density="compact"
-        />
-      </v-col>
-      <v-col class="col">
-        <v-switch
-          v-model="pinHistory"
-          label="Pin history"
           color="primary"
           hide-details
           inset

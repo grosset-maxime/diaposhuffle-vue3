@@ -3,45 +3,31 @@
 import type { Fn } from '@vueuse/core'
 
 // Vendors Libs
-import { ref, watch } from 'vue'
+import { watch } from 'vue'
 import { useEventListener } from '@vueuse/core'
 
 import { getKey } from '@/utils/utils'
 
 let stopKeyboardShortcuts: Fn | null
 
-interface opts {
-  fromBddOnly: boolean;
-  ignoreIfNotExist: boolean;
-}
-const DEFAULT_OPTIONS: opts = {
-  fromBddOnly: false,
-  ignoreIfNotExist: false,
-}
-
 // Props
 interface Props {
   show?: boolean;
-  showOptions?: boolean;
   showPreview?: boolean;
   showSrc?: boolean;
 }
 const props = withDefaults(defineProps<Props>(), {
   show: false,
-  showOptions: false,
   showPreview: false,
   showSrc: false,
 })
 
 // Emits
 const emit = defineEmits<{
-  (e: 'confirm', opts: opts): void;
+  (e: 'confirm'): void;
   (e: 'cancel'): void;
   (e: 'click:outside'): void;
 }>()
-
-// Refs
-const options = ref({ ...DEFAULT_OPTIONS })
 
 // Watchers
 watch(
@@ -49,7 +35,6 @@ watch(
   (isShow) => {
     if (isShow) {
       attachKeyboardShortcuts()
-      resetOptions()
     } else {
       removeKeyboardShortcuts()
     }
@@ -58,15 +43,11 @@ watch(
 
 // Methods
 function onConfirm () {
-  emit('confirm', { ...options.value })
+  emit('confirm')
 }
 
 function onCancel () {
   emit('cancel')
-}
-
-function resetOptions () {
-  options.value = { ...DEFAULT_OPTIONS }
 }
 
 function keyboardShortcuts (e: KeyboardEvent) {
@@ -103,6 +84,7 @@ function removeKeyboardShortcuts () {
     :model-value="show"
     persistent
     no-click-animation
+    scrim="surface"
     @click:outside="emit('click:outside')"
   >
     <div class="delete-modal-body">
@@ -122,21 +104,6 @@ function removeKeyboardShortcuts () {
         <!-- @slot Src of the item. -->
         <slot name="src" />
       </div>
-
-      <div class="options" v-if="showOptions">
-        <v-checkbox
-          class="option-only-from-bdd option mt-2 mb-2"
-          v-model="options.fromBddOnly"
-          label="Only from Bdd"
-          hide-details
-        />
-        <v-checkbox
-          class="option-ignore-if-exist option mt-2 mb-2"
-          v-model="options.ignoreIfNotExist"
-          label="Ignore if not exist"
-          hide-details
-        />
-      </div>
     </div>
 
     <v-divider class="separator" />
@@ -152,15 +119,12 @@ function removeKeyboardShortcuts () {
 <style lang="scss">
 /* FYI: As Vuetify v-dialog is injected at root in DOM, style cannot be scoped. */
 
-.delete-modal {
-  position: absolute;
+.delete-modal.delete-modal.delete-modal {
   top: 0;
-  display: flex;
-  flex-direction: column;
   align-items: center;
   background: #{$grey-7 + 'CC'};
   padding: 15px;
-  width: 600px;
+  width: 800px;
 
   .separator {
     margin: 4px 0;
@@ -193,14 +157,6 @@ function removeKeyboardShortcuts () {
     .src-slot-ctn {
       margin-top: 5px;
       margin-bottom: 5px;
-    }
-
-    .options {
-      display: flex;
-
-      .option {
-        margin-right: 30px;
-      }
     }
   }
 

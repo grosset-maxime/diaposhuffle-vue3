@@ -8,9 +8,6 @@ interface states {
   showTags: boolean;
   pinTags: boolean;
 
-  showHistory: boolean;
-  pinHistory: boolean;
-
   showPined: boolean;
   pinPined: boolean;
 
@@ -28,9 +25,6 @@ export const useUIOptionsStore = createGlobalState(() => {
 
     showTags: true,
     pinTags: true,
-
-    showHistory: true,
-    pinHistory: false,
 
     showPined: true,
     pinPined: true,
@@ -64,14 +58,6 @@ export const useUIOptionsStore = createGlobalState(() => {
     get: () => states.value.pinTags,
     set: (val) => (states.value.pinTags = val),
   })
-  const showHistory = computed({
-    get: () => states.value.showHistory,
-    set: (val) => (states.value.showHistory = val),
-  })
-  const pinHistory = computed({
-    get: () => states.value.pinHistory,
-    set: (val) => (states.value.pinHistory = val),
-  })
   const showPined = computed({
     get: () => states.value.showPined,
     set: (val) => (states.value.showPined = val),
@@ -102,7 +88,6 @@ export const useUIOptionsStore = createGlobalState(() => {
   const toggleShowAll = (val: boolean) => {
     showPath.value = val
     showTags.value = val
-    showHistory.value = val
     showPined.value = val
     showListIndex.value = val
     showLoop.value = val
@@ -110,7 +95,6 @@ export const useUIOptionsStore = createGlobalState(() => {
   const togglePinAll = (val: boolean) => {
     pinPath.value = val
     pinTags.value = val
-    pinHistory.value = val
     pinPined.value = val
     pinListIndex.value = val
     pinLoop.value = val
@@ -123,8 +107,6 @@ export const useUIOptionsStore = createGlobalState(() => {
     pinPath,
     showTags,
     pinTags,
-    showHistory,
-    pinHistory,
     showPined,
     pinPined,
     showListIndex,

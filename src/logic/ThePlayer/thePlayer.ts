@@ -44,6 +44,7 @@ export interface UsePlayerExpose {
   canPause: () => boolean
   canResume: () => boolean
   reset: () => void
+  onDeleteItem: (itm: Item) => void
 }
 
 interface UseThePlayer {
@@ -188,6 +189,8 @@ export const useThePlayer = ({
       playerName.value = PlayerName.history
     }
   }
+
+  const onDeleteItem = (itm: Item): void => player.value.onDeleteItem(itm)
   // #endregion Actions
 
   return {
@@ -206,5 +209,6 @@ export const useThePlayer = ({
     canResume,
     reset,
     toggleHistoryPlayer,
+    onDeleteItem,
   }
 }

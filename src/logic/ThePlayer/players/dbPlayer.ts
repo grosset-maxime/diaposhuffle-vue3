@@ -65,13 +65,13 @@ export const useDBPlayer = ({
 
   async function fetchItems (): Promise<Array<Item>> {
     try {
-      const items = await fetchItemsFromBddAPI({
+      const itms: Array<Item> = await fetchItemsFromBddAPI({
         tags: Array.from(sourceOptsStore.tags.value),
         tagsOperator: sourceOptsStore.tagsOperator.value,
         types: sourceOptsStore.fileTypes.value,
       })
 
-      return items
+      return itms
 
     } catch (e) {
       const error = buildError(e)
@@ -96,13 +96,13 @@ export const useDBPlayer = ({
       return getRandomItem()
     }
 
-    let index = itemIndex.value + 1
+    let index: number = itemIndex.value + 1
 
-    if (index >= items.value.length) { // TODO: do it if itemsLoopFeature enabled.
+    if (index >= items.value.length) { // TODO: do it if canLoop.
       index = 0
     }
 
-    const itm = items.value[ index ]
+    const itm: Item = items.value[ index ]
 
     if (!itm) { throw new Error('No next item found.') }
 
@@ -112,7 +112,7 @@ export const useDBPlayer = ({
   function getPreviousItem (): { itm: Item, index: number } {
     let index = itemIndex.value - 1
 
-    if (index < 0) { // TODO: do it if itemsLoopFeature enabled.
+    if (index < 0) { // TODO: do it if canLoop.
       index = items.value.length - 1
     }
 
@@ -221,7 +221,7 @@ export const useDBPlayer = ({
   function canPause (): boolean { return true }
   function canResume (): boolean { return true }
 
-  const reset = (): void => {
+  function reset (): void {
     isStopped.value = true
     isPaused.value = false
 
@@ -242,6 +242,34 @@ export const useDBPlayer = ({
 
     errors.value = []
   }
+
+  function onDeleteItem (itm: Item): void {
+    const itms: Array<Item> = items.value
+    let itmIndex: number | undefined
+
+    if (item.value?.src === itm.src) {
+      itmIndex = itemIndex.value
+    } else {
+      for (let i = itms.length - 1; i > 0; i--) {
+        if (itms[ i ].src === itm.src) {
+          itmIndex = i
+          break
+        }
+      }
+    }
+
+    if (typeof itmIndex === 'number') {
+      itms.splice(itmIndex, 1) // Remove the item from the array by its index.
+      items.value = itms.slice() // Clone the array (FASTEST).
+      itemIndex.value = (itmIndex || 0) - 1
+
+      // TODO: do it only if it is active player
+      thePlayerStore.itemsCount.value = items.value.length
+      thePlayerStore.itemIndex.value = itemIndex.value
+    }
+
+    next()
+  }
   // #endregion Exposed Actions
 
   const player: UsePlayerExpose = {
@@ -259,6 +287,8 @@ export const useDBPlayer = ({
     canPause,
     canResume,
     reset,
+
+    onDeleteItem,
   }
 
   return player

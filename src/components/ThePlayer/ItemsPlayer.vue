@@ -1,4 +1,7 @@
 <script setup lang="ts">
+// Types
+import type { Item } from '@/models/item'
+
 import { ref, onMounted } from 'vue'
 
 import { useItemsPlayer } from '@/logic/ThePlayer/itemsPlayer'
@@ -14,11 +17,11 @@ export interface ItemsPlayerCmpExpose {
 
   goToNextItem: () => void
   goToPreviousItem: () => void
+  toggleHistoryPlayer: () => void
+  onDeleteItem: (itm: Item) => void
 
   playItem: () => void
   pauseItem: () => void
-
-  toggleHistoryPlayer: () => void
 }
 
 // Emits
@@ -86,6 +89,7 @@ defineExpose<ItemsPlayerCmpExpose>({
   goToNextItem: thePlayer.next,
   goToPreviousItem: thePlayer.previous,
   toggleHistoryPlayer: thePlayer.toggleHistoryPlayer,
+  onDeleteItem: thePlayer.onDeleteItem,
 
   playItem,
   pauseItem,

@@ -36,7 +36,7 @@ import ItemsInfoChip from '@/components/ThePlayer/ItemsInfoChipChip.vue'
 import PinWrapper from '@/components/ThePlayer/PinWrapper.vue'
 import ItemPathChip from '@/components/ThePlayer/ItemPathChip.vue'
 
-import TaggerModal from '@/components/TheTagger/TheTagger.vue'
+import TheTagger from '@/components/TheTagger/TheTagger.vue'
 import DeleteModal from '@/components/DeleteModal.vue'
 import { eagerComputed } from '@vueuse/shared'
 import { useTheHistoryStore } from '@/stores/ThePlayer/TheHistoryStore'
@@ -44,13 +44,11 @@ import { useTheHistoryStore } from '@/stores/ThePlayer/TheHistoryStore'
 const { showTheHelp } = useGlobalState()
 const { showThePlayer } = useDiapoShuffleStore()
 const {
-  showHistory,
   showListIndex: showItemsInfo,
   showLoop,
   showPath,
   showPined,
   showTags,
-  pinHistory,
   pinListIndex,
   pinLoop,
   pinPath,
@@ -62,14 +60,14 @@ const theLoopStore = useTheLoopStore()
 const thePinedStore = useThePinedStore()
 const theHistoryStore = useTheHistoryStore()
 
-const item = computed(() => thePlayerStore.item.value)
-const isPaused = computed(() => thePlayerStore.isPaused.value)
-const isItemVideo = computed(() => thePlayerStore.isItemVideo.value)
-const playingItemTags = computed(() => item.value?.tags || new Set<TagId>())
-const isLoopEnabled = computed(() => theLoopStore.enabled.value)
-const isItemsInfoEnabled = computed(() => thePlayerStore.itemsInfoEnabled.value)
-const isHistoryEnabled = computed(() => thePlayerStore.historyEnabled.value)
-const isPinedItem = eagerComputed(() => thePinedStore.has(item.value))
+const item = computed<Item | undefined>(() => thePlayerStore.item.value)
+const isPaused = computed<boolean>(() => thePlayerStore.isPaused.value)
+const isItemVideo = computed<boolean>(() => thePlayerStore.isItemVideo.value)
+const itemTags = computed<Set<TagId>>(() => item.value?.tags || new Set<TagId>())
+const isLoopEnabled = computed<boolean>(() => theLoopStore.enabled.value)
+const isItemsInfoEnabled = computed<boolean>(() => thePlayerStore.itemsInfoEnabled.value)
+// const isHistoryEnabled = computed<boolean>(() => thePlayerStore.historyEnabled.value)
+const isPinedItem = eagerComputed<boolean>(() => thePinedStore.has(item.value))
 const historyCount = theHistoryStore.count
 
 // Refs to Components element in template.
@@ -78,7 +76,6 @@ const ItemsPlayerCmp = ref<ItemsPlayerCmpExpose | null>(null)
 // #region Delete Item Modal
 const deleteModal = {
   show: ref(false),
-  showOptions: ref(false),
   itemData: ref<Item | undefined>(),
 }
 
@@ -86,50 +83,41 @@ const deleteSrcText = computed<string>(() => {
   return `Src: ${deleteModal.itemData.value?.src}`
 })
 
-function showDeleteModal (
-  { item, showOptions = false }: { item: Item; showOptions?: boolean },
-): void {
+function showDeleteModal ({ item }: { item: Item }): void {
   showUI()
   pausePlayer()
   stopKSListener()
 
   deleteModal.itemData.value = item
-  deleteModal.showOptions.value = !!showOptions
   deleteModal.show.value = true
 }
 
-function hideDeleteModal ({
-  remove = false,
-  fromBddOnly,
-  ignoreIfNotExist,
-}: {
-  remove?: boolean;
-  fromBddOnly?: boolean;
-  ignoreIfNotExist?: boolean;
-} = {}): void {
+async function hideDeleteModal (
+  { remove = false }: { remove?: boolean } = {},
+): Promise<void> {
   const item = deleteModal.itemData.value
 
-  hideUI()
+  if (item && remove) {
+    try {
+      await thePlayerStore.deleteItem({ item })
+
+      // TODO: dispatch deleteItemEvent instead of calling an action.
+      ItemsPlayerCmp.value?.onDeleteItem(item)
+      hideUI()
+
+    } catch (e: unknown) {
+      console.error(e)
+      const error = buildError(e)
+
+      pausePlayer()
+      displayAlert(error as Partial<Alert>)
+    }
+  }
 
   deleteModal.show.value = false
   deleteModal.itemData.value = undefined
 
   startKSListener()
-
-  if (item && remove) {
-    thePlayerStore.deleteItem({
-      item,
-      fromBddOnly,
-      ignoreIfNotExist,
-    }).catch((e: unknown) => {
-      const error = buildError(e)
-
-      pausePlayer()
-      displayAlert(error as Partial<Alert>)
-
-      throw error
-    })
-  }
 }
 // #endregion Delete Item Modal
 
@@ -151,8 +139,10 @@ function hideTaggerModal (): void {
 }
 
 async function onSaveTaggerModal (selectedTagIds: Set<TagId>): Promise<void> {
+  if (!item.value) { return }
+
   const tags = selectedTagIds
-  const itemVal = item.value!
+  const itemVal = item.value
 
   // TODO: reactivity?
   itemVal.tags = tags
@@ -351,9 +341,6 @@ const showTheTagsList = eagerComputed<boolean>(
 const showTheItemsInfoChip = eagerComputed<boolean>(
   () => !!(showItemsInfo.value && isItemsInfoEnabled.value),
 )
-const showTheHistoryChip = eagerComputed<boolean>(
-  () => !!(showHistory.value && isHistoryEnabled.value),
-)
 const showPinedChip = eagerComputed<boolean>(
   () => !!(showPined.value && isPinedItem.value),
 )
@@ -446,7 +433,6 @@ onMounted(async () => {
   // Init pined states from UI options.
   itemPathChip.pined.value = pinPath.value
   tagsList.pined.value = pinTags.value
-  historyChip.pined.value = pinHistory.value
   pinedChip.pined.value = pinPined.value
   itemsInfoChip.pined.value = pinListIndex.value
   loop.pined.value = pinLoop.value
@@ -559,7 +545,7 @@ onMounted(async () => {
           {{ alert.publicMessage }}
         </v-col>
         <v-col class="shrink" v-if="alert.showDeleteBtn">
-          <v-btn @click="item && showDeleteModal({ item, showOptions: true })">
+          <v-btn @click="item && showDeleteModal({ item })">
             Delete
           </v-btn>
         </v-col>
@@ -597,15 +583,14 @@ onMounted(async () => {
       @mouseover="onMouseOverUI"
       @mouseout="onMouseOutUI"
     >
-      <TagsList :tags-ids="playingItemTags" class="the-tags-list" @click="showTaggerModal" />
+      <TagsList :tags-ids="itemTags" class="the-tags-list" @click="showTaggerModal" />
     </PinWrapper>
 
     <DeleteModal
       :show="deleteModal.show.value"
-      :show-options="deleteModal.showOptions.value"
       :show-preview="!!deleteModal.itemData.value"
       :show-src="!!deleteModal.itemData.value"
-      @confirm="hideDeleteModal({ ...$event, remove: true })"
+      @confirm="hideDeleteModal({ remove: true })"
       @cancel="hideDeleteModal"
       @click:outside="hideDeleteModal"
     >
@@ -656,9 +641,9 @@ onMounted(async () => {
     </PinWrapper>
 
     <Teleport to="body">
-      <TaggerModal
+      <TheTagger
         :show="taggerModal.show.value"
-        :selected-tag-ids="playingItemTags"
+        :selected="itemTags"
         @close="hideTaggerModal"
         @save="onSaveTaggerModal"
       />

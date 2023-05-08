@@ -37,11 +37,10 @@ const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboar
 // Props
 interface Props {
   show: boolean
-  selected?: Set<TagId>
+  selected: Set<TagId>
   editMode?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {
-  selected: (): Set<TagId> => new Set(),
   editMode: false,
 })
 

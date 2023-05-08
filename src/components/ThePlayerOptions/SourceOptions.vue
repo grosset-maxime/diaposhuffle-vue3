@@ -17,7 +17,7 @@ import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
 
 // Components
 import TheFolderBrowser from '@/components/TheFolderBrowser/TheFolderBrowser.vue'
-import TaggerModal from '@/components/TheTagger/TheTagger.vue'
+import TheTagger from '@/components/TheTagger/TheTagger.vue'
 import TagChip from '@/components/TagChip.vue'
 import { useThePinedStore } from '@/stores/ThePlayer/ThePinedStore'
 
@@ -273,7 +273,7 @@ function clearPineds () {
         @save="onSaveTheFolderBrowser"
       />
 
-      <TaggerModal
+      <TheTagger
         :show="showTagger"
         :selected="selectedTags"
         @close="onCloseTaggerModal"

@@ -6,8 +6,8 @@ import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 
 const { item } = useThePlayerStore()
 
-const pathStart = computed(() => item.value?.customFolderPath || '')
-const pathEnd = computed(() => item.value?.randomPublicPath || '')
+const pathStart = computed<string>(() => item.value?.customFolderPath || '')
+const pathEnd = computed<string>(() => item.value?.randomPublicPath || '.')
 
 // Emits
 const emit = defineEmits<{
@@ -21,7 +21,7 @@ const emit = defineEmits<{
       {{ pathStart }}
     </span>
 
-    <span class="path-end" v-show="pathEnd">
+    <span class="path-end">
       {{ pathEnd }}
     </span>
   </div>
@@ -41,7 +41,7 @@ const emit = defineEmits<{
   }
 
   .path-start {
-    font-size: 0.5em;
+    font-size: 0.8em;
     margin-right: 4px;
   }
 

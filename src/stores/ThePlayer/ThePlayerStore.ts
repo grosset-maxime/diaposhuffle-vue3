@@ -46,19 +46,11 @@ export const useThePlayerStore = createGlobalState(() => {
   }
 
   // #region Actions
-  async function deleteItem ({
-    item,
-    fromBddOnly,
-    ignoreIfNotExist,
-  }: {
-    item: Item;
-    fromBddOnly?: boolean;
-    ignoreIfNotExist?: boolean;
-  }) {
+  async function deleteItem ({ item }: { item: Item }): Promise<boolean> {
     let result = false
 
     try {
-      const response = await deleteItemAPI({ item, fromBddOnly, ignoreIfNotExist })
+      const response = await deleteItemAPI({ item })
       result = response.success
     } catch (e) {
       const error = buildError(e)
@@ -72,7 +64,7 @@ export const useThePlayerStore = createGlobalState(() => {
     return result
   }
 
-  async function setItemTags ({ item }: { item: Item }) {
+  async function setItemTags ({ item }: { item: Item }): Promise<boolean> {
     let result = false
 
     try {

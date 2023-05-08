@@ -7,6 +7,8 @@ import type { TagCategoryId, TagId, Tag, TagCategory } from '@/models/tag'
 import { computed } from 'vue'
 import Fuse from 'fuse.js'
 
+import { createTag } from '@/models/tag'
+
 // Stores
 import { useTaggerStore } from '@/stores/tagger'
 
@@ -290,19 +292,26 @@ export const useTheTagger = ({
   //#endregion Filtered Tags & Categories & LastUsedTags
 
   //#region Selected Tags section
-  const selectedTagsMap = computed(() => {
-    const tagsMap: Map<TagId, Tag> = new Map()
-    const mapToFilter = isFiltering.value
+  const selectedTagsMap = computed<Map<TagId, Tag>>(() => {
+    const tagsMapResult: Map<TagId, Tag> = new Map()
+
+    const tagsMapToFilter: Map<TagId, Tag> = isFiltering.value
       ? filteredTagsMap.value
       : sortedTagsMap.value
 
-    mapToFilter.forEach((tag, tagId) => {
+    tagsMapToFilter.forEach((tag, tagId) => {
       if(selectedTagsIdsSet.value.has(tagId)){
-        tagsMap.set(tagId, tag)
+        tagsMapResult.set(tagId, tag)
       }
     })
 
-    return tagsMap
+    selectedTagsIdsSet.value.forEach((tagId: TagId) => {
+      if (!tagsMap.value.get(tagId)) {
+        tagsMapResult.set(tagId, createTag({ id: tagId }))
+      }
+    })
+
+    return tagsMapResult
   })
   //#endregion Selected Tags section
 
