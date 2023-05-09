@@ -8,6 +8,7 @@ import { ref, computed, inject } from 'vue'
 // Stores
 import { useFolderBrowserStore } from '@/stores/folderBrowser'
 import { theFolderBrowserKey } from '@/interfaces/symbols'
+import { useErrorStore } from '@/stores/errorStore'
 
 // Props
 interface Props {
@@ -15,9 +16,13 @@ interface Props {
 }
 const props = defineProps<Props>()
 
+const errorStore = useErrorStore()
+
 const selectedFoldersModal = inject(theFolderBrowserKey)
 if (!selectedFoldersModal) {
-  throw new Error(`Could not resolve ${theFolderBrowserKey.description}`)
+  throw errorStore.add(`Could not resolve ${theFolderBrowserKey.description}`, {
+    file: 'FolderItem.vue',
+  })
 }
 const {
   selectedFolders,

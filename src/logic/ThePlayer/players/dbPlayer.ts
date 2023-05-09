@@ -1,24 +1,23 @@
 // Types
 import type { Item } from '@/models/item'
+import type { UsePlayerArg, UsePlayerExpose } from '../thePlayer'
 
 // Vendors Libs
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 
-import { getRandomElementWithIndex } from '@/utils/utils'
-import { buildError } from '@/api/api'
-import {
-  fetchItemsFromBdd as fetchItemsFromBddAPI,
-} from '@/api/items'
-// import { Item as ItemClass } from '@/models/item'
+// Libs
+import { useTheLoop } from '../theLoop'
+import { getNextItem, getPreviousItem } from '@/utils/playerUtils'
 
 // Stores
 import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
-import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
-import type { UsePlayerArg, UsePlayerExpose } from '../thePlayer'
-import { useTheLoop } from '../theLoop'
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
-import { useTheHistoryStore } from '@/stores/ThePlayer/TheHistoryStore'
+import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
+import { useErrorStore } from '@/stores/errorStore'
+import type { CustomError, CustomErrorData } from '@/models/error'
+import { useDBPlayerStore } from '@/stores/ThePlayer/players/dbPlayerStore'
+
 
 export const useDBPlayer = ({
   showNextItem,
@@ -27,114 +26,43 @@ export const useDBPlayer = ({
 }: UsePlayerArg) => {
   const thePlayerStore = useThePlayerStore()
   const playerOptsStore = usePlayerOptionsStore()
-  const sourceOptsStore = useSourceOptionsStore()
   const theLoopStore = useTheLoopStore()
-  const theHistoryStore = useTheHistoryStore()
+  const historyPlayerStore = useHistoryPlayerStore()
+  const errorStore = useErrorStore()
 
-  const isStopped = ref(true)
-  const isPaused = ref(false)
+  const isFetchItemRandomly = playerOptsStore.isFetchItemRandomly
 
-  const isFetchItemRandomly = computed(() => playerOptsStore.isFetchItemRandomly.value)
+  const {
+    isStopped,
+    isPaused,
 
-  const items = ref<Array<Item>>([])
-  const item = ref<Item | undefined>()
-  const itemIndex = ref<number>(-1)
+    items,
+    item,
+    itemIndex,
+    nextItem,
+    nextItemIndex,
 
-  const nextItem = ref<Item | undefined>()
-  const nextItemIndex = ref<number>(NaN)
-
-  // State
-  const errors = ref<Array<{ [key: string]: unknown }>>([])
+    fetchItems,
+    reset: resetStore,
+  } = useDBPlayerStore()
 
   // #region Methods
-  function addError ({ actionName, error }: { actionName: string; error: unknown }): void {
-    errors.value.push({
-      [ actionName ]: error,
-    })
-    console.error(actionName, error)
-  }
-
-  const onError = (e: unknown) => {
-    const error = buildError(e)
-    addError({
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    return errorStore.add(error, {
+      ...errorData,
+      file: 'dbPlayer.ts',
       actionName: 'PLAYER_A_FETCH_PREV',
-      error,
     })
-    return error
-  }
-
-  async function fetchItems (): Promise<Array<Item>> {
-    try {
-      const itms: Array<Item> = await fetchItemsFromBddAPI({
-        tags: Array.from(sourceOptsStore.tags.value),
-        tagsOperator: sourceOptsStore.tagsOperator.value,
-        types: sourceOptsStore.fileTypes.value,
-      })
-
-      return itms
-
-    } catch (e) {
-      const error = buildError(e)
-      addError({
-        actionName: 'PLAYER_A_FETCH_ITEMS_FROM_BDD',
-        error,
-      })
-      throw error
-    }
-  }
-
-  function getRandomItem (): { itm: Item, index: number } {
-    const { el: itm, index } = getRandomElementWithIndex(items.value)
-
-    if (!itm) { throw new Error('No random item found.') }
-
-    return { itm, index }
-  }
-
-  function getNextItem (): { itm: Item, index: number } {
-    if (isFetchItemRandomly.value) {
-      return getRandomItem()
-    }
-
-    let index: number = itemIndex.value + 1
-
-    if (index >= items.value.length) { // TODO: do it if canLoop.
-      index = 0
-    }
-
-    const itm: Item = items.value[ index ]
-
-    if (!itm) { throw new Error('No next item found.') }
-
-    return { itm, index }
-  }
-
-  function getPreviousItem (): { itm: Item, index: number } {
-    let index = itemIndex.value - 1
-
-    if (index < 0) { // TODO: do it if canLoop.
-      index = items.value.length - 1
-    }
-
-    const itm = items.value[ index ]
-
-    if (!itm) { throw new Error('No next item found.') }
-
-    return { itm, index }
   }
 
   async function onLoopEnd (): Promise<void> {
     theLoopStore.indeterminate.value = true
 
     if (!nextItem.value) {
-      const { itm, index } = getNextItem()
-      nextItem.value = itm
-      nextItemIndex.value = index
+      return await next()
     }
 
-    if (!nextItem.value) { throw new Error('No next item found.') }
-
-    theHistoryStore.add(nextItem.value)
+    historyPlayerStore.add(nextItem.value)
 
     setNextItem(nextItem.value)
     await showNextItem()
@@ -156,9 +84,9 @@ export const useDBPlayer = ({
       theLoop.startLooping()
     }
   }
+  // #endregion Methods
 
   const theLoop = useTheLoop({ endFn: onLoopEnd })
-  // #endregion Methods
 
   // #region Exposed Actions
   async function start (): Promise<void> {
@@ -168,12 +96,13 @@ export const useDBPlayer = ({
     items.value = await fetchItems()
     itemIndex.value = -1
 
-    thePlayerStore.itemsCount.value = items.value.length
-    thePlayerStore.itemIndex.value = itemIndex.value
-
     if (!items.value.length) {
+      isStopped.value = true
       throw onError('Items are empty.')
     }
+
+    thePlayerStore.itemsCount.value = items.value.length
+    thePlayerStore.itemIndex.value = itemIndex.value
 
     await onLoopEnd()
   }
@@ -196,18 +125,28 @@ export const useDBPlayer = ({
   }
 
   async function next (): Promise<void> {
-    const { itm, index } = getNextItem()
+    const { itm, index } = getNextItem({ items, itemIndex, isFetchItemRandomly })
     nextItem.value = itm
     nextItemIndex.value = index
+
+    if (!nextItem.value) {
+      isStopped.value = true
+      throw onError('No next item found.')
+    }
 
     await theLoop.stopLooping()
     await onLoopEnd()
   }
 
   async function previous (): Promise<void> {
-    const { itm, index } = getPreviousItem()
+    const { itm, index } = getPreviousItem({ items, itemIndex })
     nextItem.value = itm
     nextItemIndex.value = index
+
+    if (!nextItem.value) {
+      isStopped.value = true
+      throw onError('No previous item found.')
+    }
 
     await theLoop.stopLooping()
     await onLoopEnd()
@@ -222,14 +161,7 @@ export const useDBPlayer = ({
   function canResume (): boolean { return true }
 
   function reset (): void {
-    isStopped.value = true
-    isPaused.value = false
-
-    items.value = []
-    itemIndex.value = NaN
-    item.value = undefined
-    nextItem.value = undefined
-    nextItemIndex.value = NaN
+    resetStore()
 
     // Loop's components/feature enabled/disabled
     theLoopStore.enabled.value = true
@@ -239,11 +171,11 @@ export const useDBPlayer = ({
     thePlayerStore.itemsInfoEnabled.value = true
     thePlayerStore.historyEnabled.value = true
     thePlayerStore.pauseEnabled.value = true
-
-    errors.value = []
   }
 
   function onDeleteItem (itm: Item): void {
+    // TODO: if no more items in the list, stop playing.
+
     const itms: Array<Item> = items.value
     let itmIndex: number | undefined
 

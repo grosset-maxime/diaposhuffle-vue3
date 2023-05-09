@@ -12,7 +12,6 @@ import type {
 import { computed, ref, reactive } from 'vue'
 import { createGlobalState } from '@vueuse/core'
 
-import { buildError } from '@/api/api'
 import { createTagCategory } from '@/models/tag'
 import {
   fetchTags as fetchTagsAPI,
@@ -24,6 +23,7 @@ import {
   updateCategory as updateCategoryAPI,
   deleteCategory as deleteCategoryAPI,
 } from '@/api/tags'
+import { createError } from '@/models/error'
 
 export const useTaggerStore = createGlobalState(() => {
   // State
@@ -139,12 +139,16 @@ export const useTaggerStore = createGlobalState(() => {
       const tag = await addTagAPI(tagData)
 
       if (!tag) {
-        throw buildError('Fail to add a new tag.')
+        throw createError('Fail to add a new tag.', {
+          file: 'tagger.ts',
+        })
       }
 
       _addTag(tag)
     } catch (e) {
-      const error = buildError(e)
+      const error = createError(e, {
+        file: 'tagger.ts',
+      })
       addError({
         actionName: 'TAGGER_A_ADD_TAG',
         error,
@@ -157,12 +161,16 @@ export const useTaggerStore = createGlobalState(() => {
       const tag = await updateTagAPI(tagData)
 
       if (!tag) {
-        throw buildError('Fail to update tag.')
+        throw createError('Fail to update tag.', {
+          file: 'tagger.ts',
+        })
       }
 
       _updateTag(tag)
     } catch (e) {
-      const error = buildError(e)
+      const error = createError(e, {
+        file: 'tagger.ts',
+      })
       addError({
         actionName: 'TAGGER_A_UPDATE_TAG',
         error,
@@ -176,19 +184,25 @@ export const useTaggerStore = createGlobalState(() => {
       : tagId
 
     if (!tag) {
-      throw buildError(`Tag not found: ${tagId}`)
+      throw createError(`Tag not found: ${tagId}`, {
+        file: 'tagger.ts',
+      })
     }
 
     try {
       const success = await deleteTagAPI(tag)
 
       if (!success) {
-        throw buildError('Fail to delete tag.')
+        throw createError('Fail to delete tag.', {
+          file: 'tagger.ts',
+        })
       }
 
       _deleteTag(tag)
     } catch (e) {
-      const error = buildError(e)
+      const error = createError(e, {
+        file: 'tagger.ts',
+      })
       addError({
         actionName: 'TAGGER_A_DELETE_TAG',
         error,
@@ -201,12 +215,16 @@ export const useTaggerStore = createGlobalState(() => {
       const category = await addCategoryAPI(categoryData)
 
       if (!category) {
-        throw buildError('Fail to add a new category.')
+        throw createError('Fail to add a new category.', {
+          file: 'tagger.ts',
+        })
       }
 
       _addCategory(category)
     } catch (e) {
-      const error = buildError(e)
+      const error = createError(e, {
+        file: 'tagger.ts',
+      })
       addError({
         actionName: 'TAGGER_A_ADD_CATEGORY',
         error,
@@ -219,12 +237,16 @@ export const useTaggerStore = createGlobalState(() => {
       const category = await updateCategoryAPI(categoryData)
 
       if (!category) {
-        throw buildError('Fail to update category.')
+        throw createError('Fail to update category.', {
+          file: 'tagger.ts',
+        })
       }
 
       _updateCategory(category)
     } catch (e) {
-      const error = buildError(e)
+      const error = createError(e, {
+        file: 'tagger.ts',
+      })
       addError({
         actionName: 'TAGGER_A_UPDATE_CATEGORY',
         error,
@@ -238,7 +260,9 @@ export const useTaggerStore = createGlobalState(() => {
       : categoryId
 
     if (!category) {
-      throw buildError(`Tag not found: ${categoryId}`)
+      throw createError(`Tag not found: ${categoryId}`, {
+        file: 'tagger.ts',
+      })
     }
 
     try {
@@ -258,12 +282,16 @@ export const useTaggerStore = createGlobalState(() => {
       const success = results.every((success) => success)
 
       if (!success) {
-        throw buildError('Fail to delete category.')
+        throw createError('Fail to delete category.', {
+          file: 'tagger.ts',
+        })
       }
 
       _deleteCategory(category)
     } catch (e) {
-      const error = buildError(e)
+      const error = createError(e, {
+        file: 'tagger.ts',
+      })
       addError({
         actionName: 'TAGGER_A_DELETE_CATEGORY',
         error,
@@ -280,7 +308,9 @@ export const useTaggerStore = createGlobalState(() => {
       const tags = await fetchTagsAPI()
       _setTags(tags)
     } catch (e) {
-      const error = buildError(e)
+      const error = createError(e, {
+        file: 'tagger.ts',
+      })
       addError({
         actionName: 'TAGGER_A_FETCH_TAGS',
         error,
@@ -308,7 +338,9 @@ export const useTaggerStore = createGlobalState(() => {
 
       _setCategories(categories)
     } catch (e) {
-      const error = buildError(e)
+      const error = createError(e, {
+        file: 'tagger.ts',
+      })
       addError({
         actionName: 'TAGGER_A_FETCH_TAGS',
         error,

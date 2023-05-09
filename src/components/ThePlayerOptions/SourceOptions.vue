@@ -19,11 +19,11 @@ import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
 import TheFolderBrowser from '@/components/TheFolderBrowser/TheFolderBrowser.vue'
 import TheTagger from '@/components/TheTagger/TheTagger.vue'
 import TagChip from '@/components/TagChip.vue'
-import { useThePinedStore } from '@/stores/ThePlayer/ThePinedStore'
+import { usePinedPlayerStore } from '@/stores/ThePlayer/players/pinedPlayerStore'
 
 const { showTagger, showFolderBrowser } = useDiapoShuffleStore()
 const sourceOptsStore = useSourceOptionsStore()
-const thePinedStore = useThePinedStore()
+const pinedPlayerStore = usePinedPlayerStore()
 
 //#region Folder Browser
 const selectedFolders = ref<Set<FolderPath>>(new Set(sourceOptsStore.folders.value))
@@ -114,12 +114,12 @@ const isFromPinedComputed = computed({
 })
 
 const pinedsLength = eagerComputed<number>(
-  () => thePinedStore.items.value.length,
+  () => pinedPlayerStore.items.value.length,
 )
 
 function clearPineds () {
   isFromPinedComputed.value = false
-  thePinedStore.reset()
+  pinedPlayerStore.reset()
 }
 //#endregion Pineds
 </script>

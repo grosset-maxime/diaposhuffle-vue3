@@ -3,7 +3,7 @@ import { ref, reactive } from 'vue'
 import { createGlobalState } from '@vueuse/core'
 
 import { getFolders as getFoldersAPI } from '@/api/folders'
-import { buildError } from '@/api/api'
+import { createError } from '@/models/error'
 
 export type FolderPath = string
 export interface Folder {
@@ -50,7 +50,9 @@ export const useFolderBrowserStore = createGlobalState(() => {
     const folder = getFolder(parentPath)
 
     if (!folder) {
-      throw buildError(`Folder not found with path: ${parentPath}`)
+      throw createError(`Folder not found with path: ${parentPath}`, {
+        file: 'folderBrowser.ts',
+      })
     }
 
     if (folder.fetched) {
@@ -86,7 +88,9 @@ export const useFolderBrowserStore = createGlobalState(() => {
         folder.children.push(childPath)
       })
     } catch (e) {
-      const error = buildError(e)
+      const error = createError(e, {
+        file: 'folderBrowser.ts',
+      })
       addError({
         actionName: 'FOLDER_BROWSER_A_FETCH_FOLDERS',
         error,

@@ -12,9 +12,9 @@ import { Position } from '@/interfaces/components/PinWrapper'
 
 // Vendors Libs
 import { ref, computed, watch, onMounted } from 'vue'
+import { eagerComputed } from '@vueuse/shared'
 
 // Libs
-import { buildError } from '@/api/api'
 import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
 
 // Stores
@@ -23,7 +23,8 @@ import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
 import { useUIOptionsStore } from '@/stores/ThePlayerOptions/uiOptions'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
-import { useThePinedStore } from '@/stores/ThePlayer/ThePinedStore'
+import { usePinedPlayerStore } from '@/stores/ThePlayer/players/pinedPlayerStore'
+import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
 
 // Components
 import TheLoop from '@/components/ThePlayer/TheLoop.vue'
@@ -38,8 +39,7 @@ import ItemPathChip from '@/components/ThePlayer/ItemPathChip.vue'
 
 import TheTagger from '@/components/TheTagger/TheTagger.vue'
 import DeleteModal from '@/components/DeleteModal.vue'
-import { eagerComputed } from '@vueuse/shared'
-import { useTheHistoryStore } from '@/stores/ThePlayer/TheHistoryStore'
+import { createError } from '@/models/error'
 
 const { showTheHelp } = useGlobalState()
 const { showThePlayer } = useDiapoShuffleStore()
@@ -57,8 +57,8 @@ const {
 } = useUIOptionsStore()
 const thePlayerStore = useThePlayerStore()
 const theLoopStore = useTheLoopStore()
-const thePinedStore = useThePinedStore()
-const theHistoryStore = useTheHistoryStore()
+const pinedPlayerStore = usePinedPlayerStore()
+const historyPlayerStore = useHistoryPlayerStore()
 
 const item = computed<Item | undefined>(() => thePlayerStore.item.value)
 const isPaused = computed<boolean>(() => thePlayerStore.isPaused.value)
@@ -67,8 +67,8 @@ const itemTags = computed<Set<TagId>>(() => item.value?.tags || new Set<TagId>()
 const isLoopEnabled = computed<boolean>(() => theLoopStore.enabled.value)
 const isItemsInfoEnabled = computed<boolean>(() => thePlayerStore.itemsInfoEnabled.value)
 // const isHistoryEnabled = computed<boolean>(() => thePlayerStore.historyEnabled.value)
-const isPinedItem = eagerComputed<boolean>(() => thePinedStore.has(item.value))
-const historyCount = theHistoryStore.count
+const isPinedItem = eagerComputed<boolean>(() => pinedPlayerStore.has(item.value))
+const historyCount = historyPlayerStore.count
 
 // Refs to Components element in template.
 const ItemsPlayerCmp = ref<ItemsPlayerCmpExpose | null>(null)
@@ -106,8 +106,9 @@ async function hideDeleteModal (
       hideUI()
 
     } catch (e: unknown) {
-      console.error(e)
-      const error = buildError(e)
+      const error = createError(e, {
+        file: 'ThePlayer.vue',
+      })
 
       pausePlayer()
       displayAlert(error as Partial<Alert>)
@@ -152,7 +153,9 @@ async function onSaveTaggerModal (selectedTagIds: Set<TagId>): Promise<void> {
   try {
     await thePlayerStore.setItemTags({ item: itemVal })
   } catch (e) {
-    const error = buildError(e)
+    const error = createError(e, {
+      file: 'ThePlayer.vue',
+    })
 
     pausePlayer()
     displayAlert(error as Partial<Alert>)
@@ -201,11 +204,11 @@ function goToPreviousItem (): void { ItemsPlayerCmp.value?.goToPreviousItem() }
 function togglePinItem (): void {
   if (!item.value) { return }
 
-  if (thePinedStore.has(item.value)) {
-    thePinedStore.remove(item.value)
+  if (pinedPlayerStore.has(item.value)) {
+    pinedPlayerStore.remove(item.value)
     triggerUnpinedAnim()
   } else {
-    thePinedStore.add(item.value)
+    pinedPlayerStore.add(item.value)
     triggerPinedAnim()
   }
 }

@@ -1,4 +1,5 @@
 import { useTaggerStore } from '@/stores/tagger'
+import { createError } from './error'
 
 export type TagCategoryId = string;
 
@@ -71,7 +72,9 @@ export class Tag {
 
   constructor ({ id, name, categoryId = '0' }: TagData) {
     if (!id) {
-      throw new Error(`Invalid tag, tag has no id: ${id}`)
+      throw createError(`Invalid tag, tag has no id: ${id}`, {
+        file: 'tag.ts',
+      })
     }
 
     // Data

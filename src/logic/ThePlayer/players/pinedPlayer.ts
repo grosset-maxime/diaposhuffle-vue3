@@ -4,10 +4,7 @@
 import type { Item } from '@/models/item'
 
 // Vendors Libs
-import { ref, computed } from 'vue'
-
-import { getRandomElementWithIndex } from '@/utils/utils'
-import { buildError } from '@/api/api'
+import { computed } from 'vue'
 
 // Stores
 import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
@@ -15,100 +12,52 @@ import type { UsePlayerArg, UsePlayerExpose } from '../thePlayer'
 import { useTheLoop } from '../theLoop'
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
-import { useThePinedStore } from '@/stores/ThePlayer/ThePinedStore'
+import { usePinedPlayerStore } from '@/stores/ThePlayer/players/pinedPlayerStore'
+import { getNextItem, getPreviousItem } from '@/utils/playerUtils'
+import { useErrorStore } from '@/stores/errorStore'
+import type { CustomError, CustomErrorData } from '@/models/error'
 
 export const usePinedPlayer = ({
   showNextItem,
   setNextItem,
   getItemDuration,
 }: UsePlayerArg) => {
-  const thePinedStore = useThePinedStore()
+  const pinedPlayerStore = usePinedPlayerStore()
   const thePlayerStore = useThePlayerStore()
   const playerOptsStore = usePlayerOptionsStore()
   const theLoopStore = useTheLoopStore()
-
-  const isStopped = ref(true)
-  const isPaused = ref(false)
+  const errorStore = useErrorStore()
 
   const isFetchItemRandomly = computed(() => playerOptsStore.isFetchItemRandomly.value)
 
-  const items = ref<Array<Item>>([])
-  const item = ref<Item | undefined>()
-  const itemIndex = ref<number>(-1)
+  const {
+    isStopped,
+    isPaused,
 
-  const nextItem = ref<Item | undefined>()
-  const nextItemIndex = ref<number>(NaN)
+    items,
+    item,
+    itemIndex,
+    nextItem,
+    nextItemIndex,
 
-  // State
-  const errors = ref<Array<{ [key: string]: unknown }>>([])
+    reset: resetStore,
+  } = usePinedPlayerStore()
 
   // #region Methods
-  function addError ({ actionName, error }: { actionName: string; error: unknown }): void {
-    errors.value.push({
-      [ actionName ]: error,
-    })
-    console.error(actionName, error)
-  }
-
-  const onError = (e: unknown) => {
-    const error = buildError(e)
-    addError({
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    return errorStore.add(error, {
+      ...errorData,
+      file: 'pinedPlayer.ts',
       actionName: 'PLAYER_A_FETCH_PREV',
-      error,
     })
-    return error
-  }
-
-  function getRandomItem (): { itm: Item, index: number } {
-    const { el: itm, index } = getRandomElementWithIndex(items.value)
-
-    if (!itm) { throw new Error('No random item found.') }
-
-    return { itm, index }
-  }
-
-  function getNextItem (): { itm: Item, index: number } {
-    if (isFetchItemRandomly.value) {
-      return getRandomItem()
-    }
-
-    let index: number = itemIndex.value + 1
-
-    if (index >= items.value.length) { // TODO: do it if canLoop.
-      index = 0
-    }
-
-    const itm: Item = items.value[ index ]
-
-    if (!itm) { throw new Error('No next item found.') }
-
-    return { itm, index }
-  }
-
-  function getPreviousItem (): { itm: Item, index: number } {
-    let index: number = itemIndex.value - 1
-
-    if (index < 0) { // TODO: do it if canLoop.
-      index = items.value.length - 1
-    }
-
-    const itm: Item = items.value[ index ]
-
-    if (!itm) { throw new Error('No next item found.') }
-
-    return { itm, index }
   }
 
   async function onLoopEnd (): Promise<void> {
     theLoopStore.indeterminate.value = true
 
     if (!nextItem.value) {
-      const { itm, index } = getNextItem()
-      nextItem.value = itm
-      nextItemIndex.value = index
+      return await next()
     }
-
-    if (!nextItem.value) { throw new Error('No next item found.') }
 
     setNextItem(nextItem.value)
     await showNextItem()
@@ -141,7 +90,7 @@ export const usePinedPlayer = ({
     theLoopStore.indeterminate.value = true
     isStopped.value = false
 
-    items.value = thePinedStore.items.value
+    items.value = pinedPlayerStore.items.value
     itemIndex.value = -1
 
     thePlayerStore.itemsCount.value = items.value.length
@@ -172,18 +121,28 @@ export const usePinedPlayer = ({
   }
 
   async function next (): Promise<void> {
-    const { itm, index } = getNextItem()
+    const { itm, index } = getNextItem({ items, itemIndex, isFetchItemRandomly })
     nextItem.value = itm
     nextItemIndex.value = index
+
+    if (!nextItem.value) {
+      isStopped.value = true
+      throw onError('No next item found.')
+    }
 
     await theLoop.stopLooping()
     await onLoopEnd()
   }
 
   async function previous (): Promise<void> {
-    const { itm, index } = getPreviousItem()
+    const { itm, index } = getPreviousItem({ items, itemIndex })
     nextItem.value = itm
     nextItemIndex.value = index
+
+    if (!nextItem.value) {
+      isStopped.value = true
+      throw onError('No previous item found.')
+    }
 
     await theLoop.stopLooping()
     await onLoopEnd()
@@ -198,14 +157,7 @@ export const usePinedPlayer = ({
   function canResume (): boolean { return true }
 
   function reset (): void {
-    isStopped.value = true
-    isPaused.value = false
-
-    items.value = []
-    itemIndex.value = NaN
-    item.value = undefined
-    nextItem.value = undefined
-    nextItemIndex.value = NaN
+    resetStore()
 
     // Loop's components/feature enabled/disabled
     theLoopStore.enabled.value = true
@@ -214,8 +166,6 @@ export const usePinedPlayer = ({
     // Player's components/feature enabled/disabled
     thePlayerStore.itemsInfoEnabled.value = true
     thePlayerStore.pauseEnabled.value = true
-
-    errors.value = []
   }
 
   function onDeleteItem (itm: Item): void {

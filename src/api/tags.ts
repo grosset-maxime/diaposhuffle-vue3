@@ -8,7 +8,8 @@ import {
   Tag as TagClass,
   TagCategory as TagCategoryClass,
 } from '@/models/tag'
-import { BASE_URL, buildError, fetchJson } from '@/api/api'
+import { BASE_URL, fetchJson } from '@/api/api'
+import { createError } from '@/models/error'
 
 /**
  * Fetch the entire tags list.
@@ -39,7 +40,9 @@ export const fetchTags = async () => {
         categoryId: t.category,
       }))
   } catch (error) {
-    throw buildError(error)
+    throw createError(error, {
+      file: 'tags.ts',
+    })
   }
 
   return tags
@@ -74,7 +77,9 @@ export const fetchCategories = async () => {
         color: c.color,
       }))
   } catch (error) {
-    throw buildError(error)
+    throw createError(error, {
+      file: 'tags.ts',
+    })
   }
 
   return categories
@@ -99,7 +104,9 @@ const editTag = async ({
   tag: Tag | TagData;
 }) => {
   if (!tag) {
-    throw buildError('Missing tag option to edit tag.')
+    throw createError('Missing tag option to edit tag.', {
+      file: 'tags.ts',
+    })
   }
 
   let success = false
@@ -121,7 +128,9 @@ const editTag = async ({
     const json = await fetchJson(url, opts)
     success = !!json.success
   } catch (error) {
-    throw buildError(error)
+    throw createError(error, {
+      file: 'tags.ts',
+    })
   }
 
   return success
@@ -134,7 +143,9 @@ const editTag = async ({
  */
 export const addTag = async (tagData: TagData) => {
   if (!tagData) {
-    throw buildError('Missing tagData option to add tag.')
+    throw createError('Missing tagData option to add tag.', {
+      file: 'tags.ts',
+    })
   }
 
   let success = false
@@ -144,9 +155,15 @@ export const addTag = async (tagData: TagData) => {
       isNew: true,
       tag: tagData,
     })
-    if (!success) { throw buildError('Add tag not successful.')}
+    if (!success) {
+      throw createError('Add tag not successful.', {
+        file: 'tags.ts',
+      })
+    }
   } catch (error) {
-    throw buildError(error)
+    throw createError(error, {
+      file: 'tags.ts',
+    })
   }
 
   return createTag(tagData)
@@ -159,16 +176,24 @@ export const addTag = async (tagData: TagData) => {
  */
 export const updateTag = async (tagData: TagData | Tag) => {
   if (!tagData) {
-    throw buildError('Missing tag option to edit a tag.')
+    throw createError('Missing tag option to edit a tag.', {
+      file: 'tags.ts',
+    })
   }
 
   let success = false
 
   try {
     success = await editTag({ tag: tagData })
-    if (!success) { throw buildError('Update tag not successful.')}
+    if (!success) {
+      throw createError('Update tag not successful.', {
+        file: 'tags.ts',
+      })
+    }
   } catch (error) {
-    throw buildError(error)
+    throw createError(error, {
+      file: 'tags.ts',
+    })
   }
 
   return tagData instanceof TagClass
@@ -183,7 +208,9 @@ export const updateTag = async (tagData: TagData | Tag) => {
  */
 export const deleteTag = async (tag: TagData | Tag) => {
   if (!tag) {
-    throw buildError('Missing tag option to delete tag.')
+    throw createError('Missing tag option to delete tag.', {
+      file: 'tags.ts',
+    })
   }
 
   let success = false
@@ -191,7 +218,9 @@ export const deleteTag = async (tag: TagData | Tag) => {
   try {
     success = await editTag({ tag, isDelete: true })
   } catch (error) {
-    throw buildError(error)
+    throw createError(error, {
+      file: 'tags.ts',
+    })
   }
 
   return success
@@ -236,7 +265,9 @@ const editCategory = async ({
 
     json = await fetchJson(url, opts)
   } catch (error) {
-    throw buildError(error)
+    throw createError(error, {
+      file: 'tags.ts',
+    })
   }
 
   return json
@@ -249,7 +280,9 @@ const editCategory = async ({
  */
 export const addCategory = async (categoryData: TagCategoryData) => {
   if (!categoryData) {
-    throw buildError('Missing categoryData option to add a new category.')
+    throw createError('Missing categoryData option to add a new category.', {
+      file: 'tags.ts',
+    })
   }
 
   try {
@@ -259,9 +292,15 @@ export const addCategory = async (categoryData: TagCategoryData) => {
     })
     categoryData.id = response.tagCategoryId
 
-    if (!response.success) { throw buildError('Add category not successful.')}
+    if (!response.success) {
+      throw createError('Add category not successful.', {
+        file: 'tags.ts',
+      })
+    }
   } catch (error) {
-    throw buildError(error)
+    throw createError(error, {
+      file: 'tags.ts',
+    })
   }
 
   return createTagCategory(categoryData)
@@ -274,7 +313,9 @@ export const addCategory = async (categoryData: TagCategoryData) => {
  */
 export const updateCategory = async (categoryData: TagCategoryData | TagCategory) => {
   if (!categoryData) {
-    throw buildError('Missing category option to edit a category.')
+    throw createError('Missing category option to edit a category.', {
+      file: 'tags.ts',
+    })
   }
 
   let success = false
@@ -282,9 +323,15 @@ export const updateCategory = async (categoryData: TagCategoryData | TagCategory
   try {
     const response = await editCategory({ category: categoryData })
     success = response.success
-    if (!success) { throw buildError('Update category not successful.') }
+    if (!success) {
+      throw createError('Update category not successful.', {
+        file: 'tags.ts',
+      })
+    }
   } catch (error) {
-    throw buildError(error)
+    throw createError(error, {
+      file: 'tags.ts',
+    })
   }
 
   return categoryData instanceof TagCategoryClass
@@ -299,7 +346,9 @@ export const updateCategory = async (categoryData: TagCategoryData | TagCategory
  */
 export const deleteCategory = async (category: TagCategoryData | TagCategory) => {
   if (!category) {
-    throw buildError('Missing category option to delete category.')
+    throw createError('Missing category option to delete category.', {
+      file: 'tags.ts',
+    })
   }
 
   let success = false
@@ -308,7 +357,9 @@ export const deleteCategory = async (category: TagCategoryData | TagCategory) =>
     const response = await editCategory({ category, isDelete: true })
     success = response.success
   } catch (error) {
-    throw buildError(error)
+    throw createError(error, {
+      file: 'tags.ts',
+    })
   }
 
   return success

@@ -9,11 +9,11 @@ import type { Item } from '@/models/item'
 import { ref } from 'vue'
 import { createGlobalState } from '@vueuse/core'
 
-import { buildError } from '@/api/api'
 import {
   deleteItem as deleteItemAPI,
   setItemTags as setItemTagsAPI,
 } from '@/api/items'
+import { createError } from '@/models/error'
 
 export const useThePlayerStore = createGlobalState(() => {
   // Player states
@@ -53,7 +53,9 @@ export const useThePlayerStore = createGlobalState(() => {
       const response = await deleteItemAPI({ item })
       result = response.success
     } catch (e) {
-      const error = buildError(e)
+      const error = createError(e, {
+        file: 'ThePlayerStore.ts',
+      })
       addError({
         actionName: 'PLAYER_A_DELETE_ITEM',
         error,
@@ -71,7 +73,9 @@ export const useThePlayerStore = createGlobalState(() => {
       const response = await setItemTagsAPI({ item })
       result = response.success
     } catch (e) {
-      const error = buildError(e)
+      const error = createError(e, {
+        file: 'ThePlayerStore.ts',
+      })
       addError({
         actionName: 'PLAYER_A_SET_ITEM_TAGS',
         error,

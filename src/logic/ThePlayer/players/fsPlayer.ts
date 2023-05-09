@@ -4,24 +4,21 @@ import type {
   UsePlayerArg,
   UsePlayerExpose,
 } from '@/logic/ThePlayer/thePlayer'
+import type { CustomError, CustomErrorData } from '@/models/error'
 
 // Vendors Libs
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 
-// import { getRandomElementWithIndex } from '@/utils/utils'
-import { buildError } from '@/api/api'
-import {
-  fetchRandomItem as fetchRandomItemAPI,
-} from '@/api/items'
-
+// Libs
 import { useTheLoop } from '@/logic/ThePlayer/theLoop'
 
 // Stores
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
-import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
-import { useTheHistoryStore } from '@/stores/ThePlayer/TheHistoryStore'
+import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
+import { useErrorStore } from '@/stores/errorStore'
+import { useFSPlayerStore } from '@/stores/ThePlayer/players/fsPlayerStore'
 
 export const useFSPlayer = ({
   showNextItem,
@@ -31,37 +28,40 @@ export const useFSPlayer = ({
 
   const thePlayerStore = useThePlayerStore()
   const playerOptsStore = usePlayerOptionsStore()
-  const sourceOptsStore = useSourceOptionsStore()
   const theLoopStore = useTheLoopStore()
-  const theHistoryStore = useTheHistoryStore()
+  const historyPlayerStore = useHistoryPlayerStore()
+  const errorStore = useErrorStore()
 
-  const isStopped = ref(true)
-  const isPaused = ref(false)
+  const {
+    isStopped,
+    isPaused,
 
-  const item = ref<Item | undefined>()
+    item,
+    nextItem,
+    fetchNextItemPromise,
+    isFetchingNextItem,
 
-  const nextItem = ref<Item | undefined>()
-  const fetchNextItemPromise = ref<Promise<Item> | undefined>()
-  const isFetchingNext = ref(false)
-
-  const errors = ref<Array<{ [key: string]: unknown }>>([])
+    reset: resetStore,
+    fetchItem,
+  } = useFSPlayerStore()
 
   // #region Methods
-  function addError ({ actionName, error }: { actionName: string; error: unknown }): void {
-    errors.value.push({
-      [ actionName ]: error,
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    return errorStore.add(error, {
+      ...errorData,
+      file: 'fsPlayer.ts',
+      actionName: 'PLAYER_A_FETCH_PREV',
     })
-    console.error(actionName, error)
   }
 
   async function fetchNextItem (): Promise<Item> {
-    isFetchingNext.value = true
+    isFetchingNextItem.value = true
 
     fetchNextItemPromise.value = fetchItem()
     const itm: Item = await fetchNextItemPromise.value
 
     fetchNextItemPromise.value = undefined
-    isFetchingNext.value = false
+    isFetchingNextItem.value = false
 
     return itm
   }
@@ -69,7 +69,7 @@ export const useFSPlayer = ({
   async function onLoopEnd (): Promise<void> {
     theLoopStore.indeterminate.value = true
 
-    if (isFetchingNext.value) {
+    if (isFetchingNextItem.value) {
       await fetchNextItemPromise.value
 
     } else if (!nextItem.value) {
@@ -78,10 +78,10 @@ export const useFSPlayer = ({
 
     if (!nextItem.value) {
       stop()
-      throw new Error('No next item found.')
+      throw onError('No next item found.')
     }
 
-    theHistoryStore.add(nextItem.value)
+    historyPlayerStore.add(nextItem.value)
 
     setNextItem(nextItem.value)
     await showNextItem()
@@ -101,38 +101,9 @@ export const useFSPlayer = ({
       theLoop.startLooping()
     }
   }
+  // #endregion Methods
 
   const theLoop = useTheLoop({ endFn: onLoopEnd })
-
-  async function fetchItem (): Promise<Item> {
-    let item: Item | undefined
-
-    const onError = (e: unknown) => {
-      const error = buildError(e)
-      addError({
-        actionName: 'PLAYER_A_FETCH_NEXT',
-        error,
-      })
-      return error
-    }
-
-    try {
-
-      item = await fetchRandomItemAPI({
-        folders: Array.from(sourceOptsStore.folders.value),
-      })
-
-    } catch (e) {
-      throw onError(e)
-    }
-
-    if (!item) {
-      throw onError('No item found from fs.')
-    }
-
-    return item
-  }
-  // #endregion Methods
 
   // #region Exposed Actions
   async function start (): Promise<void> {
@@ -171,13 +142,7 @@ export const useFSPlayer = ({
   function canResume (): boolean { return true }
 
   function reset (): void {
-    isStopped.value = true
-    isPaused.value = false
-
-    item.value = undefined
-    nextItem.value = undefined
-    fetchNextItemPromise.value = undefined
-    isFetchingNext.value = false
+    resetStore()
 
     // Loop's components/feature enabled/disabled
     theLoopStore.enabled.value = true
@@ -186,12 +151,10 @@ export const useFSPlayer = ({
     // Player's components/feature enabled/disabled
     thePlayerStore.historyEnabled.value = true
     thePlayerStore.pauseEnabled.value = true
-
-    errors.value = []
   }
 
   async function onDeleteItem (itm: Item): Promise<void> {
-    if (isFetchingNext.value) {
+    if (isFetchingNextItem.value) {
       await fetchNextItemPromise.value
     }
 

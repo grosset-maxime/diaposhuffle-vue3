@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from 'vue'
-import { useTheHistoryStore } from '@/stores/ThePlayer/TheHistoryStore'
+import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
 
 // Props
 interface Props {
@@ -18,7 +18,7 @@ const emit = defineEmits<{
 }>()
 
 const isMouseOver = ref(false)
-const { count } = useTheHistoryStore()
+const { count } = useHistoryPlayerStore()
 
 function onMouseOver (e: MouseEvent): void {
   isMouseOver.value = true

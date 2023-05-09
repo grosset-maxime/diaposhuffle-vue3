@@ -1,89 +1,51 @@
 // Types
 import type { Item } from '@/models/item'
+import type { CustomError, CustomErrorData } from '@/models/error'
 import type { UsePlayerArg, UsePlayerExpose } from '@/logic/ThePlayer/thePlayer'
 
 // Vendors Libs
-import { computed, ref } from 'vue'
-
-import { buildError } from '@/api/api'
+import { computed } from 'vue'
 
 // Stores
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
-import { useTheHistoryStore } from '@/stores/ThePlayer/TheHistoryStore'
+import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
+import { getNextItem, getPreviousItem } from '@/utils/playerUtils'
+import { useErrorStore } from '@/stores/errorStore'
 
 export const useHistoryPlayer = ({
   showNextItem,
   setNextItem,
 }: UsePlayerArg) => {
-  const theHistoryStore = useTheHistoryStore()
+  const historyPlayerStore = useHistoryPlayerStore()
   const thePlayerStore = useThePlayerStore()
+  const errorStore = useErrorStore()
 
-  const isStopped = ref(true)
-  const isPaused = ref(false)
+  const {
+    isStopped,
+    isPaused,
 
-  const items = ref<Array<Item>>([])
-  const item = ref<Item | undefined>()
-  const itemIndex = ref<number>(NaN)
+    items,
+    item,
+    itemIndex,
+    nextItem,
+    nextItemIndex,
 
-  const nextItem = ref<Item | undefined>()
-  const nextItemIndex = ref<number>(NaN)
-
-  // State
-  const errors = ref<Array<{ [key: string]: unknown }>>([])
+    reset: resetStore,
+  } = useHistoryPlayerStore()
 
   // #region Methods
-  function addError ({ actionName, error }: { actionName: string; error: unknown }): void {
-    errors.value.push({
-      [ actionName ]: error,
-    })
-    console.error(actionName, error)
-  }
-
-  const onError = (e: unknown) => {
-    const error = buildError(e)
-    addError({
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    return errorStore.add(error, {
+      ...errorData,
+      file: 'fsPlayer.ts',
       actionName: 'PLAYER_A_FETCH_PREV',
-      error,
     })
-    return error
-  }
-
-  function getNextItem (): { itm: Item, index: number } {
-    let index: number = itemIndex.value + 1
-
-    if (index >= items.value.length) { // TODO: do it if canLoop.
-      index = 0
-    }
-
-    const itm = items.value[ index ]
-
-    if (!itm) { throw new Error('No next item found.') }
-
-    return { itm, index }
-  }
-
-  function getPreviousItem (): { itm: Item, index: number } {
-    let index: number = itemIndex.value - 1
-
-    if (index < 0) { // TODO: do it if canLoop.
-      index = items.value.length - 1
-    }
-
-    const itm: Item = items.value[ index ]
-
-    if (!itm) { throw new Error('No next item found.') }
-
-    return { itm, index }
   }
 
   async function onEnd (): Promise<void> {
     if (!nextItem.value) {
-      const { itm, index } = getNextItem()
-      nextItem.value = itm
-      nextItemIndex.value = index
+      return await next()
     }
-
-    if (!nextItem.value) { throw new Error('No next item found.') }
 
     setNextItem(nextItem.value)
     await showNextItem()
@@ -103,7 +65,7 @@ export const useHistoryPlayer = ({
   async function start (): Promise<void> {
     isStopped.value = false
 
-    items.value = theHistoryStore.items.value
+    items.value = historyPlayerStore.items.value
     itemIndex.value = 0
 
     thePlayerStore.itemsCount.value = items.value.length
@@ -125,17 +87,27 @@ export const useHistoryPlayer = ({
   function resume (): void {}
 
   async function next (): Promise<void> {
-    const { itm, index } = getNextItem()
+    const { itm, index } = getNextItem({ items, itemIndex })
     nextItem.value = itm
     nextItemIndex.value = index
+
+    if (!nextItem.value) {
+      isStopped.value = true
+      throw onError('No next item found.')
+    }
 
     await onEnd()
   }
 
   async function previous (): Promise<void> {
-    const { itm, index } = getPreviousItem()
+    const { itm, index } = getPreviousItem({ items, itemIndex })
     nextItem.value = itm
     nextItemIndex.value = index
+
+    if (!nextItem.value) {
+      isStopped.value = true
+      throw onError('No previous item found.')
+    }
 
     await onEnd()
   }
@@ -147,19 +119,10 @@ export const useHistoryPlayer = ({
   function canResume (): boolean { return false }
 
   function reset (): void {
-    isStopped.value = true
-    isPaused.value = false
-
-    items.value = []
-    itemIndex.value = NaN
-    item.value = undefined
-    nextItem.value = undefined
-    nextItemIndex.value = NaN
+    resetStore()
 
     // Player's components/feature enabled/disabled
     thePlayerStore.itemsInfoEnabled.value = true
-
-    errors.value = []
   }
 
   function onDeleteItem (itm: Item): void {
