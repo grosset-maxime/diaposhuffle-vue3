@@ -16,21 +16,19 @@ export const useHistoryPlayer = ({
   showNextItem,
   setNextItem,
 }: UsePlayerArg) => {
-  const historyPlayerStore = useHistoryPlayerStore()
   const thePlayerStore = useThePlayerStore()
   const errorStore = useErrorStore()
 
   const {
     isStopped,
     isPaused,
+    isOnHold,
 
     items,
     item,
     itemIndex,
     nextItem,
     nextItemIndex,
-
-    reset: resetStore,
   } = useHistoryPlayerStore()
 
   // #region Methods
@@ -42,19 +40,33 @@ export const useHistoryPlayer = ({
     })
   }
 
+  function activatePlayerFeatures (): void {
+    // Player's components/feature enabled/disabled
+    thePlayerStore.itemsInfoEnabled.value = true
+  }
+
+  function initPlayerStates (): void {
+    thePlayerStore.itemsCount.value = items.value.length
+    thePlayerStore.itemIndex.value = itemIndex.value
+  }
+
+  async function showItem (itemToShow: Item, itemIndexToShow: number): Promise<void> {
+    setNextItem(itemToShow)
+    await showNextItem()
+
+    item.value = itemToShow
+    itemIndex.value = itemIndexToShow
+
+    thePlayerStore.item.value = item.value
+    thePlayerStore.itemIndex.value = itemIndex.value
+  }
+
   async function onEnd (): Promise<void> {
     if (!nextItem.value) {
       return await next()
     }
 
-    setNextItem(nextItem.value)
-    await showNextItem()
-
-    item.value = nextItem.value
-    itemIndex.value = nextItemIndex.value
-
-    thePlayerStore.item.value = item.value
-    thePlayerStore.itemIndex.value = itemIndex.value
+    await showItem(nextItem.value, nextItemIndex.value)
 
     nextItem.value = undefined
     nextItemIndex.value = -1
@@ -63,13 +75,11 @@ export const useHistoryPlayer = ({
 
   // #region Exposed Actions
   async function start (): Promise<void> {
+    reset()
     isStopped.value = false
 
-    items.value = historyPlayerStore.items.value
     itemIndex.value = 0
-
-    thePlayerStore.itemsCount.value = items.value.length
-    thePlayerStore.itemIndex.value = itemIndex.value
+    initPlayerStates()
 
     if (!items.value.length) {
       throw onError('History items are empty.')
@@ -118,11 +128,21 @@ export const useHistoryPlayer = ({
   function canPause (): boolean { return false }
   function canResume (): boolean { return false }
 
-  function reset (): void {
-    resetStore()
+  function setOnHold (): void {
+    isOnHold.value = true
+  }
 
-    // Player's components/feature enabled/disabled
-    thePlayerStore.itemsInfoEnabled.value = true
+  async function leaveOnHoldAndResume (): Promise<void> {
+    isOnHold.value = false
+    activatePlayerFeatures()
+    initPlayerStates()
+
+    itemIndex.value = items.value.length - 1
+    thePlayerStore.itemIndex.value = itemIndex.value
+  }
+
+  function reset (): void {
+    activatePlayerFeatures()
   }
 
   function onDeleteItem (itm: Item): void {
@@ -156,6 +176,7 @@ export const useHistoryPlayer = ({
   const player: UsePlayerExpose = {
     isStopped: computed<boolean>(() => isStopped.value),
     isPaused: computed<boolean>(() => isPaused.value),
+    isOnHold: computed<boolean>(() => isOnHold.value),
 
     start,
     stop,
@@ -163,12 +184,15 @@ export const useHistoryPlayer = ({
     resume,
     next,
     previous,
+
     canNext,
     canPrevious,
     canPause,
     canResume,
-    reset,
 
+    setOnHold,
+    leaveOnHoldAndResume,
+    reset,
     onDeleteItem,
   }
 

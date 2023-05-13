@@ -9,6 +9,7 @@ export const usePinedPlayerStore = createGlobalState(() => {
   // #region states
   const isStopped = ref(true)
   const isPaused = ref(false)
+  const isOnHold = ref(false)
 
   const items = ref<Array<Item>>([])
   const item = ref<Item | undefined>()
@@ -45,6 +46,8 @@ export const usePinedPlayerStore = createGlobalState(() => {
   return {
     isStopped,
     isPaused,
+    isOnHold,
+
     items,
     item,
     itemIndex,

@@ -1,6 +1,6 @@
 // Types
 import type { Item } from '@/models/item'
-import type { UsePlayerArg, UsePlayerExpose } from '../thePlayer'
+import { PlayerName, type UsePlayerArg, type UsePlayerExpose } from '../thePlayer'
 
 // Vendors Libs
 import { computed } from 'vue'
@@ -18,7 +18,6 @@ import { useErrorStore } from '@/stores/errorStore'
 import type { CustomError, CustomErrorData } from '@/models/error'
 import { useDBPlayerStore } from '@/stores/ThePlayer/players/dbPlayerStore'
 
-
 export const useDBPlayer = ({
   showNextItem,
   setNextItem,
@@ -32,9 +31,14 @@ export const useDBPlayer = ({
 
   const isFetchItemRandomly = playerOptsStore.isFetchItemRandomly
 
+  const isActivePlayer = computed<boolean>(
+    () => thePlayerStore.playerName.value === PlayerName.db,
+  )
+
   const {
     isStopped,
     isPaused,
+    isOnHold,
 
     items,
     item,
@@ -55,6 +59,37 @@ export const useDBPlayer = ({
     })
   }
 
+  function activatePlayerFeatures (): void {
+    // Player's components/feature enabled/disabled
+    thePlayerStore.theLoopEnabled.value = true
+    thePlayerStore.itemsInfoEnabled.value = true
+    thePlayerStore.historyEnabled.value = true
+    thePlayerStore.pauseEnabled.value = true
+
+    // Loop's components/feature enabled/disabled
+    theLoopStore.showRemainingTime.value = true
+  }
+
+  function initPlayerStates (): void {
+    thePlayerStore.itemsCount.value = items.value.length
+    thePlayerStore.itemIndex.value = itemIndex.value
+  }
+
+  async function showItem (itemToShow: Item, itemIndexToShow: number): Promise<void> {
+    setNextItem(itemToShow)
+    await showNextItem()
+
+    item.value = itemToShow
+    itemIndex.value = itemIndexToShow
+
+    thePlayerStore.item.value = item.value
+    thePlayerStore.itemIndex.value = itemIndex.value
+
+    theLoopStore.value.value = 0
+    theLoopStore.maxValue.value = getItemDuration() || playerOptsStore.interval.value * 1000
+    theLoopStore.indeterminate.value = false
+  }
+
   async function onLoopEnd (): Promise<void> {
     theLoopStore.indeterminate.value = true
 
@@ -64,18 +99,7 @@ export const useDBPlayer = ({
 
     historyPlayerStore.add(nextItem.value)
 
-    setNextItem(nextItem.value)
-    await showNextItem()
-
-    item.value = nextItem.value
-    itemIndex.value = nextItemIndex.value
-
-    thePlayerStore.item.value = item.value
-    thePlayerStore.itemIndex.value = itemIndex.value
-
-    theLoopStore.value.value = 0
-    theLoopStore.maxValue.value = getItemDuration() || playerOptsStore.interval.value * 1000
-    theLoopStore.indeterminate.value = false
+    await showItem(nextItem.value, nextItemIndex.value)
 
     nextItem.value = undefined
     nextItemIndex.value = -1
@@ -90,6 +114,7 @@ export const useDBPlayer = ({
 
   // #region Exposed Actions
   async function start (): Promise<void> {
+    reset()
     theLoopStore.indeterminate.value = true
     isStopped.value = false
 
@@ -101,8 +126,7 @@ export const useDBPlayer = ({
       throw onError('Items are empty.')
     }
 
-    thePlayerStore.itemsCount.value = items.value.length
-    thePlayerStore.itemIndex.value = itemIndex.value
+    initPlayerStates()
 
     await onLoopEnd()
   }
@@ -160,17 +184,24 @@ export const useDBPlayer = ({
   function canPause (): boolean { return true }
   function canResume (): boolean { return true }
 
+  function setOnHold (): void {
+    pause()
+    isOnHold.value = true
+  }
+
+  async function leaveOnHoldAndResume (): Promise<void> {
+    isOnHold.value = false
+    activatePlayerFeatures()
+    initPlayerStates()
+
+    if (item.value) {
+      await showItem(item.value, itemIndex.value)
+    }
+  }
+
   function reset (): void {
     resetStore()
-
-    // Loop's components/feature enabled/disabled
-    theLoopStore.enabled.value = true
-    theLoopStore.showRemainingTime.value = true
-
-    // Player's components/feature enabled/disabled
-    thePlayerStore.itemsInfoEnabled.value = true
-    thePlayerStore.historyEnabled.value = true
-    thePlayerStore.pauseEnabled.value = true
+    activatePlayerFeatures()
   }
 
   function onDeleteItem (itm: Item): void {
@@ -207,6 +238,7 @@ export const useDBPlayer = ({
   const player: UsePlayerExpose = {
     isStopped: computed<boolean>(() => isStopped.value),
     isPaused: computed<boolean>(() => isPaused.value),
+    isOnHold: computed<boolean>(() => isOnHold.value),
 
     start,
     stop,
@@ -214,12 +246,15 @@ export const useDBPlayer = ({
     resume,
     next,
     previous,
+
     canNext,
     canPrevious,
     canPause,
     canResume,
-    reset,
 
+    setOnHold,
+    leaveOnHoldAndResume,
+    reset,
     onDeleteItem,
   }
 

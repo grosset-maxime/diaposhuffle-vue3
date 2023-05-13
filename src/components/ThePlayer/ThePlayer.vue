@@ -22,15 +22,12 @@ import { useGlobalState } from '@/stores'
 import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
 import { useUIOptionsStore } from '@/stores/ThePlayerOptions/uiOptions'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
-import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { usePinedPlayerStore } from '@/stores/ThePlayer/players/pinedPlayerStore'
 import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
 
 // Components
 import TheLoop from '@/components/ThePlayer/TheLoop.vue'
-import PauseBtn from '@/components/ThePlayer/PauseBtn.vue'
-import HistoryBtn from '@/components/ThePlayer/HistoryBtn.vue'
-import SettingsBtn from '@/components/ThePlayer/SettingsBtn.vue'
+import GenericBtn from '@/components/ThePlayer/GenericBtn.vue'
 import ItemsPlayer, { type ItemsPlayerCmpExpose } from '@/components/ThePlayer/ItemsPlayer.vue'
 import TagsList from '@/components/ThePlayer/TagsList.vue'
 import ItemsInfoChip from '@/components/ThePlayer/ItemsInfoChipChip.vue'
@@ -40,6 +37,7 @@ import ItemPathChip from '@/components/ThePlayer/ItemPathChip.vue'
 import TheTagger from '@/components/TheTagger/TheTagger.vue'
 import DeleteModal from '@/components/DeleteModal.vue'
 import { createError } from '@/models/error'
+import { PlayerName } from '@/logic/ThePlayer/thePlayer'
 
 const { showTheHelp } = useGlobalState()
 const { showThePlayer } = useDiapoShuffleStore()
@@ -56,7 +54,6 @@ const {
   pinTags,
 } = useUIOptionsStore()
 const thePlayerStore = useThePlayerStore()
-const theLoopStore = useTheLoopStore()
 const pinedPlayerStore = usePinedPlayerStore()
 const historyPlayerStore = useHistoryPlayerStore()
 
@@ -64,9 +61,8 @@ const item = computed<Item | undefined>(() => thePlayerStore.item.value)
 const isPaused = computed<boolean>(() => thePlayerStore.isPaused.value)
 const isItemVideo = computed<boolean>(() => thePlayerStore.isItemVideo.value)
 const itemTags = computed<Set<TagId>>(() => item.value?.tags || new Set<TagId>())
-const isLoopEnabled = computed<boolean>(() => theLoopStore.enabled.value)
+const isTheLoopEnabled = computed<boolean>(() => thePlayerStore.theLoopEnabled.value)
 const isItemsInfoEnabled = computed<boolean>(() => thePlayerStore.itemsInfoEnabled.value)
-// const isHistoryEnabled = computed<boolean>(() => thePlayerStore.historyEnabled.value)
 const isPinedItem = eagerComputed<boolean>(() => pinedPlayerStore.has(item.value))
 const historyCount = historyPlayerStore.count
 
@@ -184,8 +180,11 @@ const alert = ref<Alert>({
   onClose: () => {},
 })
 
-function toggleHistoryPlayer (): void {
-  ItemsPlayerCmp.value?.toggleHistoryPlayer()
+function switchToHistoryPlayer (): void {
+  ItemsPlayerCmp.value?.switchToHistoryPlayer()
+}
+function closeActivePlayer (): void {
+  ItemsPlayerCmp.value?.switchBackToPreviousPlayer()
 }
 
 function stopPlayer (): void {
@@ -267,7 +266,6 @@ function keyboardShortcuts (key: string): void {
 
   case 'ArrowRight':
     goToNextItem()
-    // goToNextItem({ pausePlayingIfStillInHistory: true }) // TODO: to manage with history player
     break
 
   case 'ArrowLeft':
@@ -284,9 +282,8 @@ function keyboardShortcuts (key: string): void {
     break
 
   case 'p':
-    pausePlayer({ pauseItm: false })
-    togglePinItem()
     showUIDuring(3000)
+    togglePinItem()
     break
 
   case 't':
@@ -333,7 +330,7 @@ const itemPathChip = {
 }
 
 const showTheLoop = eagerComputed<boolean>(
-  () => !!(showLoop.value && isLoopEnabled.value),
+  () => !!(showLoop.value && isTheLoopEnabled.value),
 )
 const showTheItemPathChip = eagerComputed<boolean>(
   () => !!(showPath.value && item.value),
@@ -346,6 +343,9 @@ const showTheItemsInfoChip = eagerComputed<boolean>(
 )
 const showPinedChip = eagerComputed<boolean>(
   () => !!(showPined.value && isPinedItem.value),
+)
+const showCloseActivePlayerBtn = eagerComputed<boolean>(
+  () => thePlayerStore.playerName.value === PlayerName.history,
 )
 
 function onMouseOverUI (): void {
@@ -476,30 +476,50 @@ onMounted(async () => {
       />
     </PinWrapper>
 
-    <PauseBtn
+    <GenericBtn
       v-if="thePlayerStore.pauseEnabled.value"
       v-show="isPaused"
       class="the-pause-btn"
       @click="resumePlayer"
       @mouseover="onMouseOverUI"
       @mouseout="onMouseOutUI"
-    />
+    >
+      <div class="pause-icon">
+        <div class="stick" />
+        <div class="stick" />
+      </div>
+    </GenericBtn>
 
-    <HistoryBtn
+    <GenericBtn
+      v-if="showCloseActivePlayerBtn"
+      class="the-close-active-player-btn ui-top"
+      @click="closeActivePlayer"
+      @mouseover="onMouseOverUI"
+      @mouseout="onMouseOutUI"
+    >
+      <v-icon class="history-icon">mdi-close</v-icon>
+    </GenericBtn>
+
+    <GenericBtn
       v-if="thePlayerStore.historyEnabled.value"
       class="the-history-btn ui-right"
       :disabled="historyCount <= 0"
-      @click="toggleHistoryPlayer"
+      @click="switchToHistoryPlayer"
       @mouseover="onMouseOverUI"
       @mouseout="onMouseOutUI"
-    />
+    >
+      <v-icon class="history-icon">mdi-history</v-icon>
+      <span class="history-count-badge">{{ historyCount }}</span>
+    </GenericBtn>
 
-    <SettingsBtn
+    <GenericBtn
       class="the-settings-btn ui-right"
       @click="pausePlayer"
       @mouseover="onMouseOverUI"
       @mouseout="onMouseOutUI"
-    />
+    >
+      <v-icon class="settings-icon">mdi-cog</v-icon>
+    </GenericBtn>
 
     <PinWrapper
       v-if="showPinedChip"
@@ -746,10 +766,35 @@ onMounted(async () => {
     top: 5px;
     right: 5px;
     z-index: 1000;
+    background-color: #{$grey-7 + '30'};
+
+    .pause-icon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      .stick {
+        width: 5px;
+        height: 16px;
+        margin: auto 1px;
+        background: #{$grey-0 + 'EE'};
+        border: 1px solid #{$grey-7 + 'EE'};
+      }
+    }
+  }
+
+  .the-close-active-player-btn {
+    left: calc(50% - 33px);
   }
 
   .the-history-btn {
     top: calc(50% - 66px);
+
+    .history-count-badge {
+      font-size: 11px;
+      position: absolute;
+      bottom: 2px;
+    }
   }
 
   .the-settings-btn {

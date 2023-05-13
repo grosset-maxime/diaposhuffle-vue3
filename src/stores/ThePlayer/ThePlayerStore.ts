@@ -1,9 +1,9 @@
-// TODO: Feature: Add fetch items from bdd with tags and types. DONE ?
 // TODO: Bug: Backend: getimagesize raize warning in call response body that
 //            trigger json.parse to fail. Should be added to the response object as error.
 
 // Types
 import type { Item } from '@/models/item'
+import type { PlayerName } from '@/logic/ThePlayer/thePlayer'
 
 // Vendors Libs
 import { ref } from 'vue'
@@ -19,6 +19,7 @@ export const useThePlayerStore = createGlobalState(() => {
   // Player states
   const isStopped = ref(true)
   const isPaused = ref(false)
+  const playerName = ref<PlayerName | undefined>()
 
   // Item states
   const item = ref<Item | undefined>()
@@ -29,6 +30,7 @@ export const useThePlayerStore = createGlobalState(() => {
   const isItemVideo = ref(false)
 
   // Player's components/feature enabled/disabled
+  const theLoopEnabled = ref(false)
   const itemsInfoEnabled = ref(false)
   const historyEnabled = ref(false)
   const pauseEnabled = ref(false)
@@ -44,6 +46,16 @@ export const useThePlayerStore = createGlobalState(() => {
     })
     console.error(actionName, error)
   }
+
+  // #region Methods
+  function resetPlayerFeatures () {
+    // Player's components/feature enabled/disabled
+    theLoopEnabled.value = false
+    itemsInfoEnabled.value = false
+    historyEnabled.value = false
+    pauseEnabled.value = false
+  }
+  // #endregion Methods
 
   // #region Actions
   async function deleteItem ({ item }: { item: Item }): Promise<boolean> {
@@ -95,10 +107,7 @@ export const useThePlayerStore = createGlobalState(() => {
     isItemVideo.value = false
     itemsCount.value = NaN
 
-    // Player's components/feature enabled/disabled
-    itemsInfoEnabled.value = false
-    historyEnabled.value = false
-    pauseEnabled.value = false
+    resetPlayerFeatures()
   }
   // #endregion Actions
 
@@ -106,6 +115,7 @@ export const useThePlayerStore = createGlobalState(() => {
     // Player states
     isStopped,
     isPaused,
+    playerName,
 
     // Item states
     item,
@@ -116,6 +126,7 @@ export const useThePlayerStore = createGlobalState(() => {
     isItemVideo,
 
     // Player's components/feature enabled/disabled
+    theLoopEnabled,
     itemsInfoEnabled,
     historyEnabled,
     pauseEnabled,
@@ -124,5 +135,6 @@ export const useThePlayerStore = createGlobalState(() => {
     deleteItem,
     setItemTags,
     reset,
+    resetPlayerFeatures,
   }
 })

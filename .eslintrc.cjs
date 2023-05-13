@@ -18,7 +18,7 @@ module.exports = {
     'prefer-template': 'error',
     'operator-linebreak': [ 'error', 'before' ],
     'no-warning-comments': 'warn',
-    'no-console': [ 'error', { allow: [ 'warn', 'error' ] } ],
+    'no-console': [ 'warn', { allow: [ 'warn', 'error' ] } ],
     'no-debugger': 'warn',
     'comma-dangle': [ 'error', 'always-multiline' ],
     'space-before-function-paren': [ 'error', 'always' ],

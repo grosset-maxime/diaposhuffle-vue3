@@ -13,7 +13,6 @@ import { useFSPlayer } from '@/logic/ThePlayer/players/fsPlayer'
 import { useDBPlayer } from '@/logic/ThePlayer/players/dbPlayer'
 import { usePinedPlayer } from '@/logic/ThePlayer/players/pinedPlayer'
 import { useHistoryPlayer } from '@/logic/ThePlayer/players/historyPlayer'
-import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 
 export enum PlayerName {
   fs = 'fsPlayer',
@@ -33,16 +32,22 @@ export interface UsePlayerArg {
 export interface UsePlayerExpose {
   isStopped: ComputedRef<boolean>
   isPaused: ComputedRef<boolean>
+  isOnHold: ComputedRef<boolean>
+
   start: () => Promise<void>
   stop: () => void
   pause: () => void
   resume: () => void
   next: () => Promise<void>
   previous: () => Promise<void>
+
   canNext: () => boolean
   canPrevious: () => boolean
   canPause: () => boolean
   canResume: () => boolean
+
+  setOnHold: () => void
+  leaveOnHoldAndResume: () => void
   reset: () => void
   onDeleteItem: (itm: Item) => void
 }
@@ -64,15 +69,16 @@ export const useThePlayer = ({
   const {
     isPaused,
     isStopped,
+    playerName,
+    resetPlayerFeatures,
   } = useThePlayerStore()
 
   const sourceOptsStore = useSourceOptionsStore()
   const thePlayerStore = useThePlayerStore()
-  const theLoopStore = useTheLoopStore()
 
   const canSwitchPlayer = ref<boolean>(false)
 
-  function getPlayerName (): PlayerName {
+  function guessPlayerName (): PlayerName {
     let playerName: PlayerName
 
     if (sourceOptsStore.isFromPined.value) {
@@ -88,7 +94,7 @@ export const useThePlayer = ({
     return playerName
   }
 
-  const playerName = ref<PlayerName>(getPlayerName())
+  playerName.value = guessPlayerName()
   const previousPlayerName = ref<PlayerName>(playerName.value)
 
   const player = computed<UsePlayerExpose>(() => {
@@ -109,11 +115,16 @@ export const useThePlayer = ({
     }
   })
 
-  watch(player, () => {
+  watch(player, (activePlayer, previousPlayer) => {
     if (!canSwitchPlayer.value) { return }
 
-    // TODO: create a store per player to store items and states like paused etc...
-    if (player.value.isStopped.value) {
+    previousPlayer.setOnHold()
+
+    resetPlayerFeatures()
+
+    if (activePlayer.isOnHold.value) {
+      activePlayer.leaveOnHoldAndResume()
+    } else {
       start()
     }
   })
@@ -167,27 +178,26 @@ export const useThePlayer = ({
   const canResume = (): boolean => player.value.canResume()
 
   const reset = (): void => {
-    theLoopStore.reset()
     thePlayerStore.reset()
-    player.value.reset()
   }
 
-  const toggleHistoryPlayer = (): void => {
-    if (!canSwitchPlayer.value) { return }
+  const switchToHistoryPlayer = (): void => {
+    if (!canSwitchPlayer.value
+      || playerName.value === PlayerName.history
+    ) { return }
 
-    if (canPause()) {
-      player.value.pause()
-    } else {
-      player.value.stop()
-    }
+    previousPlayerName.value = playerName.value || guessPlayerName()
+    playerName.value = PlayerName.history
+  }
 
-    if (playerName.value === PlayerName.history) {
-      playerName.value = previousPlayerName.value
-      previousPlayerName.value = PlayerName.history
-    } else {
-      previousPlayerName.value = playerName.value
-      playerName.value = PlayerName.history
-    }
+  const switchBackToPreviousPlayer = (): void => {
+    if (!canSwitchPlayer.value
+      || previousPlayerName.value === playerName.value
+    ) { return }
+
+    const activePlayerName = playerName.value
+    playerName.value = previousPlayerName.value
+    previousPlayerName.value = activePlayerName || guessPlayerName()
   }
 
   const onDeleteItem = (itm: Item): void => player.value.onDeleteItem(itm)
@@ -203,12 +213,15 @@ export const useThePlayer = ({
     resume,
     next,
     previous,
+
     canNext,
     canPrevious,
     canPause,
     canResume,
+
     reset,
-    toggleHistoryPlayer,
+    switchToHistoryPlayer,
+    switchBackToPreviousPlayer,
     onDeleteItem,
   }
 }

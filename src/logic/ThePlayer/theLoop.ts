@@ -90,10 +90,6 @@ export const useTheLoop = ({ endFn, step = ref(LOOP_STEP) }: UseTheLoop) => {
   }
 
   function resumeLooping (): void {
-    if (!pause.value) {
-      return
-    }
-
     pause.value = false
     stop.value = false
 

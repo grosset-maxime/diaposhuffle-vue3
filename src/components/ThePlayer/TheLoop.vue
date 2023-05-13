@@ -4,6 +4,7 @@ import { ref, computed } from 'vue'
 
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { watch } from 'vue'
+import { onMounted } from 'vue'
 
 const LOOP_DETERMINATE_COLOR = '#E87B00CC' // $orange-1 + light opacity.
 const LOOP_INDETERMINATE_COLOR = '#2196f3BB' // primary color + ligth opacity.
@@ -94,8 +95,8 @@ function goToLoopStart (): void {
   loopVal.value = 0
 }
 
-watch(indeterminate, (isIndeterminate) => {
-  if (isIndeterminate) {
+function onIndeterminateChange (): void {
+  if (indeterminate.value) {
     color.value = LOOP_INDETERMINATE_COLOR
     height.value = LOOP_INDETERMINATE_HEIGHT
     striped.value = true
@@ -104,6 +105,14 @@ watch(indeterminate, (isIndeterminate) => {
     height.value = LOOP_DETERMINATE_HEIGHT
     striped.value = false
   }
+}
+
+watch(indeterminate, () => {
+  onIndeterminateChange()
+})
+
+onMounted(() => {
+  onIndeterminateChange()
 })
 </script>
 

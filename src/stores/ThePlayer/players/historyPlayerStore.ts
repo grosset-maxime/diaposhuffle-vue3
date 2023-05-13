@@ -7,9 +7,10 @@ import { createGlobalState } from '@vueuse/core'
 
 export const useHistoryPlayerStore = createGlobalState(() => {
 
-  // #region states
+  // #region States
   const isStopped = ref(true)
   const isPaused = ref(false)
+  const isOnHold = ref(false)
 
   const items = ref<Array<Item>>([])
   const item = ref<Item | undefined>()
@@ -17,10 +18,11 @@ export const useHistoryPlayerStore = createGlobalState(() => {
 
   const nextItem = ref<Item | undefined>()
   const nextItemIndex = ref<number>(NaN)
-  // #endregion states
+  // #endregion States
 
   const count = computed<number>(() => items.value.length)
 
+  // #region Methods
   function has (item?: Item): boolean {
     if (!item) { return false }
     return items.value.some((itm) => itm.src === item.src)
@@ -44,10 +46,13 @@ export const useHistoryPlayerStore = createGlobalState(() => {
     nextItem.value = undefined
     nextItemIndex.value = NaN
   }
+  // #endregion Methods
 
   return {
     isStopped,
     isPaused,
+    isOnHold,
+
     items,
     item,
     itemIndex,

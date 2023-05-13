@@ -35,6 +35,7 @@ export const useFSPlayer = ({
   const {
     isStopped,
     isPaused,
+    isOnHold,
 
     item,
     nextItem,
@@ -52,6 +53,28 @@ export const useFSPlayer = ({
       file: 'fsPlayer.ts',
       actionName: 'PLAYER_A_FETCH_PREV',
     })
+  }
+
+  function activatePlayerFeatures (): void {
+    // Player's components/feature enabled/disabled
+    thePlayerStore.theLoopEnabled.value = true
+    thePlayerStore.historyEnabled.value = true
+    thePlayerStore.pauseEnabled.value = true
+
+    // Loop's components/feature enabled/disabled
+    theLoopStore.showRemainingTime.value = true
+  }
+
+  async function showItem (itemToShow: Item): Promise<void> {
+    setNextItem(itemToShow)
+    await showNextItem()
+
+    item.value = itemToShow
+    thePlayerStore.item.value = item.value
+
+    theLoopStore.value.value = 0
+    theLoopStore.maxValue.value = getItemDuration() || playerOptsStore.interval.value * 1000
+    theLoopStore.indeterminate.value = false
   }
 
   async function fetchNextItem (): Promise<Item> {
@@ -83,16 +106,7 @@ export const useFSPlayer = ({
 
     historyPlayerStore.add(nextItem.value)
 
-    setNextItem(nextItem.value)
-    await showNextItem()
-
-    const itm = nextItem.value
-    item.value = itm
-    thePlayerStore.item.value = itm
-
-    theLoopStore.value.value = 0
-    theLoopStore.maxValue.value = getItemDuration() || playerOptsStore.interval.value * 1000
-    theLoopStore.indeterminate.value = false
+    await showItem(nextItem.value)
 
     fetchNextItem()
       .then((itm) => nextItem.value = itm)
@@ -107,6 +121,7 @@ export const useFSPlayer = ({
 
   // #region Exposed Actions
   async function start (): Promise<void> {
+    reset()
     isStopped.value = false
     await onLoopEnd()
   }
@@ -141,16 +156,23 @@ export const useFSPlayer = ({
   function canPause (): boolean { return true }
   function canResume (): boolean { return true }
 
+  function setOnHold (): void {
+    pause()
+    isOnHold.value = true
+  }
+
+  async function leaveOnHoldAndResume (): Promise<void> {
+    isOnHold.value = false
+    activatePlayerFeatures()
+
+    if (item.value) {
+      await showItem(item.value)
+    }
+  }
+
   function reset (): void {
     resetStore()
-
-    // Loop's components/feature enabled/disabled
-    theLoopStore.enabled.value = true
-    theLoopStore.showRemainingTime.value = true
-
-    // Player's components/feature enabled/disabled
-    thePlayerStore.historyEnabled.value = true
-    thePlayerStore.pauseEnabled.value = true
+    activatePlayerFeatures()
   }
 
   async function onDeleteItem (itm: Item): Promise<void> {
@@ -169,6 +191,7 @@ export const useFSPlayer = ({
   const player: UsePlayerExpose = {
     isStopped: computed<boolean>(() => isStopped.value),
     isPaused: computed<boolean>(() => isPaused.value),
+    isOnHold: computed<boolean>(() => isOnHold.value),
 
     start,
     stop,
@@ -176,12 +199,15 @@ export const useFSPlayer = ({
     resume,
     next,
     previous,
+
     canNext,
     canPrevious,
     canPause,
     canResume,
-    reset,
 
+    setOnHold,
+    leaveOnHoldAndResume,
+    reset,
     onDeleteItem,
   }
 

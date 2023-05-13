@@ -22,6 +22,7 @@ export const useFSPlayerStore = createGlobalState(() => {
   // #region States
   const isStopped = ref(true)
   const isPaused = ref(false)
+  const isOnHold = ref(false)
 
   const item = ref<Item | undefined>()
 
@@ -73,6 +74,8 @@ export const useFSPlayerStore = createGlobalState(() => {
   return {
     isStopped,
     isPaused,
+    isOnHold,
+
     item,
     nextItem,
     fetchNextItemPromise,

@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from 'vue'
-import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
 
 // Props
 interface Props {
-  disabled?: boolean;
+  disabled?: boolean
 }
 withDefaults(defineProps<Props>(), {
   disabled: false,
@@ -18,7 +17,6 @@ const emit = defineEmits<{
 }>()
 
 const isMouseOver = ref(false)
-const { count } = useHistoryPlayerStore()
 
 function onMouseOver (e: MouseEvent): void {
   isMouseOver.value = true
@@ -36,7 +34,7 @@ onBeforeUnmount(() => {
 
 <template>
   <v-btn
-    class="history-btn"
+    class="generic-btn"
     :class="{
       disabled,
     }"
@@ -45,13 +43,12 @@ onBeforeUnmount(() => {
     @mouseover="onMouseOver"
     @mouseout="onMouseOut"
   >
-    <v-icon class="history-icon">mdi-history</v-icon>
-    <span class="count-badge">{{ count }}</span>
+    <slot />
   </v-btn>
 </template>
 
 <style lang="scss" scoped>
-.history-btn {
+.generic-btn {
   color: #{$grey-0 + '88'};
   background-color: #11111188;
 
@@ -61,12 +58,6 @@ onBeforeUnmount(() => {
 
   &:hover:not(.disabled) {
     color: $grey-0;
-  }
-
-  .count-badge {
-    font-size: 11px;
-    position: absolute;
-    bottom: 2px;
   }
 }
 </style>

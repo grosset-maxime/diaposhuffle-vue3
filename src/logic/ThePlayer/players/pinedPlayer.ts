@@ -33,14 +33,13 @@ export const usePinedPlayer = ({
   const {
     isStopped,
     isPaused,
+    isOnHold,
 
     items,
     item,
     itemIndex,
     nextItem,
     nextItemIndex,
-
-    reset: resetStore,
   } = usePinedPlayerStore()
 
   // #region Methods
@@ -52,18 +51,27 @@ export const usePinedPlayer = ({
     })
   }
 
-  async function onLoopEnd (): Promise<void> {
-    theLoopStore.indeterminate.value = true
+  function activatePlayerFeatures (): void {
+    // Player's components/feature enabled/disabled
+    thePlayerStore.theLoopEnabled.value = true
+    thePlayerStore.itemsInfoEnabled.value = true
+    thePlayerStore.pauseEnabled.value = true
 
-    if (!nextItem.value) {
-      return await next()
-    }
+    // Loop's components/feature enabled/disabled
+    theLoopStore.showRemainingTime.value = true
+  }
 
-    setNextItem(nextItem.value)
+  function initPlayerStates (): void {
+    thePlayerStore.itemsCount.value = items.value.length
+    thePlayerStore.itemIndex.value = itemIndex.value
+  }
+
+  async function showItem (itemToShow: Item, itemIndexToShow: number): Promise<void> {
+    setNextItem(itemToShow)
     await showNextItem()
 
-    item.value = nextItem.value
-    itemIndex.value = nextItemIndex.value
+    item.value = itemToShow
+    itemIndex.value = itemIndexToShow
 
     thePlayerStore.item.value = item.value
     thePlayerStore.itemIndex.value = itemIndex.value
@@ -71,6 +79,16 @@ export const usePinedPlayer = ({
     theLoopStore.value.value = 0
     theLoopStore.maxValue.value = getItemDuration() || playerOptsStore.interval.value * 1000
     theLoopStore.indeterminate.value = false
+  }
+
+  async function onLoopEnd (): Promise<void> {
+    theLoopStore.indeterminate.value = true
+
+    if (!nextItem.value) {
+      return await next()
+    }
+
+    await showItem(nextItem.value, nextItemIndex.value)
 
     nextItem.value = undefined
     nextItemIndex.value = -1
@@ -93,8 +111,7 @@ export const usePinedPlayer = ({
     items.value = pinedPlayerStore.items.value
     itemIndex.value = -1
 
-    thePlayerStore.itemsCount.value = items.value.length
-    thePlayerStore.itemIndex.value = itemIndex.value
+    initPlayerStates()
 
     if (!items.value.length) {
       throw onError('Pined items are empty.')
@@ -156,16 +173,23 @@ export const usePinedPlayer = ({
   function canPause (): boolean { return true }
   function canResume (): boolean { return true }
 
+  function setOnHold (): void {
+    pause()
+    isOnHold.value = true
+  }
+
+  async function leaveOnHoldAndResume (): Promise<void> {
+    isOnHold.value = false
+    activatePlayerFeatures()
+    initPlayerStates()
+
+    if (item.value) {
+      await showItem(item.value, itemIndex.value)
+    }
+  }
+
   function reset (): void {
-    resetStore()
-
-    // Loop's components/feature enabled/disabled
-    theLoopStore.enabled.value = true
-    theLoopStore.showRemainingTime.value = true
-
-    // Player's components/feature enabled/disabled
-    thePlayerStore.itemsInfoEnabled.value = true
-    thePlayerStore.pauseEnabled.value = true
+    activatePlayerFeatures()
   }
 
   function onDeleteItem (itm: Item): void {
@@ -200,6 +224,7 @@ export const usePinedPlayer = ({
   const player: UsePlayerExpose = {
     isStopped: computed<boolean>(() => isStopped.value),
     isPaused: computed<boolean>(() => isPaused.value),
+    isOnHold: computed<boolean>(() => isOnHold.value),
 
     start,
     stop,
@@ -207,12 +232,15 @@ export const usePinedPlayer = ({
     resume,
     next,
     previous,
+
     canNext,
     canPrevious,
     canPause,
     canResume,
-    reset,
 
+    setOnHold,
+    leaveOnHoldAndResume,
+    reset,
     onDeleteItem,
   }
 
