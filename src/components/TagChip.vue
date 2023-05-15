@@ -7,9 +7,9 @@ import { computed } from 'vue'
 import { eagerComputed } from '@vueuse/shared'
 
 // Stores
-import { useTaggerStore } from '@/stores/tagger'
+import { useTheTaggerStore } from '@/stores/TheTaggerStore'
 
-const taggerStore = useTaggerStore()
+const theTaggerStore = useTheTaggerStore()
 
 // Props
 interface Props {
@@ -36,7 +36,7 @@ const emit = defineEmits<{
 }>()
 
 const tag = computed<Tag>(
-  () => taggerStore.getTag(props.tagId) || createTag({ id: props.tagId }),
+  () => theTaggerStore.getTag(props.tagId) || createTag({ id: props.tagId }),
 )
 const tagName = computed<string>(() => tag.value.name || tag.value.id)
 const category = computed<TagCategory | undefined>(() => tag.value.category)

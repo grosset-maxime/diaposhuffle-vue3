@@ -5,11 +5,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { whenever } from '@vueuse/shared'
 
 // Libs
-import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
+import { useKeyboardShortcutsListener } from '@/logic/useKeyboardShortcutsListener'
 
 // Stores
-import { useGlobalState } from '@/stores'
-import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
+import { useMainStore } from '@/stores/mainStore'
+import { useDiapoShuffleStore } from '@/stores/diapoShuffleStore'
 
 // Components
 import SourceOptions from '@/components/ThePlayerOptions/SourceOptions.vue'
@@ -20,8 +20,8 @@ const route = useRoute()
 const router = useRouter()
 
 // Stores
-const { showTheHelp } = useGlobalState()
-const { showThePlayer, showFolderBrowser, showTagger } = useDiapoShuffleStore()
+const { showTheHelp } = useMainStore()
+const { showThePlayer, showTheFolderBrowser, showTheTagger } = useDiapoShuffleStore()
 
 const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
@@ -72,7 +72,7 @@ watch(tabId, (val) => {
 })
 
 watch(
-  [ showTheHelp, showFolderBrowser, showTagger ],
+  [ showTheHelp, showTheFolderBrowser, showTheTagger ],
   (isShow) => {
     isShow
       ? stopKSListener()
@@ -92,13 +92,13 @@ function keyboardShortcuts (key: string) {
     startPlayer()
     break
   case 'b':
-    showFolderBrowser.value = true
+    showTheFolderBrowser.value = true
     break
   case 'h':
     showTheHelp.value = true
     break
   case 't':
-    showTagger.value = true
+    showTheTagger.value = true
     break
   default:
   }

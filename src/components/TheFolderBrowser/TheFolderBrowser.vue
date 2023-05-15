@@ -7,13 +7,13 @@
 //                (Need a new backend API).
 
 // Types
-import type { FolderPath } from '@/stores/folderBrowser'
+import type { FolderPath } from '@/stores/TheFolderBrowserStore'
 import { theFolderBrowserKey } from '@/interfaces/symbols'
 
 // Vendors Libs
 import { ref, computed, watch, provide } from 'vue'
 
-import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
+import { useKeyboardShortcutsListener } from '@/logic/useKeyboardShortcutsListener'
 
 // Components
 import RootFolderItem from '@/components/TheFolderBrowser/RootFolderItem.vue'

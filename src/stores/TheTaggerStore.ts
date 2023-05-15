@@ -25,7 +25,9 @@ import {
 } from '@/api/tags'
 import { createError } from '@/models/error'
 
-export const useTaggerStore = createGlobalState(() => {
+const FILE_NAME = 'TheTaggerStore.ts'
+
+export const useTheTaggerStore = createGlobalState(() => {
   // State
   const taggerReady = ref(false)
   const tagsFetched = ref(false)
@@ -140,14 +142,14 @@ export const useTaggerStore = createGlobalState(() => {
 
       if (!tag) {
         throw createError('Fail to add a new tag.', {
-          file: 'tagger.ts',
+          file: FILE_NAME,
         })
       }
 
       _addTag(tag)
     } catch (e) {
       const error = createError(e, {
-        file: 'tagger.ts',
+        file: FILE_NAME,
       })
       addError({
         actionName: 'TAGGER_A_ADD_TAG',
@@ -162,14 +164,14 @@ export const useTaggerStore = createGlobalState(() => {
 
       if (!tag) {
         throw createError('Fail to update tag.', {
-          file: 'tagger.ts',
+          file: FILE_NAME,
         })
       }
 
       _updateTag(tag)
     } catch (e) {
       const error = createError(e, {
-        file: 'tagger.ts',
+        file: FILE_NAME,
       })
       addError({
         actionName: 'TAGGER_A_UPDATE_TAG',
@@ -185,7 +187,7 @@ export const useTaggerStore = createGlobalState(() => {
 
     if (!tag) {
       throw createError(`Tag not found: ${tagId}`, {
-        file: 'tagger.ts',
+        file: FILE_NAME,
       })
     }
 
@@ -194,14 +196,14 @@ export const useTaggerStore = createGlobalState(() => {
 
       if (!success) {
         throw createError('Fail to delete tag.', {
-          file: 'tagger.ts',
+          file: FILE_NAME,
         })
       }
 
       _deleteTag(tag)
     } catch (e) {
       const error = createError(e, {
-        file: 'tagger.ts',
+        file: FILE_NAME,
       })
       addError({
         actionName: 'TAGGER_A_DELETE_TAG',
@@ -216,14 +218,14 @@ export const useTaggerStore = createGlobalState(() => {
 
       if (!category) {
         throw createError('Fail to add a new category.', {
-          file: 'tagger.ts',
+          file: FILE_NAME,
         })
       }
 
       _addCategory(category)
     } catch (e) {
       const error = createError(e, {
-        file: 'tagger.ts',
+        file: FILE_NAME,
       })
       addError({
         actionName: 'TAGGER_A_ADD_CATEGORY',
@@ -238,14 +240,14 @@ export const useTaggerStore = createGlobalState(() => {
 
       if (!category) {
         throw createError('Fail to update category.', {
-          file: 'tagger.ts',
+          file: FILE_NAME,
         })
       }
 
       _updateCategory(category)
     } catch (e) {
       const error = createError(e, {
-        file: 'tagger.ts',
+        file: FILE_NAME,
       })
       addError({
         actionName: 'TAGGER_A_UPDATE_CATEGORY',
@@ -261,7 +263,7 @@ export const useTaggerStore = createGlobalState(() => {
 
     if (!category) {
       throw createError(`Tag not found: ${categoryId}`, {
-        file: 'tagger.ts',
+        file: FILE_NAME,
       })
     }
 
@@ -283,14 +285,14 @@ export const useTaggerStore = createGlobalState(() => {
 
       if (!success) {
         throw createError('Fail to delete category.', {
-          file: 'tagger.ts',
+          file: FILE_NAME,
         })
       }
 
       _deleteCategory(category)
     } catch (e) {
       const error = createError(e, {
-        file: 'tagger.ts',
+        file: FILE_NAME,
       })
       addError({
         actionName: 'TAGGER_A_DELETE_CATEGORY',
@@ -309,7 +311,7 @@ export const useTaggerStore = createGlobalState(() => {
       _setTags(tags)
     } catch (e) {
       const error = createError(e, {
-        file: 'tagger.ts',
+        file: FILE_NAME,
       })
       addError({
         actionName: 'TAGGER_A_FETCH_TAGS',
@@ -339,7 +341,7 @@ export const useTaggerStore = createGlobalState(() => {
       _setCategories(categories)
     } catch (e) {
       const error = createError(e, {
-        file: 'tagger.ts',
+        file: FILE_NAME,
       })
       addError({
         actionName: 'TAGGER_A_FETCH_TAGS',

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useGlobalState } from '@/stores'
+import { useMainStore } from '@/stores/mainStore'
 import { computed } from 'vue'
 
 const props = defineProps<{
@@ -11,7 +11,7 @@ const emit = defineEmits<{
   (e: 'toggleTheme'): void;
 }>()
 
-const { showTheHelp } = useGlobalState()
+const { showTheHelp } = useMainStore()
 
 // Computeds
 const appTitle = computed(() => props.title || '')

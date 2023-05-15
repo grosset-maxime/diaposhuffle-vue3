@@ -6,14 +6,14 @@ import type { Tag, TagId, TagData } from '@/models/tag'
 // Vendors Libs
 import { ref, computed, watch } from 'vue'
 
-import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
+import { useKeyboardShortcutsListener } from '@/logic/useKeyboardShortcutsListener'
 
 // Components
 import DeleteModal from '../DeleteModal.vue'
 import CircularLoading from '../CircularLoading.vue'
 
 // Stores
-import { useTaggerStore } from '@/stores/tagger'
+import { useTheTaggerStore } from '@/stores/TheTaggerStore'
 
 const EMPTY_TAG_DATA: TagData = {
   id: '',
@@ -21,7 +21,7 @@ const EMPTY_TAG_DATA: TagData = {
   categoryId: '0',
 }
 
-const taggerStore = useTaggerStore()
+const theTaggerStore = useTheTaggerStore()
 const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
 // Props
@@ -60,7 +60,7 @@ const categorySelectCmp = ref<{ menu: Ref<boolean>, isFocused: Ref<boolean> } | 
 // Computeds
 const tagModel = computed(
   () => props.tagId
-    ? taggerStore.getTag(props.tagId)
+    ? theTaggerStore.getTag(props.tagId)
     : undefined,
 )
 const titleModal = computed(() => (props.add
@@ -71,8 +71,8 @@ const confirmBtnText = computed(() => (props.add
   ? 'Add'
   : 'Edit'))
 
-const tagsList = taggerStore.tagsList
-const categoriesList = taggerStore.categoriesList
+const tagsList = theTaggerStore.tagsList
+const categoriesList = theTaggerStore.categoriesList
 
 const categoriesListSelect = computed(() => categoriesList.value.map((cat) => ({
   value: cat.id,
@@ -82,7 +82,7 @@ const categoriesListSelect = computed(() => categoriesList.value.map((cat) => ({
 })))
 
 const tagDataCategoryColor = computed(
-  () => taggerStore.getCategory(tagData.value?.categoryId || '0')?.hashColor,
+  () => theTaggerStore.getCategory(tagData.value?.categoryId || '0')?.hashColor,
 )
 
 //#region Methods

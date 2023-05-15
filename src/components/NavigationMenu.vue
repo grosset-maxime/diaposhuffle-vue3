@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { IRoute } from '../interfaces/route'
 
-import { useGlobalState } from '@/stores'
+import { useMainStore } from '@/stores/mainStore'
 
 const props = defineProps<{
   show: boolean;
@@ -10,7 +10,7 @@ const props = defineProps<{
 
 const {
   railMenu,
-} = useGlobalState()
+} = useMainStore()
 
 const toggleRailMenu = () => railMenu.value = !railMenu.value
 </script>

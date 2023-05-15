@@ -1,6 +1,6 @@
 // Types
 import type { TagId } from '@/models/tag'
-import type { FolderPath } from '@/stores/folderBrowser'
+import type { FolderPath } from '@/stores/TheFolderBrowserStore'
 
 import { createGlobalState, useStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'

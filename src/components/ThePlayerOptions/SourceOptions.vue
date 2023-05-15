@@ -5,15 +5,15 @@
 
 // Types
 import type { TagId } from '@/models/tag'
-import type { FolderPath } from '@/stores/folderBrowser'
+import type { FolderPath } from '@/stores/TheFolderBrowserStore'
 
 // Vendors Libs
 import { computed, ref, watch } from 'vue'
 import { eagerComputed } from '@vueuse/shared'
 
 // Stores
-import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
-import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
+import { useDiapoShuffleStore } from '@/stores/diapoShuffleStore'
+import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptionsStore'
 
 // Components
 import TheFolderBrowser from '@/components/TheFolderBrowser/TheFolderBrowser.vue'
@@ -21,7 +21,7 @@ import TheTagger from '@/components/TheTagger/TheTagger.vue'
 import TagChip from '@/components/TagChip.vue'
 import { usePinedPlayerStore } from '@/stores/ThePlayer/players/pinedPlayerStore'
 
-const { showTagger, showFolderBrowser } = useDiapoShuffleStore()
+const { showTheTagger, showTheFolderBrowser } = useDiapoShuffleStore()
 const sourceOptsStore = useSourceOptionsStore()
 const pinedPlayerStore = usePinedPlayerStore()
 
@@ -34,12 +34,12 @@ watch(
   () => (sourceOptsStore.folders.value = selectedFolders.value),
 )
 
-function showTheFolderBrowser () {
-  showFolderBrowser.value = true
+function showTheFolderBrowserFn () {
+  showTheFolderBrowser.value = true
 }
 
 function onCloseTheFolderBrowser () {
-  showFolderBrowser.value = false
+  showTheFolderBrowser.value = false
 }
 
 function onSaveTheFolderBrowser (folders: Set<FolderPath>) {
@@ -66,12 +66,12 @@ watch(
   (val) => { sourceOptsStore.tags.value = val },
 )
 
-function showTaggerModal () {
-  showTagger.value = true
+function showTheTaggerFn () {
+  showTheTagger.value = true
 }
 
 function onCloseTaggerModal () {
-  showTagger.value = false
+  showTheTagger.value = false
 }
 
 function onSaveTaggerModal (selectedTagIds: Set<TagId>) {
@@ -130,7 +130,7 @@ function clearPineds () {
       <v-col>
         <span class="v-label"> Folder(s) </span>
 
-        <v-btn color="secondary" @click="showTheFolderBrowser"> Browse... </v-btn>
+        <v-btn color="secondary" @click="showTheFolderBrowserFn"> Browse... </v-btn>
 
         <v-btn
           v-if="nbSelectedFolders"
@@ -173,7 +173,7 @@ function clearPineds () {
       <v-col>
         <span class="v-label"> Tag(s) </span>
 
-        <v-btn color="secondary" @click="showTaggerModal"> Select... </v-btn>
+        <v-btn color="secondary" @click="showTheTaggerFn"> Select... </v-btn>
 
         <v-chip
           v-if="nbSelectedTags"
@@ -267,14 +267,14 @@ function clearPineds () {
 
     <Teleport to="body">
       <TheFolderBrowser
-        :show="showFolderBrowser"
+        :show="showTheFolderBrowser"
         :selected="selectedFolders"
         @close="onCloseTheFolderBrowser"
         @save="onSaveTheFolderBrowser"
       />
 
       <TheTagger
-        :show="showTagger"
+        :show="showTheTagger"
         :selected="selectedTags"
         @close="onCloseTaggerModal"
         @save="onSaveTaggerModal"

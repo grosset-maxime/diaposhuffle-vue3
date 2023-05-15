@@ -16,7 +16,7 @@ export interface Folder {
   fetching: boolean
 }
 
-export const useFolderBrowserStore = createGlobalState(() => {
+export const useTheFolderBrowserStore = createGlobalState(() => {
   const ROOT_PATH = '/'
 
   // State
@@ -51,7 +51,7 @@ export const useFolderBrowserStore = createGlobalState(() => {
 
     if (!folder) {
       throw createError(`Folder not found with path: ${parentPath}`, {
-        file: 'folderBrowser.ts',
+        file: 'folderBrowserStore.ts',
       })
     }
 
@@ -89,7 +89,7 @@ export const useFolderBrowserStore = createGlobalState(() => {
       })
     } catch (e) {
       const error = createError(e, {
-        file: 'folderBrowser.ts',
+        file: 'folderBrowserStore.ts',
       })
       addError({
         actionName: 'FOLDER_BROWSER_A_FETCH_FOLDERS',

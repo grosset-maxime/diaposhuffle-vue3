@@ -1,4 +1,4 @@
-import { useTaggerStore } from '@/stores/tagger'
+import { useTheTaggerStore } from '@/stores/TheTaggerStore'
 import { createError } from './error'
 
 export type TagCategoryId = string;
@@ -40,10 +40,10 @@ export class TagCategory {
   }
 
   update () {
-    const taggerStore = useTaggerStore()
+    const theTaggerStore = useTheTaggerStore()
 
     this.tags = new Map(
-      taggerStore.tagsList.value.filter((t) => t.categoryId === this.id)
+      theTaggerStore.tagsList.value.filter((t) => t.categoryId === this.id)
         .map((t) => [ t.id, t ]),
     )
   }
@@ -99,8 +99,8 @@ export class Tag {
   }
 
   update () {
-    const taggerStore = useTaggerStore()
-    this.category = taggerStore.getCategory(this.categoryId)
+    const theTaggerStore = useTheTaggerStore()
+    this.category = theTaggerStore.getCategory(this.categoryId)
   }
 }
 

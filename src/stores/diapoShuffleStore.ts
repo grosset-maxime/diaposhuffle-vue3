@@ -4,8 +4,8 @@ import { createGlobalState } from '@vueuse/core'
 export const useDiapoShuffleStore = createGlobalState(() => {
   // States
   const showThePlayer = ref(false)
-  const showFolderBrowser = ref(false)
-  const showTagger = ref(false)
+  const showTheFolderBrowser = ref(false)
+  const showTheTagger = ref(false)
 
   // Getters
 
@@ -14,8 +14,8 @@ export const useDiapoShuffleStore = createGlobalState(() => {
   return {
     // States
     showThePlayer,
-    showFolderBrowser,
-    showTagger,
+    showTheFolderBrowser,
+    showTheTagger,
 
     // Getters
 

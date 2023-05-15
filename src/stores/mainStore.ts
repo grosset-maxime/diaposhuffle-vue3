@@ -10,7 +10,7 @@ interface states {
   theme: Theme;
 }
 
-export const useGlobalState = createGlobalState(() => {
+export const useMainStore = createGlobalState(() => {
   const defaultStates: states = {
     showMenu: true,
     railMenu: false,

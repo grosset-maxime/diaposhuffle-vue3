@@ -15,12 +15,12 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { eagerComputed } from '@vueuse/shared'
 
 // Libs
-import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
+import { useKeyboardShortcutsListener } from '@/logic/useKeyboardShortcutsListener'
 
 // Stores
-import { useGlobalState } from '@/stores'
-import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
-import { useUIOptionsStore } from '@/stores/ThePlayerOptions/uiOptions'
+import { useMainStore } from '@/stores/mainStore'
+import { useDiapoShuffleStore } from '@/stores/diapoShuffleStore'
+import { useUIOptionsStore } from '@/stores/ThePlayerOptions/uiOptionsStore'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 import { usePinedPlayerStore } from '@/stores/ThePlayer/players/pinedPlayerStore'
 import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
@@ -39,7 +39,7 @@ import DeleteModal from '@/components/DeleteModal.vue'
 import { createError } from '@/models/error'
 import { PlayerName } from '@/logic/ThePlayer/useThePlayer'
 
-const { showTheHelp } = useGlobalState()
+const { showTheHelp } = useMainStore()
 const { showThePlayer } = useDiapoShuffleStore()
 const {
   showListIndex: showItemsInfo,

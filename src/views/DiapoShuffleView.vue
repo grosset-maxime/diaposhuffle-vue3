@@ -3,13 +3,13 @@
 import ThePlayerOptions from '@/components/ThePlayerOptions/ThePlayerOptions.vue'
 import ThePlayer from '@/components/ThePlayer/ThePlayer.vue'
 
-import { useDiapoShuffleStore } from '@/stores/diapoShuffle'
-import { useTaggerStore } from '@/stores/tagger'
+import { useDiapoShuffleStore } from '@/stores/diapoShuffleStore'
+import { useTheTaggerStore } from '@/stores/TheTaggerStore'
 
 const { showThePlayer } = useDiapoShuffleStore()
 
 // To pre-fetch tags and categories list.
-useTaggerStore()
+useTheTaggerStore()
 
 </script>
 

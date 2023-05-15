@@ -16,7 +16,7 @@ import { useTheLoop } from '@/logic/ThePlayer/useTheLoop'
 // Stores
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
-import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
+import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptionsStore'
 import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
 import { useErrorStore } from '@/stores/errorStore'
 import { useFSPlayerStore } from '@/stores/ThePlayer/players/fsPlayerStore'

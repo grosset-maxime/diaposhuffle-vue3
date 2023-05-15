@@ -7,7 +7,7 @@ import type { Item } from '@/models/item'
 import { computed } from 'vue'
 
 // Stores
-import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
+import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptionsStore'
 import { PlayerName, type UsePlayerArg, type UsePlayerExpose } from '@/logic/ThePlayer/useThePlayer'
 import { useTheLoop } from '@/logic/ThePlayer/useTheLoop'
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'

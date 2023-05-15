@@ -9,7 +9,7 @@ import AppBar from '@/components/AppBar.vue'
 import TheHelp from '@/components/TheHelp/TheHelp.vue'
 
 // Stores
-import { useGlobalState } from '@/stores'
+import { useMainStore } from '@/stores/mainStore'
 
 const router = useRouter()
 const route = useRoute()
@@ -20,7 +20,7 @@ const {
   theme,
   lastVisitedRoute,
   showTheHelp,
-} = useGlobalState()
+} = useMainStore()
 
 // Computeds
 const routePath = computed((): string => route.path)

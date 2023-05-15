@@ -1,5 +1,5 @@
 import type { Ref } from 'vue'
-import type { FolderPath } from '@/stores/folderBrowser'
+import type { FolderPath } from '@/stores/TheFolderBrowserStore'
 
 export interface TheFolderBrowser {
   selectedFolders: Ref<Set<FolderPath>>

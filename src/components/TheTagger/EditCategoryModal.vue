@@ -5,10 +5,10 @@ import type { TagCategoryId, TagCategoryData, TagCategory } from '@/models/tag'
 // Vendors Libs
 import { ref, computed, watch } from 'vue'
 
-import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
+import { useKeyboardShortcutsListener } from '@/logic/useKeyboardShortcutsListener'
 
 // Stores
-import { useTaggerStore } from '@/stores/tagger'
+import { useTheTaggerStore } from '@/stores/TheTaggerStore'
 
 // Components
 import DeleteModal from '@/components/DeleteModal.vue'
@@ -19,7 +19,7 @@ const EMPTY_CATEGORY_DATA: TagCategoryData = {
   name: '',
   color: '',
 }
-const taggerStore = useTaggerStore()
+const theTaggerStore = useTheTaggerStore()
 const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
 // Props
@@ -59,7 +59,7 @@ const formCmp = ref<{
 // Computeds
 const categoryModel = computed(
   () => props.categoryId
-    ? taggerStore.getCategory(props.categoryId)
+    ? theTaggerStore.getCategory(props.categoryId)
     : undefined,
 )
 const titleModal = computed(() => (props.add
@@ -70,7 +70,7 @@ const confirmBtnText = computed(() => (props.add
   ? 'Add'
   : 'Edit'))
 
-const categoriesList = taggerStore.categoriesList
+const categoriesList = theTaggerStore.categoriesList
 
 //#region Methods
 function resetForm () {

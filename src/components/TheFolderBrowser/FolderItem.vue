@@ -1,12 +1,12 @@
 <script setup lang="ts">
 // Types
-import type { FolderPath } from '@/stores/folderBrowser'
+import type { FolderPath } from '@/stores/TheFolderBrowserStore'
 
 // Vendors Libs
 import { ref, computed, inject } from 'vue'
 
 // Stores
-import { useFolderBrowserStore } from '@/stores/folderBrowser'
+import { useTheFolderBrowserStore } from '@/stores/TheFolderBrowserStore'
 import { theFolderBrowserKey } from '@/interfaces/symbols'
 import { useErrorStore } from '@/stores/errorStore'
 
@@ -30,14 +30,14 @@ const {
   removeSelectedFolder,
 } = selectedFoldersModal
 
-const folderBrowserStore = useFolderBrowserStore()
+const theFolderBrowserStore = useTheFolderBrowserStore()
 
 const folderChildren = ref<Array<FolderPath> | undefined>()
 const selected = computed(() => selectedFolders.value.has(props.path))
 const expanded = ref(false)
 
 // Computeds
-const folder = computed(() => folderBrowserStore.getFolder(props.path))
+const folder = computed(() => theFolderBrowserStore.getFolder(props.path))
 const hasChildren = computed(() => !!folder.value?.children.length)
 const noExpand = computed(() => !!(!hasChildren.value && folder.value?.fetched))
 
@@ -46,7 +46,7 @@ async function expandFolder () {
   if (!folder.value || noExpand.value) { return }
 
   expanded.value = !expanded.value
-  folderChildren.value = await folderBrowserStore.fetchChildrenFolders(props.path)
+  folderChildren.value = await theFolderBrowserStore.fetchChildrenFolders(props.path)
 }
 
 function toggleSelect () {

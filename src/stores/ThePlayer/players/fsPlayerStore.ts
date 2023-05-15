@@ -13,7 +13,7 @@ import {
 
 // Stores
 import { useErrorStore } from '@/stores/errorStore'
-import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
+import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptionsStore'
 
 export const useFSPlayerStore = createGlobalState(() => {
   const errorStore = useErrorStore()

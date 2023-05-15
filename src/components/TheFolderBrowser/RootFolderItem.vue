@@ -1,21 +1,21 @@
 <script setup lang="ts">
 // Types
-import type { FolderPath } from '@/stores/folderBrowser'
+import type { FolderPath } from '@/stores/TheFolderBrowserStore'
 
 // Vendors Libs
 import { ref, onMounted } from 'vue'
 
 // Stores
-import { useFolderBrowserStore } from '@/stores/folderBrowser'
+import { useTheFolderBrowserStore } from '@/stores/TheFolderBrowserStore'
 
 import FolderItem from '@/components/TheFolderBrowser/FolderItem.vue'
 
-const folderBrowserStore = useFolderBrowserStore()
-const rootFolder = folderBrowserStore.getRootFolder()
+const theFolderBrowserStore = useTheFolderBrowserStore()
+const rootFolder = theFolderBrowserStore.getRootFolder()
 const rootFolderChildren = ref<Array<FolderPath>>(rootFolder.children)
 
 onMounted(async () => {
-  rootFolderChildren.value = await folderBrowserStore.fetchChildrenFolders(
+  rootFolderChildren.value = await theFolderBrowserStore.fetchChildrenFolders(
     rootFolder.path,
   )
 })

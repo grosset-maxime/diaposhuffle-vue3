@@ -11,7 +11,7 @@ import {
 } from '@/api/items'
 
 // Stores
-import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
+import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptionsStore'
 import { useErrorStore } from '@/stores/errorStore'
 
 export const useDBPlayerStore = createGlobalState(() => {

@@ -6,7 +6,7 @@ import { ref, computed, watch, type ComputedRef } from 'vue'
 
 // Stores
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
-import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
+import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptionsStore'
 
 // Players
 import { useFSPlayer } from '@/logic/ThePlayer/players/useFSPlayer'

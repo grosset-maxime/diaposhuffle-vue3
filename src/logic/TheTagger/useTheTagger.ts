@@ -10,7 +10,7 @@ import Fuse from 'fuse.js'
 import { createTag } from '@/models/tag'
 
 // Stores
-import { useTaggerStore } from '@/stores/tagger'
+import { useTheTaggerStore } from '@/stores/TheTaggerStore'
 
 export interface Sort {
     field: 'name' | 'category'
@@ -205,11 +205,11 @@ export const useTheTagger = ({
   sorts,
 }: UseTheTagger) => {
 
-  const taggerStore = useTaggerStore()
-  const tagsMap = taggerStore.tags
-  const tagsList = taggerStore.tagsList
-  const categoriesList = taggerStore.categoriesList
-  const lastUsedTagsList = taggerStore.lastUsedTagsList
+  const theTaggerStore = useTheTaggerStore()
+  const tagsMap = theTaggerStore.tags
+  const tagsList = theTaggerStore.tagsList
+  const categoriesList = theTaggerStore.categoriesList
+  const lastUsedTagsList = theTaggerStore.lastUsedTagsList
 
   //#region Sorted Tags & Categories & LastUsedTags
   const sortedTagsList = computed(

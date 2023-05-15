@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { eagerComputed } from '@vueuse/shared'
 
-import { useUIOptionsStore } from '@/stores/ThePlayerOptions/uiOptions'
+import { useUIOptionsStore } from '@/stores/ThePlayerOptions/uiOptionsStore'
 
 const {
   showListIndex,

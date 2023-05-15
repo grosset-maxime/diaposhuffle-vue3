@@ -15,12 +15,12 @@ import { ref, watch, reactive } from 'vue'
 import { eagerComputed, whenever } from '@vueuse/shared'
 
 // Stores
-import { useTaggerStore } from '@/stores/tagger'
+import { useTheTaggerStore } from '@/stores/TheTaggerStore'
 
 // Utils
 import { getRandomElement, wait } from '@/utils/utils'
 
-import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
+import { useKeyboardShortcutsListener } from '@/logic/useKeyboardShortcutsListener'
 import { useTheTagger } from '@/logic/TheTagger/useTheTagger'
 
 // Components
@@ -31,7 +31,7 @@ import EditTagModal from './EditTagModal.vue'
 import EditCategoryModal from './EditCategoryModal.vue'
 import { useTagFocus, TagsSection } from '@/logic/TheTagger/useTagFocus'
 
-const taggerStore = useTaggerStore()
+const theTaggerStore = useTheTaggerStore()
 const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
 // Props
@@ -204,7 +204,7 @@ function selectRandom () {
 }
 
 function addLastUsedTag (tagId: TagId) {
-  taggerStore.addLastUsedTag(tagId)
+  theTaggerStore.addLastUsedTag(tagId)
 }
 
 function updateSelectedTagIdsMap () {
@@ -307,7 +307,7 @@ whenever(() => props.show, async () => {
 watch([ filters, sorts ], () => resetFocus(TagsSection.unselected))
 
 // Remove from categories filter the deleted category.
-watch(taggerStore.categories, (categories) => {
+watch(theTaggerStore.categories, (categories) => {
   if (!hasCategoriesFilter) { return }
 
   filters.categories.forEach((catId) => {
@@ -317,7 +317,7 @@ watch(taggerStore.categories, (categories) => {
   })
 })
 
-whenever(taggerStore.isTaggerReady, (isTaggerReady: boolean) => {
+whenever(theTaggerStore.isTaggerReady, (isTaggerReady: boolean) => {
   if (!isTaggerReady) { return }
 
   startKSListener()
@@ -340,7 +340,7 @@ const editTagModal = ref<{
 })
 
 async function onDeleteEditTagModal (tagId: TagId) {
-  await taggerStore.deleteTag(tagId)
+  await theTaggerStore.deleteTag(tagId)
 
   updateSelectedTagIdsMap()
   hideEditTagModal()
@@ -348,8 +348,8 @@ async function onDeleteEditTagModal (tagId: TagId) {
 
 async function onConfirmEditTagModal (tagData: TagData) {
   await (editTagModal.value.add
-    ? taggerStore.addTag(tagData)
-    : taggerStore.updateTag(tagData))
+    ? theTaggerStore.addTag(tagData)
+    : theTaggerStore.updateTag(tagData))
 
   updateSelectedTagIdsMap()
   hideEditTagModal()
@@ -391,15 +391,15 @@ const editCategoryModal = ref<{
 })
 
 async function onDeleteEditCategoryModal (catId: TagCategoryId) {
-  await taggerStore.deleteCategory(catId)
+  await theTaggerStore.deleteCategory(catId)
 
   hideEditCategoryModal()
 }
 
 async function onConfirmEditCategoryModal (categoryData: TagCategoryData) {
   await (editCategoryModal.value.add
-    ? taggerStore.addCategory(categoryData)
-    : taggerStore.updateCategory(categoryData))
+    ? theTaggerStore.addCategory(categoryData)
+    : theTaggerStore.updateCategory(categoryData))
 
   hideEditCategoryModal()
 }

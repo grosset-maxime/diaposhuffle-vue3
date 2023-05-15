@@ -7,7 +7,7 @@ import { createTag, type Tag, type TagId } from '@/models/tag'
 // Vendors Libs
 import { ref, computed } from 'vue'
 
-import { useTaggerStore } from '@/stores/tagger'
+import { useTheTaggerStore } from '@/stores/TheTaggerStore'
 import { eagerComputed } from '@vueuse/shared'
 
 // Props
@@ -23,7 +23,7 @@ const emit = defineEmits<{
   (e: 'click'): void;
 }>()
 
-const taggerStore = useTaggerStore()
+const theTaggerStore = useTheTaggerStore()
 
 // Refs
 const sorts = ref({
@@ -44,7 +44,7 @@ const sorts = ref({
 // Computeds
 const hasTags = eagerComputed(() => !!props.tagsIds.size)
 
-const tagsMap = taggerStore.tags
+const tagsMap = theTaggerStore.tags
 
 const tags = computed(() => {
   return Array.from(props.tagsIds)

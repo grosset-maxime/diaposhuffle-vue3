@@ -8,13 +8,13 @@ import { useRoute } from 'vue-router'
 
 // Libs
 import { routesMap } from '@/router/routes'
-import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
+import { useKeyboardShortcutsListener } from '@/logic/useKeyboardShortcutsListener'
 
 // Components
 import DiapoShuffleHelp from '@/components/TheHelp/DiapoShuffleHelp.vue'
 
 // Stores
-import { useGlobalState } from '@/stores'
+import { useMainStore } from '@/stores/mainStore'
 
 const route = useRoute()
 const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
@@ -34,7 +34,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // Refs
-const { showTheHelp } = useGlobalState()
+const { showTheHelp } = useMainStore()
 
 // Computeds
 const routePath = computed((): string => route.path)

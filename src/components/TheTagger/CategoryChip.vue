@@ -6,10 +6,10 @@ import type { TagCategoryId } from '@/models/tag'
 import { computed } from 'vue'
 
 // Stores
-import { useTaggerStore } from '@/stores/tagger'
+import { useTheTaggerStore } from '@/stores/TheTaggerStore'
 import { eagerComputed } from '@vueuse/shared'
 
-const taggerStore = useTaggerStore()
+const theTaggerStore = useTheTaggerStore()
 
 const DEFAULT_COLOR = '#FFFFFF'
 
@@ -36,7 +36,7 @@ const emit = defineEmits<{
 }>()
 
 // Computeds
-const category = computed(() => taggerStore.getCategory(props.categoryId))
+const category = computed(() => theTaggerStore.getCategory(props.categoryId))
 const isNoneCategory = computed(() => !!category.value?.isNone())
 const nbTags = computed(
   () => typeof props.nbTags === 'number'

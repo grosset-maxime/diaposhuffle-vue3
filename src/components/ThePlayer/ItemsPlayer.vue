@@ -7,7 +7,7 @@ import { ref, onMounted } from 'vue'
 import { useItemsPlayer } from '@/logic/ThePlayer/useItemsPlayer'
 import { useThePlayer } from '@/logic/ThePlayer/useThePlayer'
 
-import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
+import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptionsStore'
 
 export interface ItemsPlayerCmpExpose {
   startPlayer: () => void

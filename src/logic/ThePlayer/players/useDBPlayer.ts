@@ -10,7 +10,7 @@ import { useTheLoop } from '@/logic/ThePlayer/useTheLoop'
 import { getNextItem, getPreviousItem } from '@/utils/playerUtils'
 
 // Stores
-import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
+import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptionsStore'
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
