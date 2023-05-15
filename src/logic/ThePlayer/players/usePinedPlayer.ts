@@ -1,56 +1,57 @@
+// TODO: Bug: Manage unpin on playing pined items.
+
 // Types
 import type { Item } from '@/models/item'
-import type {
-  UsePlayerArg,
-  UsePlayerExpose,
-} from '@/logic/ThePlayer/thePlayer'
-import type { CustomError, CustomErrorData } from '@/models/error'
 
 // Vendors Libs
 import { computed } from 'vue'
 
-// Libs
-import { useTheLoop } from '@/logic/ThePlayer/theLoop'
-
 // Stores
-import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
-import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
-import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
+import { PlayerName, type UsePlayerArg, type UsePlayerExpose } from '@/logic/ThePlayer/useThePlayer'
+import { useTheLoop } from '@/logic/ThePlayer/useTheLoop'
+import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
+import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
+import { usePinedPlayerStore } from '@/stores/ThePlayer/players/pinedPlayerStore'
+import { getNextItem, getPreviousItem } from '@/utils/playerUtils'
 import { useErrorStore } from '@/stores/errorStore'
-import { useFSPlayerStore } from '@/stores/ThePlayer/players/fsPlayerStore'
+import type { CustomError, CustomErrorData } from '@/models/error'
 
-export const useFSPlayer = ({
+export const usePinedPlayer = ({
   showNextItem,
   setNextItem,
   getItemDuration,
 }: UsePlayerArg) => {
-
   const thePlayerStore = useThePlayerStore()
   const playerOptsStore = usePlayerOptionsStore()
   const theLoopStore = useTheLoopStore()
-  const historyPlayerStore = useHistoryPlayerStore()
   const errorStore = useErrorStore()
+
+  const isFetchItemRandomly = computed(() => playerOptsStore.isFetchItemRandomly.value)
+
+  const isActivePlayer = computed<boolean>(
+    () => thePlayerStore.playerName.value === PlayerName.pined,
+  )
 
   const {
     isStopped,
     isPaused,
     isOnHold,
 
+    items,
     item,
+    itemIndex,
     nextItem,
-    fetchNextItemPromise,
-    isFetchingNextItem,
+    nextItemIndex,
 
-    reset: resetStore,
-    fetchItem,
-  } = useFSPlayerStore()
+    remove,
+  } = usePinedPlayerStore()
 
   // #region Methods
   function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
     return errorStore.add(error, {
       ...errorData,
-      file: 'fsPlayer.ts',
+      file: 'usePinedPlayer.ts',
       actionName: 'PLAYER_A_FETCH_PREV',
     })
   }
@@ -58,71 +59,68 @@ export const useFSPlayer = ({
   function activatePlayerFeatures (): void {
     // Player's components/feature enabled/disabled
     thePlayerStore.theLoopEnabled.value = true
-    thePlayerStore.historyEnabled.value = true
+    thePlayerStore.itemsInfoEnabled.value = true
     thePlayerStore.pauseEnabled.value = true
 
     // Loop's components/feature enabled/disabled
     theLoopStore.showRemainingTime.value = true
   }
 
-  async function showItem (itemToShow: Item): Promise<void> {
+  function initPlayerStates (): void {
+    thePlayerStore.itemsCount.value = items.value.length
+    thePlayerStore.itemIndex.value = itemIndex.value
+  }
+
+  async function showItem (itemToShow: Item, itemIndexToShow: number): Promise<void> {
     setNextItem(itemToShow)
     await showNextItem()
 
     item.value = itemToShow
+    itemIndex.value = itemIndexToShow
+
     thePlayerStore.item.value = item.value
+    thePlayerStore.itemIndex.value = itemIndex.value
 
     theLoopStore.value.value = 0
     theLoopStore.maxValue.value = getItemDuration() || playerOptsStore.interval.value * 1000
     theLoopStore.indeterminate.value = false
   }
 
-  async function fetchNextItem (): Promise<Item> {
-    isFetchingNextItem.value = true
-
-    fetchNextItemPromise.value = fetchItem()
-    const itm: Item = await fetchNextItemPromise.value
-
-    fetchNextItemPromise.value = undefined
-    isFetchingNextItem.value = false
-
-    return itm
-  }
-
   async function onLoopEnd (): Promise<void> {
     theLoopStore.indeterminate.value = true
 
-    if (isFetchingNextItem.value) {
-      await fetchNextItemPromise.value
-
-    } else if (!nextItem.value) {
-      nextItem.value = await fetchNextItem()
-    }
-
     if (!nextItem.value) {
-      stop()
-      throw onError('No next item found.')
+      return await next()
     }
 
-    historyPlayerStore.add(nextItem.value)
+    await showItem(nextItem.value, nextItemIndex.value)
 
-    await showItem(nextItem.value)
-
-    fetchNextItem()
-      .then((itm) => nextItem.value = itm)
+    nextItem.value = undefined
+    nextItemIndex.value = -1
 
     if (!thePlayerStore.isPaused.value) {
       theLoop.startLooping()
     }
   }
-  // #endregion Methods
 
   const theLoop = useTheLoop({ endFn: onLoopEnd })
+  // #endregion Methods
 
   // #region Exposed Actions
   async function start (): Promise<void> {
     reset()
+
+    theLoopStore.indeterminate.value = true
     isStopped.value = false
+
+    itemIndex.value = -1
+
+    initPlayerStates()
+
+    if (!items.value.length) {
+      throw onError('Pined items are empty.')
+    }
+
     await onLoopEnd()
   }
 
@@ -144,14 +142,37 @@ export const useFSPlayer = ({
   }
 
   async function next (): Promise<void> {
+    const { itm, index } = getNextItem({ items, itemIndex, isFetchItemRandomly })
+    nextItem.value = itm
+    nextItemIndex.value = index
+
+    if (!nextItem.value) {
+      isStopped.value = true
+      throw onError('No next item found.')
+    }
+
     await theLoop.stopLooping()
     await onLoopEnd()
   }
 
-  async function previous (): Promise<void> {}
+  async function previous (): Promise<void> {
+    const { itm, index } = getPreviousItem({ items, itemIndex })
+    nextItem.value = itm
+    nextItemIndex.value = index
+
+    if (!nextItem.value) {
+      isStopped.value = true
+      throw onError('No previous item found.')
+    }
+
+    await theLoop.stopLooping()
+    await onLoopEnd()
+  }
 
   function canNext (): boolean { return true }
-  function canPrevious (): boolean { return false }
+  function canPrevious (): boolean {
+    return !isFetchItemRandomly.value
+  }
 
   function canPause (): boolean { return true }
   function canResume (): boolean { return true }
@@ -164,27 +185,28 @@ export const useFSPlayer = ({
   async function leaveOnHoldAndResume (): Promise<void> {
     isOnHold.value = false
     activatePlayerFeatures()
+    initPlayerStates()
 
     if (item.value) {
-      await showItem(item.value)
+      await showItem(item.value, itemIndex.value)
     }
   }
 
   function reset (): void {
-    resetStore()
     activatePlayerFeatures()
   }
 
-  async function onDeleteItem (itm: Item): Promise<void> {
-    if (isFetchingNextItem.value) {
-      await fetchNextItemPromise.value
-    }
+  function onDeleteItem (itm: Item): void {
+    remove(itm)
 
-    if (nextItem.value && itm.src === nextItem.value.src) {
-      nextItem.value = undefined
-    }
+    // TODO: if no more items in the list, stop playing.
 
-    next()
+    if (isActivePlayer.value) {
+      thePlayerStore.itemsCount.value = items.value.length
+      thePlayerStore.itemIndex.value = itemIndex.value
+
+      next()
+    }
   }
   // #endregion Exposed Actions
 

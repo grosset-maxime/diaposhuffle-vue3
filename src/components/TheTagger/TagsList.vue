@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Types
 import type { TagId, Tag } from '@/models/tag'
-import type { FilteredTagResult } from '@/logic/TheTagger/theTagger'
+import type { FilteredTagResult } from '@/logic/TheTagger/useTheTagger'
 
 // Vendors Libs
 import { eagerComputed } from '@vueuse/shared'

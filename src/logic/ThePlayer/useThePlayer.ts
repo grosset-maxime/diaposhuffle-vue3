@@ -9,10 +9,10 @@ import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptions'
 
 // Players
-import { useFSPlayer } from '@/logic/ThePlayer/players/fsPlayer'
-import { useDBPlayer } from '@/logic/ThePlayer/players/dbPlayer'
-import { usePinedPlayer } from '@/logic/ThePlayer/players/pinedPlayer'
-import { useHistoryPlayer } from '@/logic/ThePlayer/players/historyPlayer'
+import { useFSPlayer } from '@/logic/ThePlayer/players/useFSPlayer'
+import { useDBPlayer } from '@/logic/ThePlayer/players/useDBPlayer'
+import { usePinedPlayer } from '@/logic/ThePlayer/players/usePinedPlayer'
+import { useHistoryPlayer } from '@/logic/ThePlayer/players/useHistoryPlayer'
 
 export enum PlayerName {
   fs = 'fsPlayer',

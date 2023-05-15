@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Types
 import type { TagCategoryId, TagCategory } from '@/models/tag'
-import type { FilteredCategoryResult } from '@/logic/TheTagger/theTagger'
+import type { FilteredCategoryResult } from '@/logic/TheTagger/useTheTagger'
 
 import CategoryChip from './CategoryChip.vue'
 

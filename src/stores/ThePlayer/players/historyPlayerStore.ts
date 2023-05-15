@@ -22,7 +22,35 @@ export const useHistoryPlayerStore = createGlobalState(() => {
 
   const count = computed<number>(() => items.value.length)
 
-  // #region Methods
+  // #region Private Methods
+  function onDeleteItem (itm: Item): void {
+    const itms: Array<Item> = items.value
+    let itmIndex: number = itemIndex.value
+    let itemFound = false
+
+    for (let i = itms.length - 1; i >= 0; i--) {
+      if (itms[ i ].src === itm.src) {
+        itemFound = true
+        itms.splice(i, 1) // Remove the item from the array by its index.
+
+        if (i <= itmIndex) {
+          itmIndex = itmIndex - 1
+        }
+
+        if (item.value?.src === itm.src) {
+          item.value = undefined
+        }
+      }
+    }
+
+    if (itemFound) {
+      items.value = itms.slice() // Clone the array (FASTEST).
+      itemIndex.value = itmIndex
+    }
+  }
+  // #endregion Private Methods
+
+  // #region Actions
   function has (item?: Item): boolean {
     if (!item) { return false }
     return items.value.some((itm) => itm.src === item.src)
@@ -46,7 +74,7 @@ export const useHistoryPlayerStore = createGlobalState(() => {
     nextItem.value = undefined
     nextItemIndex.value = NaN
   }
-  // #endregion Methods
+  // #endregion Actions
 
   return {
     isStopped,
@@ -59,6 +87,8 @@ export const useHistoryPlayerStore = createGlobalState(() => {
     nextItem,
     nextItemIndex,
     count,
+
+    onDeleteItem, // TODO
 
     has,
     add,

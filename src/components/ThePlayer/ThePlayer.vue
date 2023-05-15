@@ -37,7 +37,7 @@ import ItemPathChip from '@/components/ThePlayer/ItemPathChip.vue'
 import TheTagger from '@/components/TheTagger/TheTagger.vue'
 import DeleteModal from '@/components/DeleteModal.vue'
 import { createError } from '@/models/error'
-import { PlayerName } from '@/logic/ThePlayer/thePlayer'
+import { PlayerName } from '@/logic/ThePlayer/useThePlayer'
 
 const { showTheHelp } = useGlobalState()
 const { showThePlayer } = useDiapoShuffleStore()
@@ -57,6 +57,7 @@ const thePlayerStore = useThePlayerStore()
 const pinedPlayerStore = usePinedPlayerStore()
 const historyPlayerStore = useHistoryPlayerStore()
 
+const activePlayerName = computed<PlayerName | undefined>(() => thePlayerStore.playerName.value)
 const item = computed<Item | undefined>(() => thePlayerStore.item.value)
 const isPaused = computed<boolean>(() => thePlayerStore.isPaused.value)
 const isItemVideo = computed<boolean>(() => thePlayerStore.isItemVideo.value)
@@ -206,6 +207,10 @@ function togglePinItem (): void {
   if (pinedPlayerStore.has(item.value)) {
     pinedPlayerStore.remove(item.value)
     triggerUnpinedAnim()
+
+    if (activePlayerName.value === PlayerName.pined) {
+      ItemsPlayerCmp.value?.onDeleteItem(item.value)
+    }
   } else {
     pinedPlayerStore.add(item.value)
     triggerPinedAnim()

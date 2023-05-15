@@ -3,7 +3,7 @@
 
 // Types
 import type { Item } from '@/models/item'
-import type { PlayerName } from '@/logic/ThePlayer/thePlayer'
+import type { PlayerName } from '@/logic/ThePlayer/useThePlayer'
 
 // Vendors Libs
 import { ref } from 'vue'

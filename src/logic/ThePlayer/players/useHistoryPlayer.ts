@@ -1,7 +1,7 @@
 // Types
 import type { Item } from '@/models/item'
 import type { CustomError, CustomErrorData } from '@/models/error'
-import type { UsePlayerArg, UsePlayerExpose } from '@/logic/ThePlayer/thePlayer'
+import { PlayerName, type UsePlayerArg, type UsePlayerExpose } from '@/logic/ThePlayer/useThePlayer'
 
 // Vendors Libs
 import { computed } from 'vue'
@@ -19,6 +19,10 @@ export const useHistoryPlayer = ({
   const thePlayerStore = useThePlayerStore()
   const errorStore = useErrorStore()
 
+  const isActivePlayer = computed<boolean>(
+    () => thePlayerStore.playerName.value === PlayerName.history,
+  )
+
   const {
     isStopped,
     isPaused,
@@ -29,13 +33,15 @@ export const useHistoryPlayer = ({
     itemIndex,
     nextItem,
     nextItemIndex,
+
+    onDeleteItem: onDeleteItemStore,
   } = useHistoryPlayerStore()
 
   // #region Methods
   function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
     return errorStore.add(error, {
       ...errorData,
-      file: 'fsPlayer.ts',
+      file: 'useHistoryPlayer.ts',
       actionName: 'PLAYER_A_FETCH_PREV',
     })
   }
@@ -146,30 +152,16 @@ export const useHistoryPlayer = ({
   }
 
   function onDeleteItem (itm: Item): void {
-    const itms: Array<Item> = items.value
-    let itmIndex: number = itemIndex.value
-    let itemFound = false
+    onDeleteItemStore(itm)
 
-    for (let i = itms.length - 1; i >= 0; i--) {
-      if (itms[ i ].src === itm.src) {
-        itemFound = true
-        itms.splice(i, 1) // Remove the item from the array by its index.
+    // TODO: if no more items in the list, stop playing.
 
-        if (i <= itmIndex)
-          itmIndex = itmIndex - 1
-      }
-    }
-
-    if (itemFound) {
-      items.value = itms.slice() // Clone the array (FASTEST).
-      itemIndex.value = itmIndex
-
-      // TODO: do it only if it is active player
+    if (isActivePlayer.value) {
       thePlayerStore.itemsCount.value = items.value.length
       thePlayerStore.itemIndex.value = itemIndex.value
-    }
 
-    next()
+      next()
+    }
   }
   // #endregion Exposed Actions
 

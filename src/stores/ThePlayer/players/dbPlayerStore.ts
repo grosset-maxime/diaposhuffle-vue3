@@ -18,7 +18,7 @@ export const useDBPlayerStore = createGlobalState(() => {
   const sourceOptsStore = useSourceOptionsStore()
   const errorStore = useErrorStore()
 
-  // #region states
+  // #region States
   const isStopped = ref(true)
   const isPaused = ref(false)
   const isOnHold = ref(false)
@@ -29,8 +29,34 @@ export const useDBPlayerStore = createGlobalState(() => {
 
   const nextItem = ref<Item | undefined>()
   const nextItemIndex = ref<number>(NaN)
-  // #endregion states
+  // #endregion States
 
+  // #region Private Methods
+  function onDeleteItem (itm: Item): void {
+    const itms: Array<Item> = items.value
+    let itmIndex: number | undefined
+
+    if (item.value?.src === itm.src) {
+      itmIndex = itemIndex.value
+      item.value = undefined
+    } else {
+      for (let i = itms.length - 1; i > 0; i--) {
+        if (itms[ i ].src === itm.src) {
+          itmIndex = i
+          break
+        }
+      }
+    }
+
+    if (typeof itmIndex === 'number') {
+      itms.splice(itmIndex, 1) // Remove the item from the array by its index.
+      items.value = itms.slice() // Clone the array (FASTEST).
+      itemIndex.value = (itmIndex || 0) - 1
+    }
+  }
+  // #endregion Private Methods
+
+  // #region Actions
   function has (item?: Item): boolean {
     if (!item) { return false }
     return items.value.some((itm) => itm.src === item.src)
@@ -72,6 +98,7 @@ export const useDBPlayerStore = createGlobalState(() => {
       })
     }
   }
+  // #endregion Actions
 
   return {
     isStopped,
@@ -83,6 +110,8 @@ export const useDBPlayerStore = createGlobalState(() => {
     itemIndex,
     nextItem,
     nextItemIndex,
+
+    onDeleteItem, // TODO
 
     has,
     add,

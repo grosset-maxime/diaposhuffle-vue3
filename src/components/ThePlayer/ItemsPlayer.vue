@@ -4,8 +4,8 @@ import type { Item } from '@/models/item'
 
 import { ref, onMounted } from 'vue'
 
-import { useItemsPlayer } from '@/logic/ThePlayer/itemsPlayer'
-import { useThePlayer } from '@/logic/ThePlayer/thePlayer'
+import { useItemsPlayer } from '@/logic/ThePlayer/useItemsPlayer'
+import { useThePlayer } from '@/logic/ThePlayer/useThePlayer'
 
 import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
 

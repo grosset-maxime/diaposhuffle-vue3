@@ -1,34 +1,39 @@
-// TODO: Bug: Manage unpin on playing pined items.
-
 // Types
 import type { Item } from '@/models/item'
+import { PlayerName, type UsePlayerArg, type UsePlayerExpose } from '@/logic/ThePlayer/useThePlayer'
 
 // Vendors Libs
 import { computed } from 'vue'
 
+// Libs
+import { useTheLoop } from '@/logic/ThePlayer/useTheLoop'
+import { getNextItem, getPreviousItem } from '@/utils/playerUtils'
+
 // Stores
 import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptions'
-import type { UsePlayerArg, UsePlayerExpose } from '../thePlayer'
-import { useTheLoop } from '../theLoop'
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
-import { usePinedPlayerStore } from '@/stores/ThePlayer/players/pinedPlayerStore'
-import { getNextItem, getPreviousItem } from '@/utils/playerUtils'
+import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
 import { useErrorStore } from '@/stores/errorStore'
 import type { CustomError, CustomErrorData } from '@/models/error'
+import { useDBPlayerStore } from '@/stores/ThePlayer/players/dbPlayerStore'
 
-export const usePinedPlayer = ({
+export const useDBPlayer = ({
   showNextItem,
   setNextItem,
   getItemDuration,
 }: UsePlayerArg) => {
-  const pinedPlayerStore = usePinedPlayerStore()
   const thePlayerStore = useThePlayerStore()
   const playerOptsStore = usePlayerOptionsStore()
   const theLoopStore = useTheLoopStore()
+  const historyPlayerStore = useHistoryPlayerStore()
   const errorStore = useErrorStore()
 
-  const isFetchItemRandomly = computed(() => playerOptsStore.isFetchItemRandomly.value)
+  const isFetchItemRandomly = playerOptsStore.isFetchItemRandomly
+
+  const isActivePlayer = computed<boolean>(
+    () => thePlayerStore.playerName.value === PlayerName.db,
+  )
 
   const {
     isStopped,
@@ -40,13 +45,18 @@ export const usePinedPlayer = ({
     itemIndex,
     nextItem,
     nextItemIndex,
-  } = usePinedPlayerStore()
+
+    onDeleteItem: onDeleteItemStore,
+
+    fetchItems,
+    reset: resetStore,
+  } = useDBPlayerStore()
 
   // #region Methods
   function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
     return errorStore.add(error, {
       ...errorData,
-      file: 'pinedPlayer.ts',
+      file: 'useDBPlayer.ts',
       actionName: 'PLAYER_A_FETCH_PREV',
     })
   }
@@ -55,6 +65,7 @@ export const usePinedPlayer = ({
     // Player's components/feature enabled/disabled
     thePlayerStore.theLoopEnabled.value = true
     thePlayerStore.itemsInfoEnabled.value = true
+    thePlayerStore.historyEnabled.value = true
     thePlayerStore.pauseEnabled.value = true
 
     // Loop's components/feature enabled/disabled
@@ -88,6 +99,8 @@ export const usePinedPlayer = ({
       return await next()
     }
 
+    historyPlayerStore.add(nextItem.value)
+
     await showItem(nextItem.value, nextItemIndex.value)
 
     nextItem.value = undefined
@@ -97,25 +110,25 @@ export const usePinedPlayer = ({
       theLoop.startLooping()
     }
   }
+  // #endregion Methods
 
   const theLoop = useTheLoop({ endFn: onLoopEnd })
-  // #endregion Methods
 
   // #region Exposed Actions
   async function start (): Promise<void> {
     reset()
-
     theLoopStore.indeterminate.value = true
     isStopped.value = false
 
-    items.value = pinedPlayerStore.items.value
+    items.value = await fetchItems()
     itemIndex.value = -1
 
-    initPlayerStates()
-
     if (!items.value.length) {
-      throw onError('Pined items are empty.')
+      isStopped.value = true
+      throw onError('Items are empty.')
     }
+
+    initPlayerStates()
 
     await onLoopEnd()
   }
@@ -189,35 +202,21 @@ export const usePinedPlayer = ({
   }
 
   function reset (): void {
+    resetStore()
     activatePlayerFeatures()
   }
 
   function onDeleteItem (itm: Item): void {
-    const itms: Array<Item> = items.value
-    let itmIndex: number | undefined
+    onDeleteItemStore(itm)
 
-    if (item.value?.src === itm.src) {
-      itmIndex = itemIndex.value
-    } else {
-      for (let i = itms.length - 1; i > 0; i--) {
-        if (itms[ i ].src === itm.src) {
-          itmIndex = i
-          break
-        }
-      }
-    }
+    // TODO: if no more items in the list, stop playing.
 
-    if (typeof itmIndex === 'number') {
-      itms.splice(itmIndex, 1) // Remove the item from the array by its index.
-      items.value = itms.slice() // Clone the array (FASTEST).
-      itemIndex.value = (itmIndex || 0) - 1
-
-      // TODO: do it only if it is active player
+    if (isActivePlayer.value) {
       thePlayerStore.itemsCount.value = items.value.length
       thePlayerStore.itemIndex.value = itemIndex.value
-    }
 
-    next()
+      next()
+    }
   }
   // #endregion Exposed Actions
 

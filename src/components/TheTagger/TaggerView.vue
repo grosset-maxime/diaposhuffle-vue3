@@ -7,8 +7,8 @@
 
 // Types
 import type { TagCategoryId, TagId, TagData, TagCategoryData } from '@/models/tag'
-import type { Sort } from '@/logic/TheTagger/theTagger'
-import type { TagFocused, ShakeSections } from '@/logic/TheTagger/tagFocus'
+import type { Sort } from '@/logic/TheTagger/useTheTagger'
+import type { TagFocused, ShakeSections } from '@/logic/TheTagger/useTagFocus'
 
 // Vendors Libs
 import { ref, watch, reactive } from 'vue'
@@ -21,7 +21,7 @@ import { useTaggerStore } from '@/stores/tagger'
 import { getRandomElement, wait } from '@/utils/utils'
 
 import { useKeyboardShortcutsListener } from '@/composables/keyboardShortcutsListener'
-import { useTheTagger } from '@/logic/TheTagger/theTagger'
+import { useTheTagger } from '@/logic/TheTagger/useTheTagger'
 
 // Components
 import CategoriesList from './CategoriesList.vue'
@@ -29,7 +29,7 @@ import CircularLoading from '../CircularLoading.vue'
 import TagsList from './TagsList.vue'
 import EditTagModal from './EditTagModal.vue'
 import EditCategoryModal from './EditCategoryModal.vue'
-import { useTagFocus, TagsSection } from '@/logic/TheTagger/tagFocus'
+import { useTagFocus, TagsSection } from '@/logic/TheTagger/useTagFocus'
 
 const taggerStore = useTaggerStore()
 const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
