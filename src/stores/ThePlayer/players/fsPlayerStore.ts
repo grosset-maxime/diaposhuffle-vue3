@@ -14,8 +14,14 @@ import {
 // Stores
 import { useErrorStore } from '@/stores/errorStore'
 import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptionsStore'
+import {
+  ON_FS_PLAYER_STORE_AFTER_DELETE_ITEM,
+  ON_ITEM_DELETED,
+  emitter,
+} from '@/logic/useEmitter'
 
 export const useFSPlayerStore = createGlobalState(() => {
+
   const errorStore = useErrorStore()
   const sourceOptsStore = useSourceOptionsStore()
 
@@ -31,7 +37,7 @@ export const useFSPlayerStore = createGlobalState(() => {
   const isFetchingNextItem = ref(false)
   // #endregion States
 
-  // #region Methods
+  // #region Private Methods
   function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
     return errorStore.add(error, {
       ...errorData,
@@ -40,11 +46,32 @@ export const useFSPlayerStore = createGlobalState(() => {
     })
   }
 
+  async function onDeleteItem (itm: Item) {
+    if (item.value?.src === itm.src) {
+      item.value = undefined
+    }
+
+    if (isFetchingNextItem.value) {
+      await fetchNextItemPromise.value
+    }
+
+    if (nextItem.value && nextItem.value.src === itm.src) {
+      nextItem.value = undefined
+    }
+
+    // Dispatch an event to tell to player that the item was remove from the store.
+    emitter.emit(ON_FS_PLAYER_STORE_AFTER_DELETE_ITEM, itm)
+  }
+  // #endregion Private Methods
+
+  // #region Actions
   function reset (): void {
     isStopped.value = true
     isPaused.value = false
+    isOnHold.value = false
 
     item.value = undefined
+
     nextItem.value = undefined
     fetchNextItemPromise.value = undefined
     isFetchingNextItem.value = false
@@ -69,7 +96,9 @@ export const useFSPlayerStore = createGlobalState(() => {
 
     return item
   }
-  // #endregion Methods
+  // #endregion Actions
+
+  emitter.on(ON_ITEM_DELETED, onDeleteItem)
 
   return {
     isStopped,

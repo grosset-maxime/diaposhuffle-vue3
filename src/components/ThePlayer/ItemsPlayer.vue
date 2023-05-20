@@ -19,7 +19,6 @@ export interface ItemsPlayerCmpExpose {
   goToPreviousItem: () => void
   switchToHistoryPlayer: () => void
   switchBackToPreviousPlayer: () => void
-  onDeleteItem: (itm: Item) => void
 
   playItem: () => void
   pauseItem: () => void
@@ -91,7 +90,6 @@ defineExpose<ItemsPlayerCmpExpose>({
   goToPreviousItem: thePlayer.previous,
   switchToHistoryPlayer: thePlayer.switchToHistoryPlayer,
   switchBackToPreviousPlayer: thePlayer.switchBackToPreviousPlayer,
-  onDeleteItem: thePlayer.onDeleteItem,
 
   playItem,
   pauseItem,

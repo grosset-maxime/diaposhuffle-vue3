@@ -2,7 +2,7 @@
 import type { Item } from '@/models/item'
 
 // Vendors Libs
-import { ref, computed, watch, type ComputedRef } from 'vue'
+import { ref, watch, type ComputedRef } from 'vue'
 
 // Stores
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
@@ -49,7 +49,6 @@ export interface UsePlayerExpose {
   setOnHold: () => void
   leaveOnHoldAndResume: () => void
   reset: () => void
-  onDeleteItem: (itm: Item) => void
 }
 
 interface UseThePlayer {
@@ -76,6 +75,18 @@ export const useThePlayer = ({
   const sourceOptsStore = useSourceOptionsStore()
   const thePlayerStore = useThePlayerStore()
 
+  // #region use*Player
+  const playerArg: UsePlayerArg = {
+    setNextItem,
+    showNextItem,
+    getItemDuration,
+  }
+  const fsPlayer = useFSPlayer(playerArg)
+  const dbPlayer = useDBPlayer(playerArg)
+  const pinedPlayer = usePinedPlayer(playerArg)
+  const historyPlayer = useHistoryPlayer(playerArg)
+  // #endregion use*Player
+
   const canSwitchPlayer = ref<boolean>(false)
 
   function guessPlayerName (): PlayerName {
@@ -97,33 +108,31 @@ export const useThePlayer = ({
   playerName.value = guessPlayerName()
   const previousPlayerName = ref<PlayerName>(playerName.value)
 
-  const player = computed<UsePlayerExpose>(() => {
-    const playerArg: UsePlayerArg = {
-      setNextItem,
-      showNextItem,
-      getItemDuration,
-    }
-
-    if (playerName.value === PlayerName.db) {
-      return useDBPlayer(playerArg)
-    } else if (playerName.value === PlayerName.pined) {
-      return usePinedPlayer(playerArg)
-    } else if (playerName.value === PlayerName.history) {
-      return useHistoryPlayer(playerArg)
+  function getPlayer (playerName?: PlayerName): UsePlayerExpose {
+    if (playerName === PlayerName.db) {
+      return dbPlayer
+    } else if (playerName === PlayerName.pined) {
+      return pinedPlayer
+    } else if (playerName === PlayerName.history) {
+      return historyPlayer
     } else {
-      return useFSPlayer(playerArg)
+      return fsPlayer
     }
-  })
+  }
+  let player: UsePlayerExpose = getPlayer(playerName.value)
 
-  watch(player, (activePlayer, previousPlayer) => {
+  watch (playerName, () => {
     if (!canSwitchPlayer.value) { return }
+
+    const previousPlayer: UsePlayerExpose = player
+    player = getPlayer(playerName.value)
 
     previousPlayer.setOnHold()
 
     resetPlayerFeatures()
 
-    if (activePlayer.isOnHold.value) {
-      activePlayer.leaveOnHoldAndResume()
+    if (player.isOnHold.value) {
+      player.leaveOnHoldAndResume()
     } else {
       start()
     }
@@ -133,7 +142,7 @@ export const useThePlayer = ({
   const start = (): void => {
     reset()
 
-    player.value.start()
+    player.start()
     isStopped.value = false
 
     // Allow to switch player after the first start.
@@ -141,41 +150,41 @@ export const useThePlayer = ({
   }
 
   const pause = (): void => {
-    if (player.value.canPause()) {
-      player.value.pause()
+    if (player.canPause()) {
+      player.pause()
       isPaused.value = true
     }
   }
 
   const resume = (): void => {
-    if (player.value.canResume()) {
-      player.value.resume()
+    if (player.canResume()) {
+      player.resume()
       isPaused.value = false
     }
   }
 
   const stop = (): void => {
-    player.value.stop()
+    player.stop()
     isStopped.value = true
     canSwitchPlayer.value = false
   }
 
   const next = async (): Promise<void> => {
     if (canNext()) {
-      player.value.next()
+      player.next()
     }
   }
   const previous = async (): Promise<void> => {
     if (canPrevious()) {
-      player.value.previous()
+      player.previous()
     }
   }
 
-  const canNext = (): boolean => player.value.canNext()
-  const canPrevious = (): boolean => player.value.canPrevious()
+  const canNext = (): boolean => player.canNext()
+  const canPrevious = (): boolean => player.canPrevious()
 
-  const canPause = (): boolean => player.value.canPause()
-  const canResume = (): boolean => player.value.canResume()
+  const canPause = (): boolean => player.canPause()
+  const canResume = (): boolean => player.canResume()
 
   const reset = (): void => {
     thePlayerStore.reset()
@@ -199,8 +208,6 @@ export const useThePlayer = ({
     playerName.value = previousPlayerName.value
     previousPlayerName.value = activePlayerName || guessPlayerName()
   }
-
-  const onDeleteItem = (itm: Item): void => player.value.onDeleteItem(itm)
   // #endregion Actions
 
   return {
@@ -222,6 +229,5 @@ export const useThePlayer = ({
     reset,
     switchToHistoryPlayer,
     switchBackToPreviousPlayer,
-    onDeleteItem,
   }
 }

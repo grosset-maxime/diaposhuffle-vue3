@@ -17,12 +17,19 @@ import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerS
 import { useErrorStore } from '@/stores/errorStore'
 import type { CustomError, CustomErrorData } from '@/models/error'
 import { useDBPlayerStore } from '@/stores/ThePlayer/players/dbPlayerStore'
+import {
+  ON_DB_PLAYER_STORE_AFTER_DELETE_ITEM,
+  ON_THE_PLAYER_STOP,
+  emitter,
+} from '@/logic/useEmitter'
 
 export const useDBPlayer = ({
   showNextItem,
   setNextItem,
   getItemDuration,
 }: UsePlayerArg) => {
+
+  // Use stores.
   const thePlayerStore = useThePlayerStore()
   const playerOptsStore = usePlayerOptionsStore()
   const theLoopStore = useTheLoopStore()
@@ -46,13 +53,11 @@ export const useDBPlayer = ({
     nextItem,
     nextItemIndex,
 
-    onDeleteItem: onDeleteItemStore,
-
     fetchItems,
     reset: resetStore,
   } = useDBPlayerStore()
 
-  // #region Methods
+  // #region Private Methods
   function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
     return errorStore.add(error, {
       ...errorData,
@@ -70,6 +75,17 @@ export const useDBPlayer = ({
 
     // Loop's components/feature enabled/disabled
     theLoopStore.showRemainingTime.value = true
+  }
+
+  function addEventsListeners (): void {
+    removeEventsListeners()
+    emitter.on(ON_DB_PLAYER_STORE_AFTER_DELETE_ITEM, onAfterDeleteItem)
+    emitter.on(ON_THE_PLAYER_STOP, removeEventsListeners)
+  }
+
+  function removeEventsListeners (): void {
+    emitter.off(ON_DB_PLAYER_STORE_AFTER_DELETE_ITEM, onAfterDeleteItem)
+    emitter.off(ON_THE_PLAYER_STOP, removeEventsListeners)
   }
 
   function initPlayerStates (): void {
@@ -110,12 +126,24 @@ export const useDBPlayer = ({
       theLoop.startLooping()
     }
   }
-  // #endregion Methods
+
+  function onAfterDeleteItem (): void {
+    // TODO: if no more items in the list, stop playing.
+
+    if (isActivePlayer.value) {
+      thePlayerStore.itemsCount.value = items.value.length
+      thePlayerStore.itemIndex.value = itemIndex.value
+
+      next()
+    }
+  }
+  // #endregion Private Methods
 
   const theLoop = useTheLoop({ endFn: onLoopEnd })
 
   // #region Exposed Actions
   async function start (): Promise<void> {
+    addEventsListeners()
     reset()
     theLoopStore.indeterminate.value = true
     isStopped.value = false
@@ -136,6 +164,7 @@ export const useDBPlayer = ({
   function stop (): void {
     isStopped.value = true
     theLoop.stopLooping()
+    removeEventsListeners()
   }
 
   function pause (): void {
@@ -205,19 +234,6 @@ export const useDBPlayer = ({
     resetStore()
     activatePlayerFeatures()
   }
-
-  function onDeleteItem (itm: Item): void {
-    onDeleteItemStore(itm)
-
-    // TODO: if no more items in the list, stop playing.
-
-    if (isActivePlayer.value) {
-      thePlayerStore.itemsCount.value = items.value.length
-      thePlayerStore.itemIndex.value = itemIndex.value
-
-      next()
-    }
-  }
   // #endregion Exposed Actions
 
   const player: UsePlayerExpose = {
@@ -240,7 +256,6 @@ export const useDBPlayer = ({
     setOnHold,
     leaveOnHoldAndResume,
     reset,
-    onDeleteItem,
   }
 
   return player

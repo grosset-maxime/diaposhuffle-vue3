@@ -1,27 +1,35 @@
-// TODO: Bug: Manage unpin on playing pined items.
-
 // Types
 import type { Item } from '@/models/item'
+import type { CustomError, CustomErrorData } from '@/models/error'
 
 // Vendors Libs
 import { computed } from 'vue'
 
 // Stores
 import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptionsStore'
-import { PlayerName, type UsePlayerArg, type UsePlayerExpose } from '@/logic/ThePlayer/useThePlayer'
-import { useTheLoop } from '@/logic/ThePlayer/useTheLoop'
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 import { usePinedPlayerStore } from '@/stores/ThePlayer/players/pinedPlayerStore'
-import { getNextItem, getPreviousItem } from '@/utils/playerUtils'
 import { useErrorStore } from '@/stores/errorStore'
-import type { CustomError, CustomErrorData } from '@/models/error'
+
+// Logics
+import {
+  ON_ITEM_UNPINED,
+  ON_THE_PLAYER_STOP,
+  emitter,
+} from '@/logic/useEmitter'
+import { PlayerName, type UsePlayerArg, type UsePlayerExpose } from '@/logic/ThePlayer/useThePlayer'
+import { useTheLoop } from '@/logic/ThePlayer/useTheLoop'
+
+// Utlis
+import { getNextItem, getPreviousItem } from '@/utils/playerUtils'
 
 export const usePinedPlayer = ({
   showNextItem,
   setNextItem,
   getItemDuration,
 }: UsePlayerArg) => {
+
   const thePlayerStore = useThePlayerStore()
   const playerOptsStore = usePlayerOptionsStore()
   const theLoopStore = useTheLoopStore()
@@ -43,8 +51,6 @@ export const usePinedPlayer = ({
     itemIndex,
     nextItem,
     nextItemIndex,
-
-    remove,
   } = usePinedPlayerStore()
 
   // #region Methods
@@ -64,6 +70,17 @@ export const usePinedPlayer = ({
 
     // Loop's components/feature enabled/disabled
     theLoopStore.showRemainingTime.value = true
+  }
+
+  function addEventsListeners (): void {
+    removeEventsListeners()
+    emitter.on(ON_ITEM_UNPINED, onUnpined)
+    emitter.on(ON_THE_PLAYER_STOP, removeEventsListeners)
+  }
+
+  function removeEventsListeners (): void {
+    emitter.off(ON_ITEM_UNPINED, onUnpined)
+    emitter.off(ON_THE_PLAYER_STOP, removeEventsListeners)
   }
 
   function initPlayerStates (): void {
@@ -108,6 +125,7 @@ export const usePinedPlayer = ({
 
   // #region Exposed Actions
   async function start (): Promise<void> {
+    addEventsListeners()
     reset()
 
     theLoopStore.indeterminate.value = true
@@ -127,6 +145,7 @@ export const usePinedPlayer = ({
   function stop (): void {
     isStopped.value = true
     theLoop.stopLooping()
+    removeEventsListeners()
   }
 
   function pause (): void {
@@ -196,9 +215,7 @@ export const usePinedPlayer = ({
     activatePlayerFeatures()
   }
 
-  function onDeleteItem (itm: Item): void {
-    remove(itm)
-
+  function onUnpined (): void {
     // TODO: if no more items in the list, stop playing.
 
     if (isActivePlayer.value) {
@@ -230,7 +247,6 @@ export const usePinedPlayer = ({
     setOnHold,
     leaveOnHoldAndResume,
     reset,
-    onDeleteItem,
   }
 
   return player

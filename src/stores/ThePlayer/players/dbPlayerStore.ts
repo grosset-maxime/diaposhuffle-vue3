@@ -14,7 +14,15 @@ import {
 import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptionsStore'
 import { useErrorStore } from '@/stores/errorStore'
 
+// Logics
+import {
+  ON_DB_PLAYER_STORE_AFTER_DELETE_ITEM,
+  ON_ITEM_DELETED,
+  emitter,
+} from '@/logic/useEmitter'
+
 export const useDBPlayerStore = createGlobalState(() => {
+
   const sourceOptsStore = useSourceOptionsStore()
   const errorStore = useErrorStore()
 
@@ -40,7 +48,7 @@ export const useDBPlayerStore = createGlobalState(() => {
       itmIndex = itemIndex.value
       item.value = undefined
     } else {
-      for (let i = itms.length - 1; i > 0; i--) {
+      for (let i = itms.length - 1; i >= 0; i--) {
         if (itms[ i ].src === itm.src) {
           itmIndex = i
           break
@@ -53,30 +61,22 @@ export const useDBPlayerStore = createGlobalState(() => {
       items.value = itms.slice() // Clone the array (FASTEST).
       itemIndex.value = (itmIndex || 0) - 1
     }
+
+    // Dispatch an event to tell to player that the item was remove from the store.
+    emitter.emit(ON_DB_PLAYER_STORE_AFTER_DELETE_ITEM, itm)
   }
   // #endregion Private Methods
 
   // #region Actions
-  function has (item?: Item): boolean {
-    if (!item) { return false }
-    return items.value.some((itm) => itm.src === item.src)
-  }
-
-  function add (item: Item): void {
-    items.value = [ ...items.value, item ]
-  }
-
-  function remove (item: Item): void {
-    items.value = items.value.filter((itm) => itm.src !== item.src)
-  }
-
   function reset (): void {
     isStopped.value = true
     isPaused.value = false
+    isOnHold.value = false
 
     items.value = []
-    itemIndex.value = NaN
     item.value = undefined
+    itemIndex.value = NaN
+
     nextItem.value = undefined
     nextItemIndex.value = NaN
   }
@@ -100,6 +100,8 @@ export const useDBPlayerStore = createGlobalState(() => {
   }
   // #endregion Actions
 
+  emitter.on(ON_ITEM_DELETED, onDeleteItem)
+
   return {
     isStopped,
     isPaused,
@@ -111,11 +113,6 @@ export const useDBPlayerStore = createGlobalState(() => {
     nextItem,
     nextItemIndex,
 
-    onDeleteItem, // TODO
-
-    has,
-    add,
-    remove,
     reset,
     fetchItems,
   }

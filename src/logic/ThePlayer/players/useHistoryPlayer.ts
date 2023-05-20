@@ -11,11 +11,17 @@ import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
 import { getNextItem, getPreviousItem } from '@/utils/playerUtils'
 import { useErrorStore } from '@/stores/errorStore'
+import {
+  ON_HISTORY_PLAYER_STORE_AFTER_DELETE_ITEM,
+  ON_THE_PLAYER_STOP,
+  emitter,
+} from '@/logic/useEmitter'
 
 export const useHistoryPlayer = ({
   showNextItem,
   setNextItem,
 }: UsePlayerArg) => {
+
   const thePlayerStore = useThePlayerStore()
   const errorStore = useErrorStore()
 
@@ -33,11 +39,9 @@ export const useHistoryPlayer = ({
     itemIndex,
     nextItem,
     nextItemIndex,
-
-    onDeleteItem: onDeleteItemStore,
   } = useHistoryPlayerStore()
 
-  // #region Methods
+  // #region Private Methods
   function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
     return errorStore.add(error, {
       ...errorData,
@@ -49,6 +53,17 @@ export const useHistoryPlayer = ({
   function activatePlayerFeatures (): void {
     // Player's components/feature enabled/disabled
     thePlayerStore.itemsInfoEnabled.value = true
+  }
+
+  function addEventsListeners (): void {
+    removeEventsListeners()
+    emitter.on(ON_HISTORY_PLAYER_STORE_AFTER_DELETE_ITEM, onAfterDeleteItem)
+    emitter.on(ON_THE_PLAYER_STOP, removeEventsListeners)
+  }
+
+  function removeEventsListeners (): void {
+    emitter.off(ON_HISTORY_PLAYER_STORE_AFTER_DELETE_ITEM, onAfterDeleteItem)
+    emitter.off(ON_THE_PLAYER_STOP, removeEventsListeners)
   }
 
   function initPlayerStates (): void {
@@ -77,10 +92,23 @@ export const useHistoryPlayer = ({
     nextItem.value = undefined
     nextItemIndex.value = -1
   }
-  // #endregion Methods
+
+  function onAfterDeleteItem (): void {
+    // TODO: if no more items in the list, stop playing.
+
+    if (isActivePlayer.value) {
+      thePlayerStore.itemsCount.value = items.value.length
+      thePlayerStore.itemIndex.value = itemIndex.value
+
+      next()
+    }
+  }
+  // #endregion Private Methods
 
   // #region Exposed Actions
   async function start (): Promise<void> {
+    addEventsListeners()
+
     reset()
     isStopped.value = false
 
@@ -96,6 +124,7 @@ export const useHistoryPlayer = ({
 
   function stop (): void {
     isStopped.value = true
+    removeEventsListeners()
   }
 
   function pause (): void {}
@@ -150,19 +179,6 @@ export const useHistoryPlayer = ({
   function reset (): void {
     activatePlayerFeatures()
   }
-
-  function onDeleteItem (itm: Item): void {
-    onDeleteItemStore(itm)
-
-    // TODO: if no more items in the list, stop playing.
-
-    if (isActivePlayer.value) {
-      thePlayerStore.itemsCount.value = items.value.length
-      thePlayerStore.itemIndex.value = itemIndex.value
-
-      next()
-    }
-  }
   // #endregion Exposed Actions
 
   const player: UsePlayerExpose = {
@@ -185,7 +201,6 @@ export const useHistoryPlayer = ({
     setOnHold,
     leaveOnHoldAndResume,
     reset,
-    onDeleteItem,
   }
 
   return player

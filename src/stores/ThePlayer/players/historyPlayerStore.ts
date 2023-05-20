@@ -4,6 +4,11 @@ import type { Item } from '@/models/item'
 // Vendors Libs
 import { computed, ref } from 'vue'
 import { createGlobalState } from '@vueuse/core'
+import {
+  ON_HISTORY_PLAYER_STORE_AFTER_DELETE_ITEM,
+  ON_ITEM_DELETED,
+  emitter,
+} from '@/logic/useEmitter'
 
 export const useHistoryPlayerStore = createGlobalState(() => {
 
@@ -47,34 +52,32 @@ export const useHistoryPlayerStore = createGlobalState(() => {
       items.value = itms.slice() // Clone the array (FASTEST).
       itemIndex.value = itmIndex
     }
+
+    // Dispatch an event to tell to player that the item was remove from the store.
+    emitter.emit(ON_HISTORY_PLAYER_STORE_AFTER_DELETE_ITEM, itm)
   }
   // #endregion Private Methods
 
   // #region Actions
-  function has (item?: Item): boolean {
-    if (!item) { return false }
-    return items.value.some((itm) => itm.src === item.src)
-  }
-
   function add (item: Item): void {
     items.value = [ ...items.value, item ]
-  }
-
-  function remove (item: Item): void {
-    items.value = items.value.filter((itm) => itm.src !== item.src)
   }
 
   function reset (): void {
     isStopped.value = true
     isPaused.value = false
+    isOnHold.value = false
 
     items.value = []
-    itemIndex.value = NaN
     item.value = undefined
+    itemIndex.value = NaN
+
     nextItem.value = undefined
     nextItemIndex.value = NaN
   }
   // #endregion Actions
+
+  emitter.on(ON_ITEM_DELETED, onDeleteItem)
 
   return {
     isStopped,
@@ -88,11 +91,7 @@ export const useHistoryPlayerStore = createGlobalState(() => {
     nextItemIndex,
     count,
 
-    onDeleteItem, // TODO
-
-    has,
     add,
-    remove,
     reset,
   }
 })

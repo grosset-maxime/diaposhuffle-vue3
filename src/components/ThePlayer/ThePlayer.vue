@@ -16,6 +16,11 @@ import { eagerComputed } from '@vueuse/shared'
 
 // Libs
 import { useKeyboardShortcutsListener } from '@/logic/useKeyboardShortcutsListener'
+import {
+  emitter,
+  ON_ITEM_DELETED,
+  ON_THE_PLAYER_STOP,
+} from '@/logic/useEmitter'
 
 // Stores
 import { useMainStore } from '@/stores/mainStore'
@@ -57,7 +62,6 @@ const thePlayerStore = useThePlayerStore()
 const pinedPlayerStore = usePinedPlayerStore()
 const historyPlayerStore = useHistoryPlayerStore()
 
-const activePlayerName = computed<PlayerName | undefined>(() => thePlayerStore.playerName.value)
 const item = computed<Item | undefined>(() => thePlayerStore.item.value)
 const isPaused = computed<boolean>(() => thePlayerStore.isPaused.value)
 const isItemVideo = computed<boolean>(() => thePlayerStore.isItemVideo.value)
@@ -98,8 +102,8 @@ async function hideDeleteModal (
     try {
       await thePlayerStore.deleteItem({ item })
 
-      // TODO: dispatch deleteItemEvent instead of calling an action.
-      ItemsPlayerCmp.value?.onDeleteItem(item)
+      emitter.emit(ON_ITEM_DELETED, item)
+
       hideUI()
 
     } catch (e: unknown) {
@@ -191,6 +195,7 @@ function closeActivePlayer (): void {
 function stopPlayer (): void {
   ItemsPlayerCmp.value?.stopPlayer()
   showThePlayer.value = false
+  emitter.emit(ON_THE_PLAYER_STOP)
 }
 function pausePlayer (opts: { pauseItm?: boolean } = {}): void {
   ItemsPlayerCmp.value?.pausePlayer(opts)
@@ -207,10 +212,6 @@ function togglePinItem (): void {
   if (pinedPlayerStore.has(item.value)) {
     pinedPlayerStore.remove(item.value)
     triggerUnpinedAnim()
-
-    if (activePlayerName.value === PlayerName.pined) {
-      ItemsPlayerCmp.value?.onDeleteItem(item.value)
-    }
   } else {
     pinedPlayerStore.add(item.value)
     triggerPinedAnim()

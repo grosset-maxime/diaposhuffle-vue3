@@ -1,16 +1,30 @@
-import { createError } from '@/models/error'
-import { getCurrentInstance } from 'vue'
+// Types
+import type { Emitter } from 'mitt'
+import type { Item } from '@/models/item'
 
-export default function useEmitter () {
-  const internalInstance = getCurrentInstance()
+// Vendors libs
+import mitt from 'mitt'
 
-  if (!internalInstance) {
-    throw createError('Vue internal instance is undefined', {
-      file: 'useEmitter.ts',
-    })
-  }
+export type MittEvents = {
+  'item.deleted': Item
+  'item.unpined': Item
 
-  const emitter = internalInstance.appContext.config.globalProperties.emitter
+  'thePlayer.stop': void
 
-  return emitter
+  'dbPlayerStore.afterDeleteItem': Item
+  'fsPlayerStore.afterDeleteItem': Item
+  'historyPlayerStore.afterDeleteItem': Item
 }
+
+// #region Events names
+export const ON_ITEM_DELETED = 'item.deleted'
+export const ON_ITEM_UNPINED = 'item.unpined'
+
+export const ON_THE_PLAYER_STOP = 'thePlayer.stop'
+
+export const ON_DB_PLAYER_STORE_AFTER_DELETE_ITEM = 'dbPlayerStore.afterDeleteItem'
+export const ON_FS_PLAYER_STORE_AFTER_DELETE_ITEM = 'fsPlayerStore.afterDeleteItem'
+export const ON_HISTORY_PLAYER_STORE_AFTER_DELETE_ITEM = 'historyPlayerStore.afterDeleteItem'
+// #endregion Events names
+
+export const emitter: Emitter<MittEvents> = mitt<MittEvents>()

@@ -11,6 +11,11 @@ import type { CustomError, CustomErrorData } from '@/models/error'
 import { computed } from 'vue'
 
 // Libs
+import {
+  ON_FS_PLAYER_STORE_AFTER_DELETE_ITEM,
+  ON_THE_PLAYER_STOP,
+  emitter,
+} from '@/logic/useEmitter'
 import { useTheLoop } from '@/logic/ThePlayer/useTheLoop'
 
 // Stores
@@ -51,7 +56,7 @@ export const useFSPlayer = ({
     fetchItem,
   } = useFSPlayerStore()
 
-  // #region Methods
+  // #region Private Methods
   function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
     return errorStore.add(error, {
       ...errorData,
@@ -68,6 +73,17 @@ export const useFSPlayer = ({
 
     // Loop's components/feature enabled/disabled
     theLoopStore.showRemainingTime.value = true
+  }
+
+  function addEventsListeners (): void {
+    removeEventsListeners()
+    emitter.on(ON_FS_PLAYER_STORE_AFTER_DELETE_ITEM, onAfterDeleteItem)
+    emitter.on(ON_THE_PLAYER_STOP, removeEventsListeners)
+  }
+
+  function removeEventsListeners (): void {
+    emitter.off(ON_FS_PLAYER_STORE_AFTER_DELETE_ITEM, onAfterDeleteItem)
+    emitter.off(ON_THE_PLAYER_STOP, removeEventsListeners)
   }
 
   async function showItem (itemToShow: Item): Promise<void> {
@@ -120,12 +136,19 @@ export const useFSPlayer = ({
       theLoop.startLooping()
     }
   }
-  // #endregion Methods
+
+  async function onAfterDeleteItem (): Promise<void> {
+    if (isActivePlayer.value) {
+      next()
+    }
+  }
+  // #endregion Private Methods
 
   const theLoop = useTheLoop({ endFn: onLoopEnd })
 
   // #region Exposed Actions
   async function start (): Promise<void> {
+    addEventsListeners()
     reset()
     isStopped.value = false
     await onLoopEnd()
@@ -134,6 +157,7 @@ export const useFSPlayer = ({
   function stop (): void {
     isStopped.value = true
     theLoop.stopLooping()
+    removeEventsListeners()
   }
 
   function pause (): void {
@@ -179,20 +203,6 @@ export const useFSPlayer = ({
     resetStore()
     activatePlayerFeatures()
   }
-
-  async function onDeleteItem (itm: Item): Promise<void> {
-    if (isFetchingNextItem.value) {
-      await fetchNextItemPromise.value
-    }
-
-    if (nextItem.value && itm.src === nextItem.value.src) {
-      nextItem.value = undefined
-    }
-
-    if (isActivePlayer.value) {
-      next()
-    }
-  }
   // #endregion Exposed Actions
 
   const player: UsePlayerExpose = {
@@ -215,7 +225,6 @@ export const useFSPlayer = ({
     setOnHold,
     leaveOnHoldAndResume,
     reset,
-    onDeleteItem,
   }
 
   return player
