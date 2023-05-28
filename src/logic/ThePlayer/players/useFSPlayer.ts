@@ -61,7 +61,6 @@ export const useFSPlayer = ({
     return errorStore.add(error, {
       ...errorData,
       file: 'useFSPlayer.ts',
-      actionName: 'PLAYER_A_FETCH_PREV',
     })
   }
 

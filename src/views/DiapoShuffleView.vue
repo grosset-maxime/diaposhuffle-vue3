@@ -9,8 +9,8 @@ import { useTheTaggerStore } from '@/stores/TheTaggerStore'
 const { showThePlayer } = useDiapoShuffleStore()
 
 // To pre-fetch tags and categories list.
-useTheTaggerStore()
-
+const theTaggerStore = useTheTaggerStore()
+theTaggerStore.initStore()
 </script>
 
 <template>

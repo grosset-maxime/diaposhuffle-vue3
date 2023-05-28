@@ -46,7 +46,6 @@ export const useHistoryPlayer = ({
     return errorStore.add(error, {
       ...errorData,
       file: 'useHistoryPlayer.ts',
-      actionName: 'PLAYER_A_FETCH_PREV',
     })
   }
 

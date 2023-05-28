@@ -6,9 +6,7 @@ import type { Item } from '@/models/item'
 import { ref, computed } from 'vue'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 
-// import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayer'
-
-type ItemName = 'item1' | 'item2'
+export type ItemName = 'item1' | 'item2'
 
 // Refs
 interface ItemObj {

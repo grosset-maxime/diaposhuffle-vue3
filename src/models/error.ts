@@ -16,8 +16,9 @@ export const ERROR_SEVERITY_ERROR = ERROR_SEVERITY.error
 export const ERROR_SEVERITY_WARN = ERROR_SEVERITY.warn
 export const ERROR_SEVERITY_INFO = ERROR_SEVERITY.info
 
+export type CustomErrorId = number
 export class CustomError {
-  id: number
+  id: CustomErrorId
   error: boolean
   message: string
   publicMessage: string

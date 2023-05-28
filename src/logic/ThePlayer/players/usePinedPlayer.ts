@@ -58,7 +58,6 @@ export const usePinedPlayer = ({
     return errorStore.add(error, {
       ...errorData,
       file: 'usePinedPlayer.ts',
-      actionName: 'PLAYER_A_FETCH_PREV',
     })
   }
 

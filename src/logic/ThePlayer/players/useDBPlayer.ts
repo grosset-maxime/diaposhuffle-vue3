@@ -62,7 +62,6 @@ export const useDBPlayer = ({
     return errorStore.add(error, {
       ...errorData,
       file: 'useDBPlayer.ts',
-      actionName: 'PLAYER_A_FETCH_PREV',
     })
   }
 

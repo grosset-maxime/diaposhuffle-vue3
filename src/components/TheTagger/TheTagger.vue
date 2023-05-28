@@ -7,6 +7,7 @@ import { ref, watch } from 'vue'
 
 // Components
 import TaggerView from '@/components/TheTagger/TaggerView.vue'
+import useReactiveSet from '@/logic/useReactiveSet'
 
 // Props
 interface Props {
@@ -24,7 +25,7 @@ const emit = defineEmits<{
 }>()
 
 // Refs
-const selected = ref<Set<TagId>>(new Set(props.selected))
+const selected = useReactiveSet<TagId>(props.selected)
 const editMode = ref(false)
 const hasOpacity = ref(false)
 const theTaggerCmp = ref<{ selectRandom: () => void } | null>(null)
@@ -35,7 +36,7 @@ function onShow () {
   editMode.value = false
   hasOpacity.value = false
 
-  selected.value = new Set(props.selected)
+  selected.value.setValues(props.selected, { clear: true })
   showTheTagger.value = true
 }
 
@@ -55,7 +56,7 @@ function onCancel () {
 function onClose () {
   onHide()
   emit('close')
-  selected.value = new Set()
+  selected.value.clear()
 }
 
 function onSelect (tagId: TagId) {

@@ -3,6 +3,7 @@
 
 // Types
 import type { Item } from '@/models/item'
+import type { CustomErrorId, CustomError, CustomErrorData } from '@/models/error'
 import type { PlayerName } from '@/logic/ThePlayer/useThePlayer'
 
 // Vendors Libs
@@ -13,9 +14,11 @@ import {
   deleteItem as deleteItemAPI,
   setItemTags as setItemTagsAPI,
 } from '@/api/items'
-import { createError } from '@/models/error'
+import { useErrorStore } from '@/stores/errorStore'
 
 export const useThePlayerStore = createGlobalState(() => {
+  const errorStore = useErrorStore()
+
   // Player states
   const isStopped = ref(true)
   const isPaused = ref(false)
@@ -23,8 +26,8 @@ export const useThePlayerStore = createGlobalState(() => {
 
   // Item states
   const item = ref<Item | undefined>()
-  const itemIndex = ref(NaN)
-  const itemsCount = ref(NaN)
+  const itemIndex = ref<number>(NaN)
+  const itemsCount = ref<number>(NaN)
   const isItemPaused = ref(false)
   const isItemPlayable = ref(false)
   const isItemVideo = ref(false)
@@ -35,16 +38,18 @@ export const useThePlayerStore = createGlobalState(() => {
   const historyEnabled = ref(false)
   const pauseEnabled = ref(false)
 
-  const errors = ref<Array<{ [key: string]: unknown }>>([])
+  const errors = ref<Array<CustomErrorId>>([])
   // const getErrors = () => errors.value
 
-
-  // Mutations
-  const addError = ({ actionName, error }: { actionName: string; error: unknown }) => {
-    errors.value.push({
-      [ actionName ]: error,
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    const customError = errorStore.add(error, {
+      ...errorData,
+      file: 'ThePlayerStore.ts',
     })
-    console.error(actionName, error)
+
+    errors.value.push(customError.id)
+
+    return customError
   }
 
   // #region Methods
@@ -65,14 +70,9 @@ export const useThePlayerStore = createGlobalState(() => {
       const response = await deleteItemAPI({ item })
       result = response.success
     } catch (e) {
-      const error = createError(e, {
-        file: 'ThePlayerStore.ts',
-      })
-      addError({
+      throw onError(e, {
         actionName: 'PLAYER_A_DELETE_ITEM',
-        error,
       })
-      throw error
     }
 
     return result
@@ -85,15 +85,9 @@ export const useThePlayerStore = createGlobalState(() => {
       const response = await setItemTagsAPI({ item })
       result = response.success
     } catch (e) {
-      const error = createError(e, {
-        file: 'ThePlayerStore.ts',
-      })
-      addError({
+      throw onError(e, {
         actionName: 'PLAYER_A_SET_ITEM_TAGS',
-        error,
       })
-
-      throw error
     }
 
     return result

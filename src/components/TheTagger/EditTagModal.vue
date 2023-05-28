@@ -267,15 +267,9 @@ watch(showDeleteModal, (shouldShow) => {
                   @update:model-value="formCmp!.validate()"
                 >
                   <template v-slot:item="{ props, item }">
-                    <v-list-item
-                      v-bind="props"
-                      :title="item?.title"
-                    >
+                    <v-list-item v-bind="props">
                       <template v-slot:prepend>
                         <v-avatar :color="item.raw.color" size="30"/>
-                      </template>
-                      <template v-slot:default>
-                        {{ item.title }}
                       </template>
                     </v-list-item>
                   </template>

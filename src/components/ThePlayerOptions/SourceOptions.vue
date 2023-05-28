@@ -20,18 +20,21 @@ import TheFolderBrowser from '@/components/TheFolderBrowser/TheFolderBrowser.vue
 import TheTagger from '@/components/TheTagger/TheTagger.vue'
 import TagChip from '@/components/TagChip.vue'
 import { usePinedPlayerStore } from '@/stores/ThePlayer/players/pinedPlayerStore'
+import useReactiveSet from '@/logic/useReactiveSet'
 
 const { showTheTagger, showTheFolderBrowser } = useDiapoShuffleStore()
 const sourceOptsStore = useSourceOptionsStore()
 const pinedPlayerStore = usePinedPlayerStore()
 
-//#region Folder Browser
-const selectedFolders = ref<Set<FolderPath>>(new Set(sourceOptsStore.folders.value))
+// #region Folder Browser
+const selectedFolders = useReactiveSet<FolderPath>(sourceOptsStore.folders.value)
 const nbSelectedFolders = eagerComputed(() => selectedFolders.value.size)
 
 watch(
-  selectedFolders,
-  () => (sourceOptsStore.folders.value = selectedFolders.value),
+  selectedFolders.value,
+  () => {
+    sourceOptsStore.folders.value = selectedFolders.value
+  },
 )
 
 function showTheFolderBrowserFn () {
@@ -43,26 +46,24 @@ function onCloseTheFolderBrowser () {
 }
 
 function onSaveTheFolderBrowser (folders: Set<FolderPath>) {
-  selectedFolders.value = folders
+  selectedFolders.value.setValues(folders, { clear: true })
 }
 
 function onUnselectAllFolders () {
-  selectedFolders.value = new Set()
+  selectedFolders.value.clear()
 }
 
 function onUnselectFolder (path: FolderPath) {
-  const newSet = new Set(selectedFolders.value)
-  newSet.delete(path)
-  selectedFolders.value = newSet
+  selectedFolders.value.delete(path)
 }
-//#endregion Folder Browser
+// #endregion Folder Browser
 
-//#region Tagger
-const selectedTags = ref<Set<TagId>>(new Set(sourceOptsStore.tags.value))
+// #region Tagger
+const selectedTags = useReactiveSet<TagId>(sourceOptsStore.tags.value)
 const nbSelectedTags = computed(() => selectedTags.value.size)
 
 watch(
-  selectedTags,
+  selectedTags.value,
   (val) => { sourceOptsStore.tags.value = val },
 )
 
@@ -75,17 +76,15 @@ function onCloseTaggerModal () {
 }
 
 function onSaveTaggerModal (selectedTagIds: Set<TagId>) {
-  selectedTags.value = selectedTagIds
+  selectedTags.value.setValues(selectedTagIds, { clear: true })
 }
 
 function onUnselectAllTags () {
-  selectedTags.value = new Set()
+  selectedTags.value.clear()
 }
 
 function onUnselectTag (tagId: TagId) {
-  const newSet = new Set(selectedTags.value)
-  newSet.delete(tagId)
-  selectedTags.value = newSet
+  selectedTags.value.delete(tagId)
 }
 //#endregion Tagger
 

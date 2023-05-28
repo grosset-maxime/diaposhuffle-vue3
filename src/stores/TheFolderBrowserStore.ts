@@ -1,9 +1,18 @@
+// Types
+import type { CustomError, CustomErrorData, CustomErrorId } from '@/models/error'
+
 // Vendors Libs
 import { ref, reactive } from 'vue'
 import { createGlobalState } from '@vueuse/core'
 
+// APIs
 import { getFolders as getFoldersAPI } from '@/api/folders'
-import { createError } from '@/models/error'
+
+// Logics
+import useReactiveMap from '@/logic/useReactiveMap'
+
+// Stores
+import { useErrorStore } from '@/stores/errorStore'
 
 export type FolderPath = string
 export interface Folder {
@@ -19,6 +28,8 @@ export interface Folder {
 export const useTheFolderBrowserStore = createGlobalState(() => {
   const ROOT_PATH = '/'
 
+  const errorStore = useErrorStore()
+
   // State
   const rootFolder = reactive<Folder>({
     path: ROOT_PATH,
@@ -29,29 +40,33 @@ export const useTheFolderBrowserStore = createGlobalState(() => {
     fetched: false,
     fetching: false,
   })
-  const folders = reactive<Map<string, Folder>>(new Map([ [ ROOT_PATH, rootFolder ] ]))
+  const folders = useReactiveMap<FolderPath, Folder>([ [ ROOT_PATH, rootFolder ] ])
 
-  const errors = ref<Array<{ [key: string]: unknown }>>([])
+  const errors = ref<Array<CustomErrorId>>([])
 
   // Getters
-  const getRootFolder = () => rootFolder
-  const getFolder = (path: FolderPath) => folders.get(path)
+  const getRootFolder = (): Folder => rootFolder
+  const getFolder = (path: FolderPath): Folder | undefined => folders.value.get(path)
 
-  // Mutations
-  const addError = ({ actionName, error }: { actionName: string; error: unknown }) => {
-    errors.value.push({
-      [ actionName ]: error,
+  // Private Methods
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    const customError = errorStore.add(error, {
+      ...errorData,
+      file: 'TheFolderBrowserStore.ts',
     })
-    console.error(actionName, error)
+
+    errors.value.push(customError.id)
+
+    return customError
   }
 
-  // Actions
-  async function fetchChildrenFolders (parentPath: FolderPath) {
+  // #region Actions
+  async function fetchChildrenFolders (parentPath: FolderPath): Promise<Array<FolderPath>> {
     const folder = getFolder(parentPath)
 
     if (!folder) {
-      throw createError(`Folder not found with path: ${parentPath}`, {
-        file: 'folderBrowserStore.ts',
+      throw onError(`Folder not found with path: ${parentPath}`, {
+        actionName: 'fetchChildrenFolders',
       })
     }
 
@@ -83,17 +98,13 @@ export const useTheFolderBrowserStore = createGlobalState(() => {
           isRoot: false,
         })
 
-        folders.set(childPath, childFolder)
+        folders.value.set(childPath, childFolder)
 
         folder.children.push(childPath)
       })
     } catch (e) {
-      const error = createError(e, {
-        file: 'folderBrowserStore.ts',
-      })
-      addError({
+      onError(e, {
         actionName: 'FOLDER_BROWSER_A_FETCH_FOLDERS',
-        error,
       })
     }
 
@@ -102,14 +113,12 @@ export const useTheFolderBrowserStore = createGlobalState(() => {
 
     return folder.children
   }
+  // #endregion Actions
 
   return {
     // Getters
     getRootFolder,
     getFolder,
-
-    // Mutations
-    addError,
 
     // Actions
     fetchChildrenFolders,

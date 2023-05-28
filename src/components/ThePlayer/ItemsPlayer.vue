@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Types
-import type { Item } from '@/models/item'
+import type { ItemName } from '@/logic/ThePlayer/useItemsPlayer'
 
 import { ref, onMounted } from 'vue'
 
@@ -34,7 +34,7 @@ const {
 } = usePlayerOptionsStore()
 
 // #region ItemsPlayer vue
-const itemsRefs = ref<Map<string, HTMLDivElement>>(new Map())
+const itemsRefs = ref<Map<ItemName, HTMLDivElement>>(new Map())
 function onClick () {
   emit('click')
 }

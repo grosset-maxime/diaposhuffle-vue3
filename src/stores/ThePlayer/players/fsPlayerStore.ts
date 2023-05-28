@@ -42,7 +42,6 @@ export const useFSPlayerStore = createGlobalState(() => {
     return errorStore.add(error, {
       ...errorData,
       file: 'fsPlayerStore.ts',
-      actionName: 'PLAYER_A_FETCH_PREV',
     })
   }
 

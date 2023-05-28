@@ -49,35 +49,35 @@ export const useSourceOptionsStore = createGlobalState(() => {
   })
   const isFromPined = ref<boolean>(false)
 
-  //#region Computeds
+  // #region Computeds
   // List of selected folder path.
-  const folders = computed({
+  const folders = computed<Set<FolderPath>>({
     get: () => new Set(states.value.folders),
-    set: (val) => (states.value.folders = Array.from(val.values())),
+    set: (val: Set<FolderPath>) => (states.value.folders = Array.from(val.values())),
   })
 
   // List of selected tags ids.
-  const tags = computed({
+  const tags = computed<Set<TagId>>({
     get: () => new Set(states.value.tags),
-    set: (val) => (states.value.tags = Array.from(val.values())),
+    set: (val: Set<TagId>) => (states.value.tags = Array.from(val.values())),
   })
 
-  const tagsOperator = computed({
+  const tagsOperator = computed<TagsOperator>({
     get: () => states.value.tagsOperator,
-    set: (val) => (states.value.tagsOperator = val),
+    set: (val: TagsOperator) => (states.value.tagsOperator = val),
   })
 
   // List of file extensions to filter.
-  const fileTypes = computed({
+  const fileTypes = computed<Array<FileType>>({
     get: () => states.value.fileTypes,
-    set: (val) => (states.value.fileTypes = val),
+    set: (val: Array<FileType>) => (states.value.fileTypes = val),
   })
 
-  const availableFileTypes = computed(() => [ ...AVAILABLE_FILE_TYPES ])
-  //#endregion Computeds
+  const availableFileTypes = computed<Array<FileType>>(() => [ ...AVAILABLE_FILE_TYPES ])
+  // #endregion Computeds
 
-  //#region Mutations
-  const toggleTagsOperator = (val?: TagsOperator) => {
+  // #region Mutations
+  const toggleTagsOperator = (val?: TagsOperator): void => {
     if (typeof val === 'string') {
       tagsOperator.value = val
     } else {
@@ -87,10 +87,10 @@ export const useSourceOptionsStore = createGlobalState(() => {
     }
   }
 
-  const setFileTypes = (vals: Array<FileType>) => {
+  const setFileTypes = (vals: Array<FileType>): void => {
     fileTypes.value = [ ...vals ]
   }
-  //#endregion Mutations
+  // #endregion Mutations
 
   return {
     // Computeds

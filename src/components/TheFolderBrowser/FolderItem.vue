@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Types
-import type { FolderPath } from '@/stores/TheFolderBrowserStore'
+import type { Folder, FolderPath } from '@/stores/TheFolderBrowserStore'
 
 // Vendors Libs
 import { ref, computed, inject } from 'vue'
@@ -19,11 +19,13 @@ const props = defineProps<Props>()
 const errorStore = useErrorStore()
 
 const selectedFoldersModal = inject(theFolderBrowserKey)
+
 if (!selectedFoldersModal) {
   throw errorStore.add(`Could not resolve ${theFolderBrowserKey.description}`, {
     file: 'FolderItem.vue',
   })
 }
+
 const {
   selectedFolders,
   addSelectedFolder,
@@ -33,23 +35,23 @@ const {
 const theFolderBrowserStore = useTheFolderBrowserStore()
 
 const folderChildren = ref<Array<FolderPath> | undefined>()
-const selected = computed(() => selectedFolders.value.has(props.path))
+const selected = computed<boolean>(() => selectedFolders.value.has(props.path))
 const expanded = ref(false)
 
 // Computeds
-const folder = computed(() => theFolderBrowserStore.getFolder(props.path))
-const hasChildren = computed(() => !!folder.value?.children.length)
-const noExpand = computed(() => !!(!hasChildren.value && folder.value?.fetched))
+const folder = computed<Folder | undefined>(() => theFolderBrowserStore.getFolder(props.path))
+const hasChildren = computed<boolean>(() => !!folder.value?.children.length)
+const noExpand = computed<boolean>(() => !!(!hasChildren.value && folder.value?.fetched))
 
 // Metods
-async function expandFolder () {
+async function expandFolder (): Promise<void> {
   if (!folder.value || noExpand.value) { return }
 
   expanded.value = !expanded.value
   folderChildren.value = await theFolderBrowserStore.fetchChildrenFolders(props.path)
 }
 
-function toggleSelect () {
+function toggleSelect (): void {
   if (!selected.value) {
     addSelectedFolder(props.path)
   } else {
@@ -57,7 +59,7 @@ function toggleSelect () {
   }
 }
 
-function onFolderItemClick (e: MouseEvent) {
+function onFolderItemClick (e: MouseEvent): void {
   if (e.target === e.currentTarget) {
     toggleSelect()
   }
@@ -110,7 +112,8 @@ function onFolderItemClick (e: MouseEvent) {
         class="checkbox"
         :true-value="true"
         :false-value="false"
-        v-model="selected"
+        :model-value="selected"
+        @click="toggleSelect"
         hide-details
         color="blue"
       />

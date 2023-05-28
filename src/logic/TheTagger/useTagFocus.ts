@@ -1,7 +1,8 @@
-import type { Ref } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 import type { TagId, Tag } from '@/models/tag'
 
 import { SHAKE_ANIMATION_TIME } from '@/utils/utils'
+import type { ReactiveMap } from '../useReactiveMap'
 
 export enum TagsSection {
   selected = 'selectedTags',
@@ -13,11 +14,10 @@ export interface TagFocused {
   pos: number
   section: TagsSection
 }
-export type ShakeSections = Map<TagsSection, boolean>
 
 export const useTagFocus = (
   tagFocused: TagFocused,
-  shakeSections: ShakeSections,
+  shakeSections: ComputedRef<ReactiveMap<TagsSection, boolean>>,
   selectedTagsMap: Ref<Map<TagId, Tag>>,
   lastUsedTagsMap: Ref<Map<TagId, Tag>>,
   unselectedTagsMap: Ref<Map<TagId, Tag>>,
@@ -30,10 +30,10 @@ export const useTagFocus = (
   ]
 
   function shakeSectionName (name: TagsSection) {
-    shakeSections.set(name, true)
+    shakeSections.value.set(name, true)
 
     setTimeout(() => {
-      shakeSections.set(name, false)
+      shakeSections.value.set(name, false)
     }, SHAKE_ANIMATION_TIME)
   }
 

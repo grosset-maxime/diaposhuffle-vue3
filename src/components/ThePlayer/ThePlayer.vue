@@ -6,6 +6,7 @@
 // TODO: Feature: Add options to play items not randomly but in row into a folder.
 
 // Types
+import type { CustomError, CustomErrorData } from '@/models/error'
 import type { Item } from '@/models/item'
 import type { TagId } from '@/models/tag'
 import { Position } from '@/interfaces/components/PinWrapper'
@@ -23,6 +24,7 @@ import {
 } from '@/logic/useEmitter'
 
 // Stores
+import { useErrorStore } from '@/stores/errorStore'
 import { useMainStore } from '@/stores/mainStore'
 import { useDiapoShuffleStore } from '@/stores/diapoShuffleStore'
 import { useUIOptionsStore } from '@/stores/ThePlayerOptions/uiOptionsStore'
@@ -41,8 +43,18 @@ import ItemPathChip from '@/components/ThePlayer/ItemPathChip.vue'
 
 import TheTagger from '@/components/TheTagger/TheTagger.vue'
 import DeleteModal from '@/components/DeleteModal.vue'
-import { createError } from '@/models/error'
 import { PlayerName } from '@/logic/ThePlayer/useThePlayer'
+
+const errorStore = useErrorStore()
+
+function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+  const customError = errorStore.add(error, {
+    ...errorData,
+    file: 'ThePlayer.vue',
+  })
+
+  return customError
+}
 
 const { showTheHelp } = useMainStore()
 const { showThePlayer } = useDiapoShuffleStore()
@@ -107,9 +119,7 @@ async function hideDeleteModal (
       hideUI()
 
     } catch (e: unknown) {
-      const error = createError(e, {
-        file: 'ThePlayer.vue',
-      })
+      const error = onError(e)
 
       pausePlayer()
       displayAlert(error as Partial<Alert>)
@@ -154,9 +164,7 @@ async function onSaveTaggerModal (selectedTagIds: Set<TagId>): Promise<void> {
   try {
     await thePlayerStore.setItemTags({ item: itemVal })
   } catch (e) {
-    const error = createError(e, {
-      file: 'ThePlayer.vue',
-    })
+    const error = onError(e)
 
     pausePlayer()
     displayAlert(error as Partial<Alert>)

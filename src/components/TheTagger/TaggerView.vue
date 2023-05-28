@@ -8,7 +8,7 @@
 // Types
 import type { TagCategoryId, TagId, TagData, TagCategoryData } from '@/models/tag'
 import type { Sort } from '@/logic/TheTagger/useTheTagger'
-import type { TagFocused, ShakeSections } from '@/logic/TheTagger/useTagFocus'
+import type { TagFocused } from '@/logic/TheTagger/useTagFocus'
 
 // Vendors Libs
 import { ref, watch, reactive } from 'vue'
@@ -30,6 +30,8 @@ import TagsList from './TagsList.vue'
 import EditTagModal from './EditTagModal.vue'
 import EditCategoryModal from './EditCategoryModal.vue'
 import { useTagFocus, TagsSection } from '@/logic/TheTagger/useTagFocus'
+import useReactiveMap from '@/logic/useReactiveMap'
+import useReactiveSet from '@/logic/useReactiveSet'
 
 const theTaggerStore = useTheTaggerStore()
 const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
@@ -54,10 +56,10 @@ const emit = defineEmits<{
   (e: 'toggleOpacity'): void;
 }>()
 
-const selectedTagsIdsSet = ref<Set<TagId>>(new Set(props.selected))
+const selectedTagsIdsSet = useReactiveSet<TagId>(props.selected)
 const isLoading = ref(true)
 
-//#region Filtering section
+// #region Filtering section
 const filters = reactive<{
   text: string;
   categories: Set<TagCategoryId>;
@@ -151,7 +153,7 @@ const tagFocused = reactive<TagFocused>({
   section: TagsSection.unselected,
 })
 
-const shakeSections = reactive<ShakeSections>(new Map())
+const shakeSections = useReactiveMap<TagsSection, boolean>()
 
 const {
   setFocusLeft,
@@ -208,7 +210,7 @@ function addLastUsedTag (tagId: TagId) {
 }
 
 function updateSelectedTagIdsMap () {
-  selectedTagsIdsSet.value = new Set(props.selected)
+  selectedTagsIdsSet.value.setValues(props.selected, { clear: true })
 }
 
 function keyboardShortcuts (key: string, e: KeyboardEvent) {

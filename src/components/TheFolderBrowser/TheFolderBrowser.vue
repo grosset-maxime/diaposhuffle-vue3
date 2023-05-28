@@ -11,8 +11,10 @@ import type { FolderPath } from '@/stores/TheFolderBrowserStore'
 import { theFolderBrowserKey } from '@/interfaces/symbols'
 
 // Vendors Libs
-import { ref, computed, watch, provide } from 'vue'
+import { computed, watch, provide } from 'vue'
 
+// Logic
+import useReactiveSet from '@/logic/useReactiveSet'
 import { useKeyboardShortcutsListener } from '@/logic/useKeyboardShortcutsListener'
 
 // Components
@@ -37,10 +39,10 @@ const emit = defineEmits<{
 const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
 // Refs
-const selectedFolders = ref<Set<FolderPath>>(new Set(props.selected))
+const selectedFolders = useReactiveSet<FolderPath>(props.selected)
 
 // Computeds
-const nbSelected = computed(() => selectedFolders.value.size)
+const nbSelected = computed<number>(() => selectedFolders.value.size)
 
 // Watchs
 watch(
@@ -57,7 +59,7 @@ watch(
 //#region Methods
 function onShow () {
   startKSListener()
-  selectedFolders.value = new Set(props.selected)
+  selectedFolders.value.setValues(props.selected, { clear: true })
 }
 
 function onHide () {
@@ -86,7 +88,7 @@ function removeSelectedFolder (path: FolderPath) {
 }
 
 function onUnselectAll () {
-  selectedFolders.value = new Set()
+  selectedFolders.value.clear()
 }
 
 function keyboardShortcuts (key: string, e: KeyboardEvent) {
