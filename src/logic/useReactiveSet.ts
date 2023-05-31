@@ -1,57 +1,71 @@
 import { computed, ref } from 'vue'
 
 export interface ReactiveSet<T> extends Set<T> {
-  setValues: (
-    values: Array<T> | Set<T>,
+  /**
+   * Add multiple values to the Set.
+   * @param values - Values to add.
+   * @param opts - Options
+   * @default {}
+   * @param opts.clear - Should clear the Set before to add values.
+   * @default false
+   */
+  addValues: (
+    values: T[] | Set<T>,
     opts?: { clear?: boolean }
   ) => ReactiveSet<T>
 }
 
-export default function useReactiveSet<T> (values?: Array<T> | Set<T>) {
-  const version = ref(1)
+export default function useReactiveSet<T> (values?: T[] | Set<T>) {
+  const version = ref<number>(1)
 
   class ReactiveSet extends Set<T> {
-    add (value: T) {
+    add (value: T): this {
       super.add(value)
       this.#incVersion()
       return this
     }
 
-    delete (value: T) {
+    delete (value: T): boolean {
       const res = super.delete(value)
       res && this.#incVersion()
       return res
     }
 
-    clear () {
+    clear (): this {
       super.clear()
       this.#incVersion()
       return this
     }
 
-    setValues (
-      values: Array<T> | Set<T>,
+    addValues (
+      values: T[] | Set<T>,
       { clear = false }: { clear?: boolean } = {},
-    ) {
+    ): this {
       clear && this.clear()
       values.forEach((val) => this.add(val))
       return this
     }
 
-    #incVersion () {
+    /**
+     * @private
+     */
+    #incVersion (): this {
       version.value += 1
+      return this
     }
   }
 
-  const inner = ref(new ReactiveSet())
+  const inner = ref<ReactiveSet>(new ReactiveSet())
 
-  if (values) {
-    inner.value.setValues(values)
-  }
+  if (values)
+    inner.value.addValues(values)
 
-  const set = computed(() => {
-    version.value
-    return inner.value
+  const set = computed<ReactiveSet>(() => {
+    // Eslint bypass to avoid no-unused-expressions error,
+    // but need to update this computed when version.value change.
+    return version.value
+      ? inner.value
+      : inner.value
   })
 
   return set

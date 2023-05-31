@@ -26,6 +26,7 @@ export class CustomError {
   actionName: string
   file: string
   isBackend: boolean
+  date: Date
 
   constructor (e: any, { file, actionName, isBackend }: CustomErrorData) {
     let error = e
@@ -55,6 +56,7 @@ export class CustomError {
     this.actionName = actionName || ''
     this.file = file || ''
     this.isBackend = !!isBackend
+    this.date = new Date()
 
     errorIdTracker = errorIdTracker + 1
   }

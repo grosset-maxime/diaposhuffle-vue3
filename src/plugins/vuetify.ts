@@ -21,6 +21,7 @@ export default createVuetify({
           surface: '#000000',
           primary: colors.orange.base,
           secondary: colors.grey.darken4,
+          error: colors.red.darken4,
         },
       },
     },

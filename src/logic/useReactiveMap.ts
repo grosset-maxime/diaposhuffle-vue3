@@ -1,38 +1,46 @@
 import { computed, ref } from 'vue'
 
 export interface ReactiveMap<K, V> extends Map<K, V> {
+  /**
+   * Set multiple values to the Map.
+   * @param values - Values to set.
+   * @param opts - Options
+   * @default {}
+   * @param opts.clear - Should clear the Map before to set values.
+   * @default false
+   */
   setValues: (
-    values: Array<[K, V]> | Map<K, V>,
+    values: [K, V][] | Map<K, V>,
     opts?: { clear?: boolean }
   ) => ReactiveMap<K, V>
 }
 
-export default function useReactiveMap<K, V> (values?: Array<[K, V]> | Map<K, V>) {
-  const version = ref(1)
+export default function useReactiveMap<K, V> (values?: [K, V][] | Map<K, V>) {
+  const version = ref<number>(1)
 
   class ReactiveMap extends Map<K, V> {
-    set (key: K, value: V) {
+    set (key: K, value: V): this {
       super.set(key, value)
       this.#incVersion()
       return this
     }
 
-    delete (key: K) {
+    delete (key: K): boolean {
       const res = super.delete(key)
       res && this.#incVersion()
       return res
     }
 
-    clear () {
+    clear (): this {
       super.clear()
       this.#incVersion()
       return this
     }
 
     setValues (
-      values: Array<[K, V]> | Map<K, V>,
+      values: [K, V][] | Map<K, V>,
       { clear = false }: { clear?: boolean } = {},
-    ) {
+    ): this {
       clear && this.clear()
 
       const vals = Array.isArray(values)
@@ -43,20 +51,26 @@ export default function useReactiveMap<K, V> (values?: Array<[K, V]> | Map<K, V>
       return this
     }
 
-    #incVersion () {
+    /**
+     * @private
+     */
+    #incVersion (): this {
       version.value += 1
+      return this
     }
   }
 
-  const inner = ref(new ReactiveMap())
+  const inner = ref<ReactiveMap>(new ReactiveMap())
 
-  if (values) {
+  if (values)
     inner.value.setValues(values)
-  }
 
-  const map = computed(() => {
-    version.value
-    return inner.value
+  const map = computed<ReactiveMap>(() => {
+    // Eslint bypass to avoid no-unused-expressions error,
+    // but need to update this computed when version.value change.
+    return version.value
+      ? inner.value
+      : inner.value
   })
 
   return map

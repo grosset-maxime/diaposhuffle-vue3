@@ -24,6 +24,13 @@ const routes: IRoute[] = [
     icon: 'mdi-cog',
     component: () => import('@/views/SettingsView.vue'),
   },
+  {
+    path: '/errors',
+    name: 'errors',
+    title: 'Errors',
+    icon: 'mdi-alert-circle-outline',
+    component: () => import('@/views/ErrorsView.vue'),
+  },
 ]
 
 export const routesMap = new Map<string, IRoute>()
