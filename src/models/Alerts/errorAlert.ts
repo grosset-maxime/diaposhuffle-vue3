@@ -40,8 +40,12 @@ export class ErrorAlert extends AbstractAlert {
       publicMessage = error.publicMessage || error.toString()
       severity = error.severity || ERROR_SEVERITY_ERROR
     } catch (er: unknown) {
-      message = er?.toString()
-      publicMessage = er?.toString()
+      message = er && (er as any).toString
+        ? (er as any).toString()
+        : 'unknown error message.'
+      publicMessage = er && (er as any).toString
+        ? (er as any).toString()
+        : 'unknown public error message.'
       severity = error?.severity ?? ERROR_SEVERITY_ERROR
     }
 
