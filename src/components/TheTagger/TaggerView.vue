@@ -210,7 +210,7 @@ function addLastUsedTag (tagId: TagId) {
 }
 
 function updateSelectedTagIdsMap () {
-  selectedTagsIdsSet.value.setValues(props.selected, { clear: true })
+  selectedTagsIdsSet.value.addValues(props.selected, { clear: true })
 }
 
 function keyboardShortcuts (key: string, e: KeyboardEvent) {

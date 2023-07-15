@@ -5,7 +5,6 @@ import {
   type UsePlayerArg,
   type UsePlayerExpose,
 } from '@/logic/ThePlayer/useThePlayer'
-import type { CustomError, CustomErrorData } from '@/models/error'
 
 // Vendors Libs
 import { computed } from 'vue'
@@ -23,8 +22,9 @@ import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptionsStore'
 import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
-import { useErrorStore } from '@/stores/errorStore'
 import { useFSPlayerStore } from '@/stores/ThePlayer/players/fsPlayerStore'
+import { useAlertStore } from '@/stores/alertStore'
+import { type ErrorAlert, createErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
 
 export const useFSPlayer = ({
   showNextItem,
@@ -36,7 +36,7 @@ export const useFSPlayer = ({
   const playerOptsStore = usePlayerOptionsStore()
   const theLoopStore = useTheLoopStore()
   const historyPlayerStore = useHistoryPlayerStore()
-  const errorStore = useErrorStore()
+  const alertStore = useAlertStore()
 
   const isActivePlayer = computed<boolean>(
     () => thePlayerStore.playerName.value === PlayerName.fs,
@@ -57,11 +57,13 @@ export const useFSPlayer = ({
   } = useFSPlayerStore()
 
   // #region Private Methods
-  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
-    return errorStore.add(error, {
+  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
+    const errorAlert = createErrorAlert(error, {
       ...errorData,
       file: 'useFSPlayer.ts',
     })
+    alertStore.add(errorAlert)
+    return errorAlert
   }
 
   function activatePlayerFeatures (): void {

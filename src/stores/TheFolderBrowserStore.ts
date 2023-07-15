@@ -1,5 +1,4 @@
 // Types
-import type { CustomError, CustomErrorData, CustomErrorId } from '@/models/error'
 
 // Vendors Libs
 import { ref, reactive } from 'vue'
@@ -10,9 +9,11 @@ import { getFolders as getFoldersAPI } from '@/api/folders'
 
 // Logics
 import useReactiveMap from '@/logic/useReactiveMap'
+import { useAlertStore } from './alertStore'
+import { createErrorAlert, type ErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
+import type { AlertId } from '@/models/Alerts/abstractAlert'
 
 // Stores
-import { useErrorStore } from '@/stores/errorStore'
 
 export type FolderPath = string
 export interface Folder {
@@ -28,7 +29,7 @@ export interface Folder {
 export const useTheFolderBrowserStore = createGlobalState(() => {
   const ROOT_PATH = '/'
 
-  const errorStore = useErrorStore()
+  const alertStore = useAlertStore()
 
   // State
   const rootFolder = reactive<Folder>({
@@ -42,22 +43,23 @@ export const useTheFolderBrowserStore = createGlobalState(() => {
   })
   const folders = useReactiveMap<FolderPath, Folder>([ [ ROOT_PATH, rootFolder ] ])
 
-  const errors = ref<Array<CustomErrorId>>([])
+  const errors = ref<Array<AlertId>>([])
 
   // Getters
   const getRootFolder = (): Folder => rootFolder
   const getFolder = (path: FolderPath): Folder | undefined => folders.value.get(path)
 
   // Private Methods
-  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
-    const customError = errorStore.add(error, {
+  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
+    const errorAlert = createErrorAlert(error, {
       ...errorData,
       file: 'TheFolderBrowserStore.ts',
     })
+    alertStore.add(errorAlert)
 
-    errors.value.push(customError.id)
+    errors.value.push(errorAlert.id)
 
-    return customError
+    return errorAlert
   }
 
   // #region Actions

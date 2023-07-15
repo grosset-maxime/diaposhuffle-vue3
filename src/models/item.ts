@@ -1,6 +1,6 @@
 // Types
 import type { TagId } from '@/models/tag'
-import { createError } from './error'
+import { createErrorAlert } from '@/models/Alerts/errorAlert'
 
 export enum ItemVideoExt {
   webm = 'webm',
@@ -86,7 +86,7 @@ export class Item {
     isVideo,
   }: ItemData) {
     if (!src) {
-      throw createError(`Invalid item, item has no src. Item src: ${src}`, {
+      throw createErrorAlert(`Invalid item, item has no src. Item src: ${src}`, {
         file: 'item.ts',
       })
     }
@@ -115,7 +115,7 @@ export class Item {
     if (!this.isImage && !this.isVideo) {
       const errorMsg = `Invalid item, not an image and not a video. Item extension: ${extension}`
       console.error(errorMsg, this)
-      throw createError(errorMsg, {
+      throw createErrorAlert(errorMsg, {
         file: 'item.ts',
       })
     }

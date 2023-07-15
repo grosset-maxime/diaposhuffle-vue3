@@ -12,7 +12,6 @@ import {
 
 // Stores
 import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptionsStore'
-import { useErrorStore } from '@/stores/errorStore'
 
 // Logics
 import {
@@ -20,11 +19,13 @@ import {
   ON_ITEM_DELETED,
   emitter,
 } from '@/logic/useEmitter'
+import { useAlertStore } from '@/stores/alertStore'
+import { createErrorAlert } from '@/models/Alerts/errorAlert'
 
 export const useDBPlayerStore = createGlobalState(() => {
 
   const sourceOptsStore = useSourceOptionsStore()
-  const errorStore = useErrorStore()
+  const alertStore = useAlertStore()
 
   // #region States
   const isStopped = ref(true)
@@ -92,10 +93,12 @@ export const useDBPlayerStore = createGlobalState(() => {
       return itms
 
     } catch (e) {
-      throw errorStore.add(e, {
-        file: 'dbPlayerStore.ts',
-        actionName: 'PLAYER_A_FETCH_ITEMS_FROM_BDD',
-      })
+      throw alertStore.add(
+        createErrorAlert(e, {
+          file: 'dbPlayerStore.ts',
+          actionName: 'PLAYER_A_FETCH_ITEMS_FROM_BDD',
+        }),
+      )
     }
   }
   // #endregion Actions

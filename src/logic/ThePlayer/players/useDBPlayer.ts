@@ -14,14 +14,14 @@ import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptionsSt
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
-import { useErrorStore } from '@/stores/errorStore'
-import type { CustomError, CustomErrorData } from '@/models/error'
 import { useDBPlayerStore } from '@/stores/ThePlayer/players/dbPlayerStore'
 import {
   ON_DB_PLAYER_STORE_AFTER_DELETE_ITEM,
   ON_THE_PLAYER_STOP,
   emitter,
 } from '@/logic/useEmitter'
+import { useAlertStore } from '@/stores/alertStore'
+import { createErrorAlert, type ErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
 
 export const useDBPlayer = ({
   showNextItem,
@@ -34,7 +34,7 @@ export const useDBPlayer = ({
   const playerOptsStore = usePlayerOptionsStore()
   const theLoopStore = useTheLoopStore()
   const historyPlayerStore = useHistoryPlayerStore()
-  const errorStore = useErrorStore()
+  const alertStore = useAlertStore()
 
   const isFetchItemRandomly = playerOptsStore.isFetchItemRandomly
 
@@ -58,11 +58,13 @@ export const useDBPlayer = ({
   } = useDBPlayerStore()
 
   // #region Private Methods
-  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
-    return errorStore.add(error, {
+  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
+    const errorAlert = createErrorAlert(error, {
       ...errorData,
       file: 'useDBPlayer.ts',
     })
+    alertStore.add(errorAlert)
+    return errorAlert
   }
 
   function activatePlayerFeatures (): void {

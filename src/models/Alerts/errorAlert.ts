@@ -1,26 +1,23 @@
-let errorIdTracker: number = 1
+import { AbstractAlert, AlertType } from './abstractAlert'
 
 export enum ERROR_SEVERITY {
-  'error' = 'error',
-  'warn' = 'warning',
-  'info' = 'info'
+  Error = 'error',
+  Warn = 'warning',
+  Info = 'info'
 }
 
-export interface CustomErrorData {
+export interface ErrorAlertData {
   file?: string
   actionName?: string
   isBackend?: boolean
 }
 
-export const ERROR_SEVERITY_ERROR = ERROR_SEVERITY.error
-export const ERROR_SEVERITY_WARN = ERROR_SEVERITY.warn
-export const ERROR_SEVERITY_INFO = ERROR_SEVERITY.info
+export const ERROR_SEVERITY_ERROR = ERROR_SEVERITY.Error
+export const ERROR_SEVERITY_WARN = ERROR_SEVERITY.Warn
+export const ERROR_SEVERITY_INFO = ERROR_SEVERITY.Info
 
-export type CustomErrorId = number
-export class CustomError {
-  id: CustomErrorId
+export class ErrorAlert extends AbstractAlert {
   error: boolean
-  message: string
   publicMessage: string
   severity: ERROR_SEVERITY
   actionName: string
@@ -28,7 +25,7 @@ export class CustomError {
   isBackend: boolean
   date: Date
 
-  constructor (e: any, { file, actionName, isBackend }: CustomErrorData) {
+  constructor (e: any, { file, actionName, isBackend }: ErrorAlertData) {
     let error = e
     let publicMessage
     let message
@@ -48,21 +45,19 @@ export class CustomError {
       severity = error?.severity ?? ERROR_SEVERITY_ERROR
     }
 
-    this.id = errorIdTracker
+    super({ type: AlertType.Error, message })
+
     this.error = true
-    this.message = message
     this.publicMessage = publicMessage
     this.severity = severity
     this.actionName = actionName || ''
     this.file = file || ''
     this.isBackend = !!isBackend
     this.date = new Date()
-
-    errorIdTracker = errorIdTracker + 1
   }
 }
 
-export function createError (error: any, errorData: CustomErrorData) {
-  console.error(error, errorData)
-  return new CustomError(error, errorData)
+export function createErrorAlert (error: any, errorData: ErrorAlertData) {
+  console.error('### error:', error, errorData)
+  return new ErrorAlert(error, errorData)
 }

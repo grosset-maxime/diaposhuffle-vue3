@@ -6,7 +6,6 @@
 // TODO: Feature: Add options to play items not randomly but in row into a folder.
 
 // Types
-import type { CustomError, CustomErrorData } from '@/models/error'
 import type { Item } from '@/models/item'
 import type { TagId } from '@/models/tag'
 import { Position } from '@/interfaces/components/PinWrapper'
@@ -24,7 +23,7 @@ import {
 } from '@/logic/useEmitter'
 
 // Stores
-import { useErrorStore } from '@/stores/errorStore'
+import { useAlertStore } from '@/stores/alertStore'
 import { useMainStore } from '@/stores/mainStore'
 import { useDiapoShuffleStore } from '@/stores/diapoShuffleStore'
 import { useUIOptionsStore } from '@/stores/ThePlayerOptions/uiOptionsStore'
@@ -44,16 +43,18 @@ import ItemPathChip from '@/components/ThePlayer/ItemPathChip.vue'
 import TheTagger from '@/components/TheTagger/TheTagger.vue'
 import DeleteModal from '@/components/DeleteModal.vue'
 import { PlayerName } from '@/logic/ThePlayer/useThePlayer'
+import { createErrorAlert, type ErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
 
-const errorStore = useErrorStore()
+const alertStore = useAlertStore()
 
-function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
-  const customError = errorStore.add(error, {
+function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
+  const errorAlert = createErrorAlert(error, {
     ...errorData,
     file: 'ThePlayer.vue',
   })
+  alertStore.add(errorAlert)
 
-  return customError
+  return errorAlert
 }
 
 const { showTheHelp } = useMainStore()

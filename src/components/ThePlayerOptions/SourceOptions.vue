@@ -46,7 +46,7 @@ function onCloseTheFolderBrowser () {
 }
 
 function onSaveTheFolderBrowser (folders: Set<FolderPath>) {
-  selectedFolders.value.setValues(folders, { clear: true })
+  selectedFolders.value.addValues(folders, { clear: true })
 }
 
 function onUnselectAllFolders () {
@@ -76,7 +76,7 @@ function onCloseTaggerModal () {
 }
 
 function onSaveTaggerModal (selectedTagIds: Set<TagId>) {
-  selectedTags.value.setValues(selectedTagIds, { clear: true })
+  selectedTags.value.addValues(selectedTagIds, { clear: true })
 }
 
 function onUnselectAllTags () {

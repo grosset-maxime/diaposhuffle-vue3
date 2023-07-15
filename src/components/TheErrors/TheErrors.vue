@@ -1,29 +1,24 @@
 <script setup lang="ts">
-// Vendors Libs
-import { computed } from 'vue'
-
 // Stores
-import { useErrorStore } from '@/stores/errorStore'
+import { useAlertStore } from '@/stores/alertStore'
 
 // Components
-import ErrorItem from '@/components/TheErrors/ErrorItem.vue'
+import ErrorAlert from '@/components/TheErrors/ErrorAlert.vue'
 
 // Stores
-const { errors } = useErrorStore()
-
-const errorsIds = computed(() => Array.from(errors.value.keys()))
+const { errorsList } = useAlertStore()
 
 </script>
 
 <template>
   <v-card class="the-errors">
-    <div class="no-error" v-if="!errorsIds.length">
+    <div class="no-error" v-if="!errorsList.length">
       No Error
     </div>
 
-    <div class="errors-list-ctn">
-      <template v-for="(errorId) in errorsIds" :key="errorId">
-        <ErrorItem class="error-item" :error-id="errorId" />
+    <div class="errors-list-ctn scrollable">
+      <template v-for="(errorAlert) in errorsList" :key="errorAlert.id">
+        <ErrorAlert class="error-alert-item" :error-alert="errorAlert" />
       </template>
     </div>
   </v-card>
@@ -41,7 +36,7 @@ const errorsIds = computed(() => Array.from(errors.value.keys()))
   .errors-list-ctn {
     padding: 20px;
 
-    .error-item {
+    .error-alert-item {
       margin-bottom: 10px;
     }
   }

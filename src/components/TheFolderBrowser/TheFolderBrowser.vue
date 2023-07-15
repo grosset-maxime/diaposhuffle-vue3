@@ -59,7 +59,7 @@ watch(
 //#region Methods
 function onShow () {
   startKSListener()
-  selectedFolders.value.setValues(props.selected, { clear: true })
+  selectedFolders.value.addValues(props.selected, { clear: true })
 }
 
 function onHide () {

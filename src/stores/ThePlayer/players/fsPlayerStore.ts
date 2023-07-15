@@ -1,6 +1,5 @@
 // Types
 import type { Item } from '@/models/item'
-import type { CustomError, CustomErrorData } from '@/models/error'
 
 // Vendors Libs
 import { ref } from 'vue'
@@ -12,17 +11,18 @@ import {
 } from '@/api/items'
 
 // Stores
-import { useErrorStore } from '@/stores/errorStore'
 import { useSourceOptionsStore } from '@/stores/ThePlayerOptions/sourceOptionsStore'
 import {
   ON_FS_PLAYER_STORE_AFTER_DELETE_ITEM,
   ON_ITEM_DELETED,
   emitter,
 } from '@/logic/useEmitter'
+import { useAlertStore } from '@/stores/alertStore'
+import { type ErrorAlert, createErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
 
 export const useFSPlayerStore = createGlobalState(() => {
 
-  const errorStore = useErrorStore()
+  const alertStore = useAlertStore()
   const sourceOptsStore = useSourceOptionsStore()
 
   // #region States
@@ -38,11 +38,13 @@ export const useFSPlayerStore = createGlobalState(() => {
   // #endregion States
 
   // #region Private Methods
-  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
-    return errorStore.add(error, {
+  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
+    const errorAlert = createErrorAlert(error, {
       ...errorData,
       file: 'fsPlayerStore.ts',
     })
+    alertStore.add(errorAlert)
+    return errorAlert
   }
 
   async function onDeleteItem (itm: Item) {

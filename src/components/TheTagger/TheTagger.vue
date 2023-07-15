@@ -36,7 +36,7 @@ function onShow () {
   editMode.value = false
   hasOpacity.value = false
 
-  selected.value.setValues(props.selected, { clear: true })
+  selected.value.addValues(props.selected, { clear: true })
   showTheTagger.value = true
 }
 

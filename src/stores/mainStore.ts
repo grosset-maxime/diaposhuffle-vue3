@@ -39,9 +39,12 @@ export const useMainStore = createGlobalState(() => {
 
   const theme = eagerComputed(() => states.value.theme)
 
+  const showFloatingAlert = ref(false)
+
   return {
     showTheHelp,
     showMenu,
+    showFloatingAlert,
     railMenu,
     lastVisitedRoute,
     theme,

@@ -1,5 +1,5 @@
 import { BASE_URL, fetchJson } from '@/api/api'
-import { createError } from '@/models/error'
+import { createErrorAlert } from '@/models/Alerts/errorAlert'
 
 /**
  * Get folders name of a parent folder from the fs.
@@ -25,7 +25,7 @@ export const getFolders = async ({ path }: { path?: string } = {}) => {
 
     folders = json.folderList
   } catch (error) {
-    throw createError(error, {
+    throw createErrorAlert(error, {
       file: 'folders.ts',
     })
   }

@@ -3,7 +3,6 @@
 
 // Types
 import type { Item } from '@/models/item'
-import type { CustomErrorId, CustomError, CustomErrorData } from '@/models/error'
 import type { PlayerName } from '@/logic/ThePlayer/useThePlayer'
 
 // Vendors Libs
@@ -14,10 +13,12 @@ import {
   deleteItem as deleteItemAPI,
   setItemTags as setItemTagsAPI,
 } from '@/api/items'
-import { useErrorStore } from '@/stores/errorStore'
+import { useAlertStore } from '../alertStore'
+import { createErrorAlert, type ErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
+import type { AlertId } from '@/models/Alerts/abstractAlert'
 
 export const useThePlayerStore = createGlobalState(() => {
-  const errorStore = useErrorStore()
+  const alertStore = useAlertStore()
 
   // Player states
   const isStopped = ref(true)
@@ -38,18 +39,19 @@ export const useThePlayerStore = createGlobalState(() => {
   const historyEnabled = ref(false)
   const pauseEnabled = ref(false)
 
-  const errors = ref<Array<CustomErrorId>>([])
+  const errors = ref<Array<AlertId>>([])
   // const getErrors = () => errors.value
 
-  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
-    const customError = errorStore.add(error, {
+  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
+    const errorAlert = createErrorAlert(error, {
       ...errorData,
       file: 'ThePlayerStore.ts',
     })
+    alertStore.add(errorAlert)
 
-    errors.value.push(customError.id)
+    errors.value.push(errorAlert.id)
 
-    return customError
+    return errorAlert
   }
 
   // #region Methods

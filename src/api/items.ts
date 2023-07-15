@@ -5,7 +5,7 @@ import type { TagsOperator, FileType } from '@/stores/ThePlayerOptions/sourceOpt
 
 import { createItem } from '@/models/item'
 import { BASE_URL, fetchJson } from '@/api/api'
-import { createError } from '@/models/error'
+import { createErrorAlert } from '@/models/Alerts/errorAlert'
 
 /**
  * Fetch one random item from file system.
@@ -45,7 +45,7 @@ export const fetchRandomItem = async (
     } = await fetchJson(url, opts)
     item = createItem(response.pic)
   } catch (error) {
-    throw createError(error, {
+    throw createErrorAlert(error, {
       file: 'items.ts',
     })
   }
@@ -104,7 +104,7 @@ export const fetchItemsFromBdd = async ({
       }),
     )
   } catch (error) {
-    throw createError(error, {
+    throw createErrorAlert(error, {
       file: 'items.ts',
     })
   }
@@ -124,7 +124,7 @@ export const deleteItem = async ({
   item: Item;
 }): Promise<{ success: boolean }> => {
   if (!item || !item.src) {
-    throw createError('Missing mandatory options.', {
+    throw createErrorAlert('Missing mandatory options.', {
       file: 'items.ts',
     })
   }
@@ -144,7 +144,7 @@ export const deleteItem = async ({
 
     response = await fetchJson(url, opts)
   } catch (error) {
-    throw createError(error, {
+    throw createErrorAlert(error, {
       file: 'items.ts',
     })
   }
@@ -164,7 +164,7 @@ export const setItemTags = async (
   const { name, path, tags } = item
 
   if (!name || !path) {
-    throw createError('Missing mandatory options.', {
+    throw createErrorAlert('Missing mandatory options.', {
       file: 'items.ts',
     })
   }
@@ -182,7 +182,7 @@ export const setItemTags = async (
 
     response = await fetchJson(url, opts)
   } catch (error) {
-    throw createError(error, {
+    throw createErrorAlert(error, {
       file: 'items.ts',
     })
   }

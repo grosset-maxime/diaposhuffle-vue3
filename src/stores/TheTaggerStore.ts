@@ -7,7 +7,6 @@ import type {
   TagCategoryId,
   TagCategoryData,
 } from '@/models/tag'
-import type { CustomError, CustomErrorData, CustomErrorId } from '@/models/error'
 
 // Vendors Libs
 import { computed, ref } from 'vue'
@@ -25,11 +24,13 @@ import {
   deleteCategory as deleteCategoryAPI,
 } from '@/api/tags'
 import useReactiveMap from '@/logic/useReactiveMap'
+import { useAlertStore } from './alertStore'
+import { createErrorAlert, ErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
+import type { AlertId } from '@/models/Alerts/abstractAlert'
 
-import { useErrorStore } from '@/stores/errorStore'
 
 export const useTheTaggerStore = createGlobalState(() => {
-  const errorStore = useErrorStore()
+  const alertStore = useAlertStore()
 
   // State
   const taggerReadyPromise = ref<Promise<void> | undefined>()
@@ -42,7 +43,7 @@ export const useTheTaggerStore = createGlobalState(() => {
 
   const lastUsedTags = useReactiveMap<TagId, Tag>()
 
-  const errors = ref<Array<CustomErrorId>>([])
+  const errors = ref<Array<AlertId>>([])
 
   // Computed
   const isTaggerReady = computed<boolean>(() => taggerReady.value)
@@ -53,18 +54,19 @@ export const useTheTaggerStore = createGlobalState(() => {
   // Getters
   const getTag = (id: TagId): Tag | undefined => tags.value.get(id)
   const getCategory = (id: TagCategoryId): TagCategory | undefined => categories.value.get(id)
-  const getErrors = (): Array<CustomErrorId> => errors.value
+  const getErrors = (): Array<AlertId> => errors.value
 
   // #region Mutations
-  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
-    const customError = errorStore.add(error, {
+  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
+    const errorAlert = createErrorAlert(error, {
       ...errorData,
       file: 'TheTaggerStore.ts',
     })
+    alertStore.add(errorAlert)
 
-    errors.value.push(customError.id)
+    errors.value.push(errorAlert.id)
 
-    return customError
+    return errorAlert
   }
 
   const addLastUsedTag = (tagId: Tag | TagId): void => {

@@ -1,6 +1,5 @@
 // Types
 import type { Item } from '@/models/item'
-import type { CustomError, CustomErrorData } from '@/models/error'
 import { PlayerName, type UsePlayerArg, type UsePlayerExpose } from '@/logic/ThePlayer/useThePlayer'
 
 // Vendors Libs
@@ -10,12 +9,13 @@ import { computed } from 'vue'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
 import { getNextItem, getPreviousItem } from '@/utils/playerUtils'
-import { useErrorStore } from '@/stores/errorStore'
 import {
   ON_HISTORY_PLAYER_STORE_AFTER_DELETE_ITEM,
   ON_THE_PLAYER_STOP,
   emitter,
 } from '@/logic/useEmitter'
+import { useAlertStore } from '@/stores/alertStore'
+import { createErrorAlert, ErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
 
 export const useHistoryPlayer = ({
   showNextItem,
@@ -23,7 +23,7 @@ export const useHistoryPlayer = ({
 }: UsePlayerArg) => {
 
   const thePlayerStore = useThePlayerStore()
-  const errorStore = useErrorStore()
+  const alertStore = useAlertStore()
 
   const isActivePlayer = computed<boolean>(
     () => thePlayerStore.playerName.value === PlayerName.history,
@@ -42,11 +42,13 @@ export const useHistoryPlayer = ({
   } = useHistoryPlayerStore()
 
   // #region Private Methods
-  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
-    return errorStore.add(error, {
+  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
+    const errorAlert = createErrorAlert(error, {
       ...errorData,
       file: 'useHistoryPlayer.ts',
     })
+    alertStore.add(errorAlert)
+    return errorAlert
   }
 
   function activatePlayerFeatures (): void {

@@ -1,4 +1,4 @@
-import { createError } from '@/models/error'
+import { createErrorAlert } from '@/models/Alerts/errorAlert'
 
 export const BASE_URL = import.meta.env.VITE_BASE_URL || ''
 
@@ -13,7 +13,7 @@ export const fetchJson = async (url: string, opts: object) => {
   const json = await response.json()
 
   if (json.error) {
-    throw createError(json.error, {
+    throw createErrorAlert(json.error, {
       file: 'api.ts',
     })
   }

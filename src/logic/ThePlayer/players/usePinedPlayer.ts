@@ -1,6 +1,5 @@
 // Types
 import type { Item } from '@/models/item'
-import type { CustomError, CustomErrorData } from '@/models/error'
 
 // Vendors Libs
 import { computed } from 'vue'
@@ -10,7 +9,6 @@ import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptionsSt
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
 import { usePinedPlayerStore } from '@/stores/ThePlayer/players/pinedPlayerStore'
-import { useErrorStore } from '@/stores/errorStore'
 
 // Logics
 import {
@@ -23,6 +21,8 @@ import { useTheLoop } from '@/logic/ThePlayer/useTheLoop'
 
 // Utlis
 import { getNextItem, getPreviousItem } from '@/utils/playerUtils'
+import { useAlertStore } from '@/stores/alertStore'
+import { createErrorAlert, type ErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
 
 export const usePinedPlayer = ({
   showNextItem,
@@ -33,7 +33,7 @@ export const usePinedPlayer = ({
   const thePlayerStore = useThePlayerStore()
   const playerOptsStore = usePlayerOptionsStore()
   const theLoopStore = useTheLoopStore()
-  const errorStore = useErrorStore()
+  const alertStore = useAlertStore()
 
   const isFetchItemRandomly = computed(() => playerOptsStore.isFetchItemRandomly.value)
 
@@ -54,11 +54,13 @@ export const usePinedPlayer = ({
   } = usePinedPlayerStore()
 
   // #region Methods
-  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
-    return errorStore.add(error, {
+  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
+    const errorAlert = createErrorAlert(error, {
       ...errorData,
       file: 'usePinedPlayer.ts',
     })
+    alertStore.add(errorAlert)
+    return errorAlert
   }
 
   function activatePlayerFeatures (): void {
