@@ -67,7 +67,9 @@ router.beforeEach((to, from, next) => {
     }"
   >
     <!-- Floating error alert. -->
-    <FloatingAlert :show="showFloatingAlert"/>
+    <Teleport to="body">
+      <FloatingAlert :show="showFloatingAlert" @close="showFloatingAlert = false"/>
+    </Teleport>
 
     <!-- Navigation menu. -->
     <NavigationMenu :show="showMenu" :items="routesMap" />

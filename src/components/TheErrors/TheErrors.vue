@@ -3,7 +3,7 @@
 import { useAlertStore } from '@/stores/alertStore'
 
 // Components
-import ErrorAlert from '@/components/TheErrors/ErrorAlert.vue'
+import ErrorAlert from '@/components/Alerts/ErrorAlert.vue'
 
 // Stores
 const { errorsList } = useAlertStore()
@@ -17,8 +17,13 @@ const { errorsList } = useAlertStore()
     </div>
 
     <div class="errors-list-ctn scrollable">
-      <template v-for="(errorAlert) in errorsList" :key="errorAlert.id">
-        <ErrorAlert class="error-alert-item" :error-alert="errorAlert" />
+      <template v-for="(errorAlert) in errorsList.reverse()" :key="errorAlert.id">
+        <ErrorAlert
+          class="error-alert-item"
+          :error-alert="errorAlert"
+          closable
+          mode="listItem"
+        />
       </template>
     </div>
   </v-card>

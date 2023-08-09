@@ -33,7 +33,11 @@ export const useAlertStore = createGlobalState(() => {
   // TODO: save alerts into the localstorage.
   function add (customAlert: CustomAlert, silent = false): CustomAlert {
     alerts.value.set(customAlert.id, customAlert)
-    !silent && (showFloatingAlert.value = true)
+
+    if (!silent) {
+      showFloatingAlert.value = true
+    }
+
     return customAlert
   }
 

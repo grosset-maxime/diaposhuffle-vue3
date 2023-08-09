@@ -1,25 +1,19 @@
 import { AbstractAlert, AlertType } from './abstractAlert'
 
-export enum ERROR_SEVERITY {
-  Error = 'error',
-  Warn = 'warning',
-  Info = 'info'
-}
-
 export interface ErrorAlertData {
   file?: string
   actionName?: string
   isBackend?: boolean
 }
 
-export const ERROR_SEVERITY_ERROR = ERROR_SEVERITY.Error
-export const ERROR_SEVERITY_WARN = ERROR_SEVERITY.Warn
-export const ERROR_SEVERITY_INFO = ERROR_SEVERITY.Info
+export const ERROR_SEVERITY_ERROR = AlertType.Error
+export const ERROR_SEVERITY_WARN = AlertType.Warning
+export const ERROR_SEVERITY_INFO = AlertType.Info
 
 export class ErrorAlert extends AbstractAlert {
   error: boolean
   publicMessage: string
-  severity: ERROR_SEVERITY
+  severity: AlertType
   actionName: string
   file: string
   isBackend: boolean
