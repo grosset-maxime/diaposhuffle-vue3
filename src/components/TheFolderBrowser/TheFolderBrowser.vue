@@ -39,7 +39,12 @@ const emit = defineEmits<{
 const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
 // Refs
-const selectedFolders = useReactiveSet<FolderPath>(props.selected)
+const selectedFolders = useReactiveSet<FolderPath>()
+watch(
+  () => props.selected,
+  () => selectedFolders.value.addValues(props.selected),
+  { immediate: true },
+)
 
 // Computeds
 const nbSelected = computed<number>(() => selectedFolders.value.size)

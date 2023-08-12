@@ -19,13 +19,12 @@ import {
   ON_ITEM_DELETED,
   emitter,
 } from '@/logic/useEmitter'
-import { useAlertStore } from '@/stores/alertStore'
-import { createErrorAlert } from '@/models/Alerts/errorAlert'
+import { createCustomError } from '@/models/customError'
+import { logError } from '@/utils/errorUtils'
 
 export const useDBPlayerStore = createGlobalState(() => {
 
   const sourceOptsStore = useSourceOptionsStore()
-  const alertStore = useAlertStore()
 
   // #region States
   const isStopped = ref(true)
@@ -93,12 +92,11 @@ export const useDBPlayerStore = createGlobalState(() => {
       return itms
 
     } catch (e) {
-      throw alertStore.add(
-        createErrorAlert(e, {
-          file: 'dbPlayerStore.ts',
-          actionName: 'PLAYER_A_FETCH_ITEMS_FROM_BDD',
-        }),
-      )
+      throw logError(createCustomError(e, {
+        file: 'dbPlayerStore.ts',
+        actionName: 'PLAYER_A_FETCH_ITEMS_FROM_BDD',
+        isBackend: true,
+      }))
     }
   }
   // #endregion Actions

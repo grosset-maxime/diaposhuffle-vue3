@@ -5,7 +5,10 @@ import type { TagsOperator, FileType } from '@/stores/ThePlayerOptions/sourceOpt
 
 import { createItem } from '@/models/item'
 import { BASE_URL, fetchJson } from '@/api/api'
-import { createErrorAlert } from '@/models/Alerts/errorAlert'
+import { logError } from '@/utils/errorUtils'
+import { createCustomError } from '@/models/customError'
+
+const FILE_NAME = 'api/items.ts'
 
 /**
  * Fetch one random item from file system.
@@ -16,8 +19,6 @@ import { createErrorAlert } from '@/models/Alerts/errorAlert'
 export const fetchRandomItem = async (
   { folders }: { folders?: Array<string> } = {},
 ): Promise<Item> => {
-  let item: Item
-
   try {
     const url = `${BASE_URL}/api/getRandomPic`
 
@@ -43,14 +44,16 @@ export const fetchRandomItem = async (
         warning: string;
       };
     } = await fetchJson(url, opts)
-    item = createItem(response.pic)
-  } catch (error) {
-    throw createErrorAlert(error, {
-      file: 'items.ts',
-    })
-  }
 
-  return item
+    return createItem(response.pic)
+
+  } catch (e) {
+    throw logError(createCustomError(e, {
+      file: FILE_NAME,
+      actionName: 'fetchRandomItem',
+      isBackend: true,
+    }))
+  }
 }
 
 /**
@@ -70,8 +73,6 @@ export const fetchItemsFromBdd = async ({
   types?: Array<FileType>
   tagsOperator?: TagsOperator
 } = {}): Promise<Array<Item>> => {
-  let items: Array<Item> = []
-
   try {
     const url = `${BASE_URL}/api/getPicsFromBdd`
 
@@ -95,7 +96,7 @@ export const fetchItemsFromBdd = async ({
       }>;
     } = await fetchJson(url, opts)
 
-    items = response.results.map((item) =>
+    return response.results.map((item) =>
       createItem({
         src: item.path,
         tags: item.tags.split(';').filter((tag) => tag),
@@ -103,13 +104,13 @@ export const fetchItemsFromBdd = async ({
         // TODO: set type (file type) ?
       }),
     )
-  } catch (error) {
-    throw createErrorAlert(error, {
-      file: 'items.ts',
-    })
+  } catch (e) {
+    throw logError(createCustomError(e, {
+      file: FILE_NAME,
+      actionName: 'fetchItemsFromBdd',
+      isBackend: true,
+    }))
   }
-
-  return items
 }
 
 /**
@@ -124,9 +125,11 @@ export const deleteItem = async ({
   item: Item;
 }): Promise<{ success: boolean }> => {
   if (!item || !item.src) {
-    throw createErrorAlert('Missing mandatory options.', {
-      file: 'items.ts',
-    })
+    throw logError(createCustomError('Missing mandatory options.', {
+      file: FILE_NAME,
+      actionName: 'deleteItem',
+      isBackend: false,
+    }))
   }
 
   let response: {
@@ -143,10 +146,12 @@ export const deleteItem = async ({
     }
 
     response = await fetchJson(url, opts)
-  } catch (error) {
-    throw createErrorAlert(error, {
-      file: 'items.ts',
-    })
+  } catch (e) {
+    throw logError(createCustomError(e, {
+      file: FILE_NAME,
+      actionName: 'deleteItem',
+      isBackend: true,
+    }))
   }
 
   return response
@@ -164,9 +169,11 @@ export const setItemTags = async (
   const { name, path, tags } = item
 
   if (!name || !path) {
-    throw createErrorAlert('Missing mandatory options.', {
-      file: 'items.ts',
-    })
+    throw logError(createCustomError('Missing mandatory options.', {
+      file: FILE_NAME,
+      actionName: 'setItemTags',
+      isBackend: false,
+    }))
   }
 
   let response: {
@@ -181,10 +188,12 @@ export const setItemTags = async (
     }
 
     response = await fetchJson(url, opts)
-  } catch (error) {
-    throw createErrorAlert(error, {
-      file: 'items.ts',
-    })
+  } catch (e) {
+    throw logError(createCustomError(e, {
+      file: FILE_NAME,
+      actionName: 'setItemTags',
+      isBackend: true,
+    }))
   }
 
   return response

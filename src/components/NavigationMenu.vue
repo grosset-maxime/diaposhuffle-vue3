@@ -2,7 +2,7 @@
 import type { IRoute } from '../interfaces/route'
 
 import { useMainStore } from '@/stores/mainStore'
-import { useAlertStore } from '@/stores/alertStore'
+import { useErrorLogStore } from '@/stores/errorLogStore'
 import { eagerComputed } from '@vueuse/core'
 
 const props = defineProps<{
@@ -14,8 +14,8 @@ const {
   railMenu,
 } = useMainStore()
 
-const { errorsList } = useAlertStore()
-const nbErrors = eagerComputed(() => errorsList.value.length)
+const { errors } = useErrorLogStore()
+const nbErrors = eagerComputed(() => errors.value.length)
 
 const toggleRailMenu = () => railMenu.value = !railMenu.value
 

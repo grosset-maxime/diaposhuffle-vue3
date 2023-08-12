@@ -8,7 +8,7 @@ import type { TagId } from '@/models/tag'
 import type { FolderPath } from '@/stores/TheFolderBrowserStore'
 
 // Vendors Libs
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { eagerComputed } from '@vueuse/shared'
 
 // Stores

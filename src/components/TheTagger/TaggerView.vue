@@ -56,7 +56,12 @@ const emit = defineEmits<{
   (e: 'toggleOpacity'): void;
 }>()
 
-const selectedTagsIdsSet = useReactiveSet<TagId>(props.selected)
+const selectedTagsIdsSet = useReactiveSet<TagId>()
+watch(
+  () => props.selected,
+  () => selectedTagsIdsSet.value.addValues(props.selected),
+  { immediate: true },
+)
 const isLoading = ref(true)
 
 // #region Filtering section

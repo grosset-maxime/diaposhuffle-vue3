@@ -11,6 +11,7 @@ export const ERROR_SEVERITY_WARN = AlertType.Warning
 export const ERROR_SEVERITY_INFO = AlertType.Info
 
 export class ErrorAlert extends AbstractAlert {
+  e: unknown
   error: boolean
   publicMessage: string
   severity: AlertType
@@ -31,7 +32,7 @@ export class ErrorAlert extends AbstractAlert {
 
     try {
       message = error.message || error.toString()
-      publicMessage = error.publicMessage || error.toString()
+      publicMessage = error.publicMessage || error.message || error.toString()
       severity = error.severity || ERROR_SEVERITY_ERROR
     } catch (er: unknown) {
       message = er && (er as any).toString
@@ -45,6 +46,7 @@ export class ErrorAlert extends AbstractAlert {
 
     super({ type: AlertType.Error, message })
 
+    this.e = e
     this.error = true
     this.publicMessage = publicMessage
     this.severity = severity

@@ -25,7 +25,8 @@ const emit = defineEmits<{
 }>()
 
 // Refs
-const selected = useReactiveSet<TagId>(props.selected)
+const selectedTagId = useReactiveSet<TagId>()
+
 const editMode = ref(false)
 const hasOpacity = ref(false)
 const theTaggerCmp = ref<{ selectRandom: () => void } | null>(null)
@@ -36,7 +37,7 @@ function onShow () {
   editMode.value = false
   hasOpacity.value = false
 
-  selected.value.addValues(props.selected, { clear: true })
+  selectedTagId.value.addValues(props.selected, { clear: true })
   showTheTagger.value = true
 }
 
@@ -45,7 +46,7 @@ function onHide () {
 }
 
 function onSave () {
-  emit('save', new Set(selected.value))
+  emit('save', new Set(selectedTagId.value))
   onClose()
 }
 
@@ -56,15 +57,15 @@ function onCancel () {
 function onClose () {
   onHide()
   emit('close')
-  selected.value.clear()
+  selectedTagId.value.clear()
 }
 
 function onSelect (tagId: TagId) {
-  selected.value.add(tagId)
+  selectedTagId.value.add(tagId)
 }
 
 function onUnselect (tagId: TagId) {
-  selected.value.delete(tagId)
+  selectedTagId.value.delete(tagId)
 }
 
 function onToggleOpacity () {
@@ -149,7 +150,7 @@ watch(
       <TaggerView
         class="tagger-ctn"
         ref="theTaggerCmp"
-        :selected="selected"
+        :selected="selectedTagId"
         :edit-mode="editMode"
         :show="show"
         @select="onSelect"

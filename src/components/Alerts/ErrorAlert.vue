@@ -91,6 +91,8 @@ function onClose (): void {
           <div>Action name: {{ errorAlert.actionName }}</div>
           <div>File: {{ errorAlert.file }}</div>
           <div>{{ errorAlert.isBackend ? 'backend' : 'frontend' }}</div>
+          <div style="margin-top: 10px;">Raw error:</div>
+          <div>{{ errorAlert.e }}</div>
         </div>
       </template>
     </v-alert>

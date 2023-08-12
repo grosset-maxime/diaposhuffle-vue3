@@ -1,31 +1,39 @@
 <script setup lang="ts">
-// Stores
-import { useAlertStore } from '@/stores/alertStore'
-
 // Components
-import ErrorAlert from '@/components/Alerts/ErrorAlert.vue'
+import ErrorItem from '@/components/TheErrors/ErrorItem.vue'
+import { useErrorLogStore } from '@/stores/errorLogStore'
 
 // Stores
-const { errorsList } = useAlertStore()
+const { errors, remove, removeAll } = useErrorLogStore()
 
 </script>
 
 <template>
   <v-card class="the-errors">
-    <div class="no-error" v-if="!errorsList.length">
+    <div class="no-error" v-if="!errors.length">
       No Error
     </div>
 
-    <div class="errors-list-ctn scrollable">
-      <template v-for="(errorAlert) in errorsList.reverse()" :key="errorAlert.id">
-        <ErrorAlert
-          class="error-alert-item"
-          :error-alert="errorAlert"
-          closable
-          mode="listItem"
+    <template v-else>
+      <div class="actions">
+        <v-btn
+          color="secondary"
+          @click="removeAll"
+        >
+          Remove all
+        </v-btn>
+      </div>
+
+      <div class="errors-list-ctn scrollable">
+        <ErrorItem
+          v-for="(error, index) in errors"
+          :key="index"
+          class="error-item"
+          :custom-error="error"
+          @remove="remove(index)"
         />
-      </template>
-    </div>
+      </div>
+    </template>
   </v-card>
 </template>
 
@@ -38,10 +46,20 @@ const { errorsList } = useAlertStore()
   display: flex;
   flex-direction: column;
 
+  .actions {
+    display: flex;
+    justify-content: end;
+    margin: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid $grey-8;
+  }
+
   .errors-list-ctn {
     padding: 20px;
+    display: flex;
+    flex-direction: column-reverse;
 
-    .error-alert-item {
+    .error-item {
       margin-bottom: 10px;
     }
   }

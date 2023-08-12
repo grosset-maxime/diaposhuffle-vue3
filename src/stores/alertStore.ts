@@ -30,7 +30,6 @@ export const useAlertStore = createGlobalState(() => {
     return alerts.value.get(alertId)
   }
 
-  // TODO: save alerts into the localstorage.
   function add (customAlert: CustomAlert, silent = false): CustomAlert {
     alerts.value.set(customAlert.id, customAlert)
 
@@ -41,12 +40,10 @@ export const useAlertStore = createGlobalState(() => {
     return customAlert
   }
 
-  // TODO: remove alerts from the localstorage.
   function remove (alertId: number): boolean {
     return alerts.value.delete(alertId)
   }
 
-  // TODO: clear alerts localstorage.
   function reset (): void {
     alerts.value.clear()
   }

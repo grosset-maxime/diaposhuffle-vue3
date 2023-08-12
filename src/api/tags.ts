@@ -9,15 +9,16 @@ import {
   TagCategory as TagCategoryClass,
 } from '@/models/tag'
 import { BASE_URL, fetchJson } from '@/api/api'
-import { createErrorAlert } from '@/models/Alerts/errorAlert'
+import { logError } from '@/utils/errorUtils'
+import { createCustomError } from '@/models/customError'
+
+const FILE_NAME = 'api/tags.ts'
 
 /**
  * Fetch the entire tags list.
  * @returns All tags list.
  */
-export const fetchTags = async () => {
-  let tags = [] as Array<Tag>
-
+export const fetchTags = async (): Promise<Tag[]> => {
   try {
     const url = `${BASE_URL}/api/getAllTags`
 
@@ -33,28 +34,26 @@ export const fetchTags = async () => {
       }>
     } = await fetchJson(url, opts)
 
-    tags = (json.tags || [])
+    return (json.tags || [])
       .map((t) => createTag({
         id: t.id,
         name: t.name,
         categoryId: t.category,
       }))
-  } catch (error) {
-    throw createErrorAlert(error, {
-      file: 'tags.ts',
-    })
+  } catch (e) {
+    throw logError(createCustomError(e, {
+      file: FILE_NAME,
+      actionName: 'fetchTags',
+      isBackend: true,
+    }))
   }
-
-  return tags
 }
 
 /**
  * Fetch list of categories (tags categories).
  * @returns Promise with
  */
-export const fetchCategories = async () => {
-  let categories = [] as Array<TagCategory>
-
+export const fetchCategories = async (): Promise<TagCategory[]> => {
   try {
     const url = `${BASE_URL}/api/getAllTagCategories`
 
@@ -70,19 +69,19 @@ export const fetchCategories = async () => {
       }>
     } = await fetchJson(url, opts)
 
-    categories = (json.tagCategories || [])
+    return (json.tagCategories || [])
       .map((c) => createTagCategory({
         id: c.id,
         name: c.name,
         color: c.color,
       }))
-  } catch (error) {
-    throw createErrorAlert(error, {
-      file: 'tags.ts',
-    })
+  } catch (e) {
+    throw logError(createCustomError(e, {
+      file: FILE_NAME,
+      actionName: 'fetchCategories',
+      isBackend: true,
+    }))
   }
-
-  return categories
 }
 
 /**
@@ -102,14 +101,14 @@ const editTag = async ({
   isNew?: boolean;
   isDelete?: boolean;
   tag: Tag | TagData;
-}) => {
+}): Promise<boolean> => {
   if (!tag) {
-    throw createErrorAlert('Missing tag option to edit tag.', {
-      file: 'tags.ts',
-    })
+    throw logError(createCustomError('Missing tag option to edit tag.', {
+      file: FILE_NAME,
+      actionName: 'editTag',
+      isBackend: false,
+    }))
   }
-
-  let success = false
 
   try {
     const url = `${BASE_URL}/api/editTag`
@@ -126,14 +125,15 @@ const editTag = async ({
     }
 
     const json = await fetchJson(url, opts)
-    success = !!json.success
-  } catch (error) {
-    throw createErrorAlert(error, {
-      file: 'tags.ts',
-    })
-  }
+    return !!json.success
 
-  return success
+  } catch (e) {
+    throw logError(createCustomError(e, {
+      file: FILE_NAME,
+      actionName: 'editTag',
+      isBackend: true,
+    }))
+  }
 }
 
 /**
@@ -143,9 +143,11 @@ const editTag = async ({
  */
 export const addTag = async (tagData: TagData) => {
   if (!tagData) {
-    throw createErrorAlert('Missing tagData option to add tag.', {
-      file: 'tags.ts',
-    })
+    throw logError(createCustomError('Missing tagData option to add tag.', {
+      file: FILE_NAME,
+      actionName: 'addTag',
+      isBackend: false,
+    }))
   }
 
   let success = false
@@ -155,15 +157,20 @@ export const addTag = async (tagData: TagData) => {
       isNew: true,
       tag: tagData,
     })
+
     if (!success) {
-      throw createErrorAlert('Add tag not successful.', {
-        file: 'tags.ts',
-      })
+      throw logError(createCustomError('Add tag not successful.', {
+        file: FILE_NAME,
+        actionName: 'addTag',
+        isBackend: true,
+      }))
     }
-  } catch (error) {
-    throw createErrorAlert(error, {
-      file: 'tags.ts',
-    })
+  } catch (e) {
+    throw logError(createCustomError(e, {
+      file: FILE_NAME,
+      actionName: 'addTag',
+      isBackend: true,
+    }))
   }
 
   return createTag(tagData)
@@ -176,24 +183,29 @@ export const addTag = async (tagData: TagData) => {
  */
 export const updateTag = async (tagData: TagData | Tag) => {
   if (!tagData) {
-    throw createErrorAlert('Missing tag option to edit a tag.', {
-      file: 'tags.ts',
-    })
+    throw logError(createCustomError('Missing tag option to edit a tag.', {
+      file: FILE_NAME,
+      actionName: 'updateTag',
+      isBackend: true,
+    }))
   }
 
-  let success = false
-
   try {
-    success = await editTag({ tag: tagData })
+    const success = await editTag({ tag: tagData })
+
     if (!success) {
-      throw createErrorAlert('Update tag not successful.', {
-        file: 'tags.ts',
-      })
+      throw logError(createCustomError('Update tag not successful.', {
+        file: FILE_NAME,
+        actionName: 'updateTag',
+        isBackend: true,
+      }))
     }
-  } catch (error) {
-    throw createErrorAlert(error, {
-      file: 'tags.ts',
-    })
+  } catch (e) {
+    throw logError(createCustomError(e, {
+      file: FILE_NAME,
+      actionName: 'updateTag',
+      isBackend: true,
+    }))
   }
 
   return tagData instanceof TagClass
@@ -208,19 +220,23 @@ export const updateTag = async (tagData: TagData | Tag) => {
  */
 export const deleteTag = async (tag: TagData | Tag) => {
   if (!tag) {
-    throw createErrorAlert('Missing tag option to delete tag.', {
-      file: 'tags.ts',
-    })
+    throw logError(createCustomError('Missing tag option to delete tag.', {
+      file: FILE_NAME,
+      actionName: 'deleteTag',
+      isBackend: false,
+    }))
   }
 
   let success = false
 
   try {
     success = await editTag({ tag, isDelete: true })
-  } catch (error) {
-    throw createErrorAlert(error, {
-      file: 'tags.ts',
-    })
+  } catch (e) {
+    throw logError(createCustomError(e, {
+      file: FILE_NAME,
+      actionName: 'deleteTag',
+      isBackend: true,
+    }))
   }
 
   return success
@@ -247,8 +263,6 @@ const editCategory = async ({
   success: boolean;
   tagCategoryId: TagCategoryId;
 }> => {
-  let json
-
   try {
     const url = `${BASE_URL}/api/editTagCategory`
 
@@ -263,14 +277,14 @@ const editCategory = async ({
       }),
     }
 
-    json = await fetchJson(url, opts)
-  } catch (error) {
-    throw createErrorAlert(error, {
-      file: 'tags.ts',
-    })
+    return await fetchJson(url, opts)
+  } catch (e) {
+    throw logError(createCustomError(e, {
+      file: FILE_NAME,
+      actionName: 'editCategory',
+      isBackend: true,
+    }))
   }
-
-  return json
 }
 
 /**
@@ -280,9 +294,11 @@ const editCategory = async ({
  */
 export const addCategory = async (categoryData: TagCategoryData) => {
   if (!categoryData) {
-    throw createErrorAlert('Missing categoryData option to add a new category.', {
-      file: 'tags.ts',
-    })
+    throw logError(createCustomError('Missing categoryData option to add a new category.', {
+      file: FILE_NAME,
+      actionName: 'addCategory',
+      isBackend: false,
+    }))
   }
 
   try {
@@ -293,14 +309,18 @@ export const addCategory = async (categoryData: TagCategoryData) => {
     categoryData.id = response.tagCategoryId
 
     if (!response.success) {
-      throw createErrorAlert('Add category not successful.', {
-        file: 'tags.ts',
-      })
+      throw logError(createCustomError('Add category not successful.', {
+        file: FILE_NAME,
+        actionName: 'addCategory',
+        isBackend: true,
+      }))
     }
-  } catch (error) {
-    throw createErrorAlert(error, {
-      file: 'tags.ts',
-    })
+  } catch (e) {
+    throw logError(createCustomError(e, {
+      file: FILE_NAME,
+      actionName: 'addCategory',
+      isBackend: true,
+    }))
   }
 
   return createTagCategory(categoryData)
@@ -313,9 +333,11 @@ export const addCategory = async (categoryData: TagCategoryData) => {
  */
 export const updateCategory = async (categoryData: TagCategoryData | TagCategory) => {
   if (!categoryData) {
-    throw createErrorAlert('Missing category option to edit a category.', {
-      file: 'tags.ts',
-    })
+    throw logError(createCustomError('Missing category option to edit a category.', {
+      file: FILE_NAME,
+      actionName: 'updateCategory',
+      isBackend: false,
+    }))
   }
 
   let success = false
@@ -323,15 +345,20 @@ export const updateCategory = async (categoryData: TagCategoryData | TagCategory
   try {
     const response = await editCategory({ category: categoryData })
     success = response.success
+
     if (!success) {
-      throw createErrorAlert('Update category not successful.', {
-        file: 'tags.ts',
-      })
+      throw logError(createCustomError('Update category not successful.', {
+        file: FILE_NAME,
+        actionName: 'updateCategory',
+        isBackend: true,
+      }))
     }
-  } catch (error) {
-    throw createErrorAlert(error, {
-      file: 'tags.ts',
-    })
+  } catch (e) {
+    throw logError(createCustomError(e, {
+      file: FILE_NAME,
+      actionName: 'updateCategory',
+      isBackend: true,
+    }))
   }
 
   return categoryData instanceof TagCategoryClass
@@ -346,9 +373,11 @@ export const updateCategory = async (categoryData: TagCategoryData | TagCategory
  */
 export const deleteCategory = async (category: TagCategoryData | TagCategory) => {
   if (!category) {
-    throw createErrorAlert('Missing category option to delete category.', {
-      file: 'tags.ts',
-    })
+    throw logError(createCustomError('Missing category option to delete category.', {
+      file: FILE_NAME,
+      actionName: 'deleteCategory',
+      isBackend: false,
+    }))
   }
 
   let success = false
@@ -356,10 +385,12 @@ export const deleteCategory = async (category: TagCategoryData | TagCategory) =>
   try {
     const response = await editCategory({ category, isDelete: true })
     success = response.success
-  } catch (error) {
-    throw createErrorAlert(error, {
-      file: 'tags.ts',
-    })
+  } catch (e) {
+    throw logError(createCustomError(e, {
+      file: FILE_NAME,
+      actionName: 'deleteCategory',
+      isBackend: true,
+    }))
   }
 
   return success
