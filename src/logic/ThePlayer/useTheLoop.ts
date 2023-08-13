@@ -7,6 +7,8 @@ import { ref, computed } from 'vue'
 import { wait } from '@/utils/utils'
 
 import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
+import { createCustomError, type CustomError, type CustomErrorData } from '@/models/customError'
+import { logError } from '@/utils/errorUtils'
 
 const LOOP_STEP = 100 // In ms.
 const LOOP_ANIMATION_WAIT = 200 // In ms.
@@ -21,6 +23,16 @@ export const useTheLoop = ({ endFn, step = ref(LOOP_STEP) }: UseTheLoop) => {
     value,
     maxValue,
   } = useTheLoopStore()
+
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    const customError = createCustomError(error, {
+      ...errorData,
+      file: 'ThePlayer/useTheLoop.ts',
+    })
+    logError(customError)
+
+    return customError
+  }
 
   const getTimeText = (ms: number, { noMs = false } = {}) => {
     const date = new Date(2020, 0, 0)
@@ -149,9 +161,13 @@ export const useTheLoop = ({ endFn, step = ref(LOOP_STEP) }: UseTheLoop) => {
   }
 
   async function onLoopEnd ({ noEvent = false } = {}): Promise<void> {
-    isLooping.value = false
-    if (!noEvent) {
-      await endFn()
+    try {
+      isLooping.value = false
+      if (!noEvent) {
+        await endFn()
+      }
+    } catch(e) {
+      throw onError(e, { actionName: 'onLoopEnd' })
     }
   }
 

@@ -88,53 +88,65 @@ export const useFSPlayer = ({
   }
 
   async function showItem (itemToShow: Item): Promise<void> {
-    setNextItem(itemToShow)
-    await showNextItem()
+    try {
+      setNextItem(itemToShow)
+      await showNextItem()
 
-    item.value = itemToShow
-    thePlayerStore.item.value = item.value
+      item.value = itemToShow
+      thePlayerStore.item.value = item.value
 
-    theLoopStore.value.value = 0
-    theLoopStore.maxValue.value = getItemDuration() || playerOptsStore.interval.value * 1000
-    theLoopStore.indeterminate.value = false
+      theLoopStore.value.value = 0
+      theLoopStore.maxValue.value = getItemDuration() || playerOptsStore.interval.value * 1000
+      theLoopStore.indeterminate.value = false
+    } catch (e) {
+      throw onError(e, { actionName: 'showItem' })
+    }
   }
 
   async function fetchNextItem (): Promise<Item> {
-    isFetchingNextItem.value = true
+    try {
+      isFetchingNextItem.value = true
 
-    fetchNextItemPromise.value = fetchItem()
-    const itm: Item = await fetchNextItemPromise.value
+      fetchNextItemPromise.value = fetchItem()
+      const itm: Item = await fetchNextItemPromise.value
 
-    fetchNextItemPromise.value = undefined
-    isFetchingNextItem.value = false
+      fetchNextItemPromise.value = undefined
+      isFetchingNextItem.value = false
 
-    return itm
+      return itm
+    } catch (e) {
+      throw onError(e, { actionName: 'fetchNextItem' })
+    }
   }
 
   async function onLoopEnd (): Promise<void> {
-    theLoopStore.indeterminate.value = true
+    try {
+      theLoopStore.indeterminate.value = true
 
-    if (isFetchingNextItem.value) {
-      await fetchNextItemPromise.value
+      if (isFetchingNextItem.value) {
+        await fetchNextItemPromise.value
 
-    } else if (!nextItem.value) {
-      nextItem.value = await fetchNextItem()
-    }
+      } else if (!nextItem.value) {
+        nextItem.value = await fetchNextItem()
+      }
 
-    if (!nextItem.value) {
-      stop()
-      throw onError('No next item found.')
-    }
+      if (!nextItem.value) {
+        stop()
+        throw 'No next item found.'
+      }
 
-    historyPlayerStore.add(nextItem.value)
+      historyPlayerStore.add(nextItem.value)
 
-    await showItem(nextItem.value)
+      await showItem(nextItem.value)
 
-    fetchNextItem()
-      .then((itm) => nextItem.value = itm)
+      fetchNextItem()
+        .then((itm) => nextItem.value = itm)
 
-    if (!thePlayerStore.isPaused.value) {
-      theLoop.startLooping()
+      if (!thePlayerStore.isPaused.value) {
+        theLoop.startLooping()
+      }
+    } catch (e) {
+      throw onError(e, { actionName: 'onLoopEnd' })
     }
   }
 
@@ -149,10 +161,16 @@ export const useFSPlayer = ({
 
   // #region Exposed Actions
   async function start (): Promise<void> {
-    addEventsListeners()
-    reset()
-    isStopped.value = false
-    await onLoopEnd()
+    try {
+      addEventsListeners()
+      reset()
+      isStopped.value = false
+
+      await onLoopEnd()
+
+    } catch (e) {
+      throw onError(e, { actionName: 'start' })
+    }
   }
 
   function stop (): void {
@@ -174,8 +192,12 @@ export const useFSPlayer = ({
   }
 
   async function next (): Promise<void> {
-    await theLoop.stopLooping()
-    await onLoopEnd()
+    try {
+      await theLoop.stopLooping()
+      await onLoopEnd()
+    } catch (e) {
+      throw onError(e, { actionName: 'next' })
+    }
   }
 
   async function previous (): Promise<void> {}
@@ -192,11 +214,15 @@ export const useFSPlayer = ({
   }
 
   async function leaveOnHoldAndResume (): Promise<void> {
-    isOnHold.value = false
-    activatePlayerFeatures()
+    try {
+      isOnHold.value = false
+      activatePlayerFeatures()
 
-    if (item.value) {
-      await showItem(item.value)
+      if (item.value) {
+        await showItem(item.value)
+      }
+    } catch (e) {
+      throw onError(e, { actionName: 'leaveOnHoldAndResume' })
     }
   }
 

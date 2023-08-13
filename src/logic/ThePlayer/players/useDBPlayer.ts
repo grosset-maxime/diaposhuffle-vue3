@@ -95,36 +95,44 @@ export const useDBPlayer = ({
   }
 
   async function showItem (itemToShow: Item, itemIndexToShow: number): Promise<void> {
-    setNextItem(itemToShow)
-    await showNextItem()
+    try {
+      setNextItem(itemToShow)
+      await showNextItem()
 
-    item.value = itemToShow
-    itemIndex.value = itemIndexToShow
+      item.value = itemToShow
+      itemIndex.value = itemIndexToShow
 
-    thePlayerStore.item.value = item.value
-    thePlayerStore.itemIndex.value = itemIndex.value
+      thePlayerStore.item.value = item.value
+      thePlayerStore.itemIndex.value = itemIndex.value
 
-    theLoopStore.value.value = 0
-    theLoopStore.maxValue.value = getItemDuration() || playerOptsStore.interval.value * 1000
-    theLoopStore.indeterminate.value = false
+      theLoopStore.value.value = 0
+      theLoopStore.maxValue.value = getItemDuration() || playerOptsStore.interval.value * 1000
+      theLoopStore.indeterminate.value = false
+    } catch (e) {
+      throw onError(e, { actionName: 'showItem' })
+    }
   }
 
   async function onLoopEnd (): Promise<void> {
-    theLoopStore.indeterminate.value = true
+    try {
+      theLoopStore.indeterminate.value = true
 
-    if (!nextItem.value) {
-      return await next()
-    }
+      if (!nextItem.value) {
+        return await next()
+      }
 
-    historyPlayerStore.add(nextItem.value)
+      historyPlayerStore.add(nextItem.value)
 
-    await showItem(nextItem.value, nextItemIndex.value)
+      await showItem(nextItem.value, nextItemIndex.value)
 
-    nextItem.value = undefined
-    nextItemIndex.value = -1
+      nextItem.value = undefined
+      nextItemIndex.value = -1
 
-    if (!thePlayerStore.isPaused.value) {
-      theLoop.startLooping()
+      if (!thePlayerStore.isPaused.value) {
+        theLoop.startLooping()
+      }
+    } catch (e) {
+      throw onError(e, { actionName: 'onLoopEnd' })
     }
   }
 
@@ -144,26 +152,26 @@ export const useDBPlayer = ({
 
   // #region Exposed Actions
   async function start (): Promise<void> {
-    addEventsListeners()
-    reset()
-    theLoopStore.indeterminate.value = true
-    isStopped.value = false
-
     try {
+      addEventsListeners()
+      reset()
+      theLoopStore.indeterminate.value = true
+      isStopped.value = false
+
       items.value = await fetchItems()
       itemIndex.value = -1
 
       if (!items.value.length) {
         isStopped.value = true
-        throw onError('Fetch items from DB are empty.')
+        throw 'Fetch items from DB are empty.'
       }
+
+      initPlayerStates()
+
+      await onLoopEnd()
     } catch (e) {
-      throw onError(e)
+      throw onError(e, { actionName: 'start' })
     }
-
-    initPlayerStates()
-
-    await onLoopEnd()
   }
 
   function stop (): void {
@@ -186,31 +194,41 @@ export const useDBPlayer = ({
   }
 
   async function next (): Promise<void> {
-    const { itm, index } = getNextItem({ items, itemIndex, isFetchItemRandomly })
-    nextItem.value = itm
-    nextItemIndex.value = index
+    try {
+      const { itm, index } = getNextItem({ items, itemIndex, isFetchItemRandomly })
+      nextItem.value = itm
+      nextItemIndex.value = index
 
-    if (!nextItem.value) {
-      isStopped.value = true
-      throw onError('No next item found.')
+      if (!nextItem.value) {
+        isStopped.value = true
+        throw 'No next item found.'
+      }
+
+      await theLoop.stopLooping()
+      await onLoopEnd()
+
+    } catch (e) {
+      throw onError(e, { actionName: 'next' })
     }
-
-    await theLoop.stopLooping()
-    await onLoopEnd()
   }
 
   async function previous (): Promise<void> {
-    const { itm, index } = getPreviousItem({ items, itemIndex })
-    nextItem.value = itm
-    nextItemIndex.value = index
+    try {
+      const { itm, index } = getPreviousItem({ items, itemIndex })
+      nextItem.value = itm
+      nextItemIndex.value = index
 
-    if (!nextItem.value) {
-      isStopped.value = true
-      throw onError('No previous item found.')
+      if (!nextItem.value) {
+        isStopped.value = true
+        throw 'No previous item found.'
+      }
+
+      await theLoop.stopLooping()
+      await onLoopEnd()
+
+    } catch (e) {
+      throw onError(e, { actionName: 'previous' })
     }
-
-    await theLoop.stopLooping()
-    await onLoopEnd()
   }
 
   function canNext (): boolean { return true }
@@ -227,12 +245,16 @@ export const useDBPlayer = ({
   }
 
   async function leaveOnHoldAndResume (): Promise<void> {
-    isOnHold.value = false
-    activatePlayerFeatures()
-    initPlayerStates()
+    try {
+      isOnHold.value = false
+      activatePlayerFeatures()
+      initPlayerStates()
 
-    if (item.value) {
-      await showItem(item.value, itemIndex.value)
+      if (item.value) {
+        await showItem(item.value, itemIndex.value)
+      }
+    } catch (e) {
+      throw onError(e, { actionName: 'leaveOnHoldAndResume' })
     }
   }
 

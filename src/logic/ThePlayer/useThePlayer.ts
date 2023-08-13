@@ -13,6 +13,8 @@ import { useFSPlayer } from '@/logic/ThePlayer/players/useFSPlayer'
 import { useDBPlayer } from '@/logic/ThePlayer/players/useDBPlayer'
 import { usePinedPlayer } from '@/logic/ThePlayer/players/usePinedPlayer'
 import { useHistoryPlayer } from '@/logic/ThePlayer/players/useHistoryPlayer'
+import { createCustomError, CustomError, type CustomErrorData } from '@/models/customError'
+import { logError } from '@/utils/errorUtils'
 
 export enum PlayerName {
   fs = 'fsPlayer',
@@ -138,6 +140,16 @@ export const useThePlayer = ({
     }
   })
 
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    const customError = createCustomError(error, {
+      ...errorData,
+      file: 'ThePlayer/useThePlayer.ts',
+    })
+    logError(customError)
+
+    return customError
+  }
+
   // #region Actions
   const start = async (): Promise<void> => {
     reset()
@@ -173,13 +185,21 @@ export const useThePlayer = ({
   }
 
   const next = async (): Promise<void> => {
-    if (canNext()) {
-      player.next()
+    try {
+      if (canNext()) {
+        await player.next()
+      }
+    } catch (e) {
+      throw onError(e, { actionName: 'next' })
     }
   }
   const previous = async (): Promise<void> => {
-    if (canPrevious()) {
-      player.previous()
+    try {
+      if (canPrevious()) {
+        player.previous()
+      }
+    } catch (e) {
+      throw onError(e, { actionName: 'previous' })
     }
   }
 

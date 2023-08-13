@@ -79,23 +79,21 @@ export const useFSPlayerStore = createGlobalState(() => {
   }
 
   async function fetchItem (): Promise<Item> {
-    let item: Item | undefined
-
     try {
 
-      item = await fetchRandomItemAPI({
+      const item = await fetchRandomItemAPI({
         folders: Array.from(sourceOptsStore.folders.value),
       })
 
+      if (!item) {
+        throw 'No item found from fs.'
+      }
+
+      return item
     } catch (e) {
-      throw onError(e)
+      throw onError(e, { actionName: 'fetchItem' })
     }
 
-    if (!item) {
-      throw onError('No item found from fs.')
-    }
-
-    return item
   }
   // #endregion Actions
 

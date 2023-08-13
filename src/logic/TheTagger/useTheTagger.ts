@@ -43,7 +43,7 @@ function applyTextFilter<T> (
   return fuse.search(query)
 }
 
-function applyCategoriesFilter (tags: Array<Tag>, categories: Set<TagCategoryId>) {
+function applyCategoriesFilter (tags: Array<Tag>, categories: Set<TagCategoryId>): Tag[] {
   return tags.filter((tag) => categories.has(tag.categoryId))
 }
 

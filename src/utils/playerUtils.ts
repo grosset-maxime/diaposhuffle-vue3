@@ -11,7 +11,6 @@ function onError (error: any, errorData: CustomErrorData): CustomError {
   return logError(
     createCustomError(error, {
       file: 'utils/playerUtils.ts',
-      isBackend: false,
       ...errorData,
     }),
   )

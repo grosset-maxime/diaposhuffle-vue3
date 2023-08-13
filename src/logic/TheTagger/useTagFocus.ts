@@ -29,7 +29,7 @@ export const useTagFocus = (
     TagsSection.unselected,
   ]
 
-  function shakeSectionName (name: TagsSection) {
+  function shakeSectionName (name: TagsSection): void {
     shakeSections.value.set(name, true)
 
     setTimeout(() => {
@@ -50,7 +50,7 @@ export const useTagFocus = (
     return tagsIds
   }
 
-  function getUpperSectionFrom (name: TagsSection) {
+  function getUpperSectionFrom (name: TagsSection): TagsSection | undefined {
     let upperSectionName: TagsSection | undefined
     let sectionTagIds
     let index = 0
@@ -74,7 +74,7 @@ export const useTagFocus = (
     return upperSectionName
   }
 
-  function getDownerSectionFrom (name: TagsSection) {
+  function getDownerSectionFrom (name: TagsSection): TagsSection | undefined {
     let downerSectionName: TagsSection | undefined
     let sectionTagIds
     let index = 0
@@ -98,7 +98,7 @@ export const useTagFocus = (
     return downerSectionName
   }
 
-  function setFocusRight () {
+  function setFocusRight (): void {
     const sectionName = tagFocused.section
     const sectionTagIds = getTagIdsFromSectionName(sectionName)
 
@@ -109,7 +109,7 @@ export const useTagFocus = (
     tagFocused.id = sectionTagIds[ tagFocused.pos ]
   }
 
-  function setFocusLeft () {
+  function setFocusLeft (): void {
     const sectionName = tagFocused.section
     const sectionTagIds = getTagIdsFromSectionName(sectionName)
 
@@ -120,7 +120,7 @@ export const useTagFocus = (
     tagFocused.id = sectionTagIds[ tagFocused.pos ]
   }
 
-  function setFocusUp () {
+  function setFocusUp (): void {
     const sectionName = tagFocused.section
     let upperSectionName = getUpperSectionFrom(sectionName)
 
@@ -136,7 +136,7 @@ export const useTagFocus = (
     }
   }
 
-  function setFocusDown () {
+  function setFocusDown (): void {
     const sectionName = tagFocused.section
     let downerSectionName = getDownerSectionFrom(sectionName)
 
@@ -152,7 +152,7 @@ export const useTagFocus = (
     }
   }
 
-  function resetFocus (tagsSection: TagsSection = tagFocused.section) {
+  function resetFocus (tagsSection: TagsSection = tagFocused.section): void {
     const sectionName = tagsSection
     const sectionTagIds = getTagIdsFromSectionName(sectionName);
     [ tagFocused.id ] = sectionTagIds

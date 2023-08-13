@@ -141,9 +141,7 @@ export const useTheTaggerStore = createGlobalState(() => {
       _updateTags()
       _updateCategories()
     } catch (e) {
-      onError(e, {
-        actionName: 'initStore',
-      })
+      throw onError(e, { actionName: 'initStore' })
     }
 
     taggerReady.value = true
@@ -154,14 +152,12 @@ export const useTheTaggerStore = createGlobalState(() => {
       const tag = await addTagAPI(tagData)
 
       if (!tag) {
-        throw onError('Fail to add a new tag.')
+        throw 'Fail to add a new tag.'
       }
 
       _addTag(tag)
     } catch (e) {
-      onError(e, {
-        actionName: 'TAGGER_A_ADD_TAG',
-      })
+      throw onError(e, { actionName: 'addTag' })
     }
   }
 
@@ -170,38 +166,34 @@ export const useTheTaggerStore = createGlobalState(() => {
       const tag = await updateTagAPI(tagData)
 
       if (!tag) {
-        throw onError('Fail to update tag.')
+        throw 'Fail to update tag.'
       }
 
       _updateTag(tag)
     } catch (e) {
-      onError(e, {
-        actionName: 'TAGGER_A_UPDATE_TAG',
-      })
+      throw onError(e, { actionName: 'updateTag' })
     }
   }
 
   async function deleteTag (tagId: Tag | TagId): Promise<void> {
-    const tag = typeof tagId === 'string'
-      ? getTag(tagId)
-      : tagId
-
-    if (!tag) {
-      throw onError(`Tag not found: ${tagId}`)
-    }
-
     try {
+      const tag = typeof tagId === 'string'
+        ? getTag(tagId)
+        : tagId
+
+      if (!tag) {
+        throw `Tag not found: ${tagId}`
+      }
+
       const success = await deleteTagAPI(tag)
 
       if (!success) {
-        throw onError('Fail to delete tag.')
+        throw 'Fail to delete tag.'
       }
 
       _deleteTag(tag)
     } catch (e) {
-      onError(e, {
-        actionName: 'TAGGER_A_DELETE_TAG',
-      })
+      throw onError(e, { actionName: 'deleteTag' })
     }
   }
 
@@ -210,14 +202,12 @@ export const useTheTaggerStore = createGlobalState(() => {
       const category = await addCategoryAPI(categoryData)
 
       if (!category) {
-        throw onError('Fail to add a new category.')
+        throw 'Fail to add a new category.'
       }
 
       _addCategory(category)
     } catch (e) {
-      onError(e, {
-        actionName: 'TAGGER_A_ADD_CATEGORY',
-      })
+      throw onError(e, { actionName: 'addCategory' })
     }
   }
 
@@ -226,34 +216,39 @@ export const useTheTaggerStore = createGlobalState(() => {
       const category = await updateCategoryAPI(categoryData)
 
       if (!category) {
-        throw onError('Fail to update category.')
+        throw 'Fail to update category.'
       }
 
       _updateCategory(category)
     } catch (e) {
-      onError(e, {
-        actionName: 'TAGGER_A_UPDATE_CATEGORY',
-      })
+      throw onError(e, { actionName: 'updateCategory' })
     }
   }
 
   async function deleteCategory (categoryId: TagCategory | TagCategoryId): Promise<void> {
-    const category = typeof categoryId === 'string'
-      ? getCategory(categoryId)
-      : categoryId
-
-    if (!category) {
-      throw onError(`Tag not found: ${categoryId}`)
-    }
-
     try {
+      const category = typeof categoryId === 'string'
+        ? getCategory(categoryId)
+        : categoryId
+
+      if (!category) {
+        throw `Category id not found: ${categoryId}`
+      }
 
       const promises = tagsList.value.map((tag) => {
-        if (tag.categoryId !== categoryId) { return Promise.resolve(true) }
+        if (tag.categoryId !== categoryId) {
+          return Promise.resolve(true)
+        }
 
         const tagData = tag.getData()
         tagData.categoryId = '0'
-        return updateTag(tagData).then(() => true).catch(() => false)
+
+        return updateTag(tagData)
+          .then(() => true)
+          .catch(() => {
+            onError(`Fail to update category of tag ${tag.id}`, { actionName: 'deleteCategory' })
+            return false
+          })
       })
 
       promises.unshift(deleteCategoryAPI(category))
@@ -263,14 +258,12 @@ export const useTheTaggerStore = createGlobalState(() => {
       const success = results.every((success) => success)
 
       if (!success) {
-        throw onError('Fail to delete category.')
+        throw `Fail to delete category id: ${categoryId}`
       }
 
       _deleteCategory(category)
     } catch (e) {
-      onError(e, {
-        actionName: 'TAGGER_A_DELETE_CATEGORY',
-      })
+      throw onError(e, { actionName: 'deleteCategory' })
     }
   }
 
@@ -283,9 +276,7 @@ export const useTheTaggerStore = createGlobalState(() => {
       const tags = await fetchTagsAPI()
       _setTags(tags)
     } catch (e) {
-      onError(e, {
-        actionName: 'TAGGER_A_FETCH_TAGS',
-      })
+      throw onError(e, { actionName: '_fetchTags' })
     }
 
     _setTagsFetched(true)
@@ -309,9 +300,7 @@ export const useTheTaggerStore = createGlobalState(() => {
 
       _setCategories(categories)
     } catch (e) {
-      onError(e, {
-        actionName: 'TAGGER_A_FETCH_TAGS',
-      })
+      throw onError(e, { actionName: '_fetchCategories' })
     }
 
     _setCategoriesFetched(true)

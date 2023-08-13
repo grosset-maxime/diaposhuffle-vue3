@@ -69,9 +69,7 @@ export const useThePlayerStore = createGlobalState(() => {
       const response = await deleteItemAPI({ item })
       result = response.success
     } catch (e) {
-      throw onError(e, {
-        actionName: 'PLAYER_A_DELETE_ITEM',
-      })
+      throw onError(e, { actionName: 'deleteItem' })
     }
 
     return result
@@ -84,9 +82,7 @@ export const useThePlayerStore = createGlobalState(() => {
       const response = await setItemTagsAPI({ item })
       result = response.success
     } catch (e) {
-      throw onError(e, {
-        actionName: 'PLAYER_A_SET_ITEM_TAGS',
-      })
+      throw onError(e, { actionName: 'setItemTags' })
     }
 
     return result

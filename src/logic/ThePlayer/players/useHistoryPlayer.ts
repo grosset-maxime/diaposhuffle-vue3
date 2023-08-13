@@ -73,25 +73,33 @@ export const useHistoryPlayer = ({
   }
 
   async function showItem (itemToShow: Item, itemIndexToShow: number): Promise<void> {
-    setNextItem(itemToShow)
-    await showNextItem()
+    try {
+      setNextItem(itemToShow)
+      await showNextItem()
 
-    item.value = itemToShow
-    itemIndex.value = itemIndexToShow
+      item.value = itemToShow
+      itemIndex.value = itemIndexToShow
 
-    thePlayerStore.item.value = item.value
-    thePlayerStore.itemIndex.value = itemIndex.value
+      thePlayerStore.item.value = item.value
+      thePlayerStore.itemIndex.value = itemIndex.value
+    } catch (e) {
+      throw onError(e, { actionName: 'showItem' })
+    }
   }
 
   async function onEnd (): Promise<void> {
-    if (!nextItem.value) {
-      return await next()
+    try {
+      if (!nextItem.value) {
+        return await next()
+      }
+
+      await showItem(nextItem.value, nextItemIndex.value)
+
+      nextItem.value = undefined
+      nextItemIndex.value = -1
+    } catch (e) {
+      throw onError(e, { actionName: 'onEnd' })
     }
-
-    await showItem(nextItem.value, nextItemIndex.value)
-
-    nextItem.value = undefined
-    nextItemIndex.value = -1
   }
 
   function onAfterDeleteItem (): void {
@@ -108,19 +116,23 @@ export const useHistoryPlayer = ({
 
   // #region Exposed Actions
   async function start (): Promise<void> {
-    addEventsListeners()
+    try {
+      addEventsListeners()
 
-    reset()
-    isStopped.value = false
+      reset()
+      isStopped.value = false
 
-    itemIndex.value = 0
-    initPlayerStates()
+      itemIndex.value = 0
+      initPlayerStates()
 
-    if (!items.value.length) {
-      throw onError('History items are empty.')
+      if (!items.value.length) {
+        throw 'History items are empty.'
+      }
+
+      await previous()
+    } catch (e) {
+      throw onError(e, { actionName: 'start' })
     }
-
-    await previous()
   }
 
   function stop (): void {
@@ -133,29 +145,37 @@ export const useHistoryPlayer = ({
   function resume (): void {}
 
   async function next (): Promise<void> {
-    const { itm, index } = getNextItem({ items, itemIndex })
-    nextItem.value = itm
-    nextItemIndex.value = index
+    try {
+      const { itm, index } = getNextItem({ items, itemIndex })
+      nextItem.value = itm
+      nextItemIndex.value = index
 
-    if (!nextItem.value) {
-      isStopped.value = true
-      throw onError('No next item found.')
+      if (!nextItem.value) {
+        isStopped.value = true
+        throw 'No next item found.'
+      }
+
+      await onEnd()
+    } catch (e) {
+      throw onError(e, { actionName: 'next' })
     }
-
-    await onEnd()
   }
 
   async function previous (): Promise<void> {
-    const { itm, index } = getPreviousItem({ items, itemIndex })
-    nextItem.value = itm
-    nextItemIndex.value = index
+    try {
+      const { itm, index } = getPreviousItem({ items, itemIndex })
+      nextItem.value = itm
+      nextItemIndex.value = index
 
-    if (!nextItem.value) {
-      isStopped.value = true
-      throw onError('No previous item found.')
+      if (!nextItem.value) {
+        isStopped.value = true
+        throw 'No previous item found.'
+      }
+
+      await onEnd()
+    } catch (e) {
+      throw onError(e, { actionName: 'previous' })
     }
-
-    await onEnd()
   }
 
   function canNext (): boolean { return true }
@@ -169,12 +189,16 @@ export const useHistoryPlayer = ({
   }
 
   async function leaveOnHoldAndResume (): Promise<void> {
-    isOnHold.value = false
-    activatePlayerFeatures()
-    initPlayerStates()
+    try {
+      isOnHold.value = false
+      activatePlayerFeatures()
+      initPlayerStates()
 
-    itemIndex.value = items.value.length - 1
-    thePlayerStore.itemIndex.value = itemIndex.value
+      itemIndex.value = items.value.length - 1
+      thePlayerStore.itemIndex.value = itemIndex.value
+    } catch (e) {
+      throw onError(e, { actionName: 'leaveOnHoldAndResume' })
+    }
   }
 
   function reset (): void {

@@ -5,6 +5,8 @@ import type { Item } from '@/models/item'
 // Vendors Libs
 import { ref, computed } from 'vue'
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
+import { logError } from '@/utils/errorUtils'
+import { createCustomError, CustomError, type CustomErrorData } from '@/models/customError'
 
 export type ItemName = 'item1' | 'item2'
 
@@ -46,6 +48,16 @@ interface UseItemsPlayer {
 export const useItemsPlayer = ({ itemsRefs }: UseItemsPlayer) => {
 
   const thePlayerStore = useThePlayerStore()
+
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    const customError = createCustomError(error, {
+      ...errorData,
+      file: 'ThePlayer/useItemsPlayer.ts',
+    })
+    logError(customError)
+
+    return customError
+  }
 
   const ITEM_1_NAME: ItemName = 'item1'
   const ITEM_2_NAME: ItemName = 'item2'
@@ -132,6 +144,7 @@ export const useItemsPlayer = ({ itemsRefs }: UseItemsPlayer) => {
       .catch(() => {
         item.isError = true
         item.isLoaded = false
+        onError(`Fail to load item. Src: "${item.src}"`, { actionName: 'item#loadPromise' })
       })
   }
 
@@ -164,37 +177,41 @@ export const useItemsPlayer = ({ itemsRefs }: UseItemsPlayer) => {
   }
 
   async function switchItems ({ animate = false } = {}): Promise<void> {
-    let animateItemsPromise = Promise.resolve()
+    try {
+      let animateItemsPromise = Promise.resolve()
 
-    const currentItem = getItem(currentItemName.value)
-    const nextItem = getItem(nextItemName.value)
+      const currentItem = getItem(currentItemName.value)
+      const nextItem = getItem(nextItemName.value)
 
-    switchWithTransition.value = animate
+      switchWithTransition.value = animate
 
-    if (animate) {
-      let currentItemPromiseResolve: Function
+      if (animate) {
+        let currentItemPromiseResolve: Function
 
-      animateItemsPromise = new Promise((resolveCurrent) => {
-        currentItemPromiseResolve = resolveCurrent
-      })
-      const currentItemEl = getItemEl(currentItemName.value)
+        animateItemsPromise = new Promise((resolveCurrent) => {
+          currentItemPromiseResolve = resolveCurrent
+        })
+        const currentItemEl = getItemEl(currentItemName.value)
 
-      const onTransitionEndCurrentItem = () => {
-        currentItemEl.removeEventListener('transitionend', onTransitionEndCurrentItem)
-        currentItemPromiseResolve()
+        const onTransitionEndCurrentItem = () => {
+          currentItemEl.removeEventListener('transitionend', onTransitionEndCurrentItem)
+          currentItemPromiseResolve()
+        }
+
+        currentItemEl.addEventListener('transitionend', onTransitionEndCurrentItem, false)
       }
 
-      currentItemEl.addEventListener('transitionend', onTransitionEndCurrentItem, false)
+      pauseItem(currentItemName.value)
+
+      nextItem.styles = { ...nextItem.styles, opacity: 1, zIndex: 2 }
+      currentItem.styles = { ...currentItem.styles, opacity: 0, zIndex: 1 }
+
+      await animateItemsPromise
+
+      currentItemName.value = nextItemName.value
+    } catch(e) {
+      throw onError(e, { actionName: 'switchItems' })
     }
-
-    pauseItem(currentItemName.value)
-
-    nextItem.styles = { ...nextItem.styles, opacity: 1, zIndex: 2 }
-    currentItem.styles = { ...currentItem.styles, opacity: 0, zIndex: 1 }
-
-    await animateItemsPromise
-
-    currentItemName.value = nextItemName.value
   }
 
   function onLoadItem1 (): void { item1.onLoadResolve?.() }
@@ -213,15 +230,19 @@ export const useItemsPlayer = ({ itemsRefs }: UseItemsPlayer) => {
   }
 
   async function showNextItem ({ animate = false } = {}): Promise<void> {
-    const item = getItem(nextItemName.value)
+    try {
+      const item = getItem(nextItemName.value)
 
-    await item.onLoadPromise
+      await item.onLoadPromise
 
-    await switchItems({ animate })
+      await switchItems({ animate })
 
-    resetItem(nextItemName.value)
+      resetItem(nextItemName.value)
 
-    playItem()
+      playItem()
+    } catch(e) {
+      throw onError(e, { actionName: 'showNextItem' })
+    }
   }
 
   function pauseItem (itemName: ItemName = currentItemName.value): void {
