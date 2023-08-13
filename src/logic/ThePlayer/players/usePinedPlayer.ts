@@ -21,8 +21,8 @@ import { useTheLoop } from '@/logic/ThePlayer/useTheLoop'
 
 // Utlis
 import { getNextItem, getPreviousItem } from '@/utils/playerUtils'
-import { useAlertStore } from '@/stores/alertStore'
-import { createErrorAlert, type ErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
+import { createCustomError, type CustomError, type CustomErrorData } from '@/models/customError'
+import { logError } from '@/utils/errorUtils'
 
 export const usePinedPlayer = ({
   showNextItem,
@@ -33,7 +33,6 @@ export const usePinedPlayer = ({
   const thePlayerStore = useThePlayerStore()
   const playerOptsStore = usePlayerOptionsStore()
   const theLoopStore = useTheLoopStore()
-  const alertStore = useAlertStore()
 
   const isFetchItemRandomly = computed(() => playerOptsStore.isFetchItemRandomly.value)
 
@@ -54,13 +53,14 @@ export const usePinedPlayer = ({
   } = usePinedPlayerStore()
 
   // #region Methods
-  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
-    const errorAlert = createErrorAlert(error, {
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    const customError = createCustomError(error, {
       ...errorData,
-      file: 'usePinedPlayer.ts',
+      file: 'players/usePinedPlayer.ts',
     })
-    alertStore.add(errorAlert)
-    return errorAlert
+    logError(customError)
+
+    return customError
   }
 
   function activatePlayerFeatures (): void {

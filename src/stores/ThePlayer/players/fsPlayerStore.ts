@@ -17,12 +17,11 @@ import {
   ON_ITEM_DELETED,
   emitter,
 } from '@/logic/useEmitter'
-import { useAlertStore } from '@/stores/alertStore'
-import { type ErrorAlert, createErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
+import { createCustomError, type CustomError, type CustomErrorData } from '@/models/customError'
+import { logError } from '@/utils/errorUtils'
 
 export const useFSPlayerStore = createGlobalState(() => {
 
-  const alertStore = useAlertStore()
   const sourceOptsStore = useSourceOptionsStore()
 
   // #region States
@@ -38,13 +37,14 @@ export const useFSPlayerStore = createGlobalState(() => {
   // #endregion States
 
   // #region Private Methods
-  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
-    const errorAlert = createErrorAlert(error, {
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    const customError = createCustomError(error, {
       ...errorData,
-      file: 'fsPlayerStore.ts',
+      file: 'stores/fsPlayerStore.ts',
     })
-    alertStore.add(errorAlert)
-    return errorAlert
+    logError(customError)
+
+    return customError
   }
 
   async function onDeleteItem (itm: Item) {

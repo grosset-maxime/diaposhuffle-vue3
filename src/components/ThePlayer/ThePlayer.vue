@@ -11,7 +11,7 @@ import type { TagId } from '@/models/tag'
 import { Position } from '@/interfaces/components/PinWrapper'
 
 // Vendors Libs
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, provide } from 'vue'
 import { eagerComputed } from '@vueuse/shared'
 
 // Libs
@@ -34,7 +34,7 @@ import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerS
 // Components
 import TheLoop from '@/components/ThePlayer/TheLoop.vue'
 import GenericBtn from '@/components/ThePlayer/GenericBtn.vue'
-import ItemsPlayer, { type ItemsPlayerCmpExpose } from '@/components/ThePlayer/ItemsPlayer.vue'
+import ItemsPlayer from '@/components/ThePlayer/ItemsPlayer.vue'
 import TagsList from '@/components/ThePlayer/TagsList.vue'
 import ItemsInfoChip from '@/components/ThePlayer/ItemsInfoChipChip.vue'
 import PinWrapper from '@/components/ThePlayer/PinWrapper.vue'
@@ -43,18 +43,21 @@ import ItemPathChip from '@/components/ThePlayer/ItemPathChip.vue'
 import TheTagger from '@/components/TheTagger/TheTagger.vue'
 import DeleteModal from '@/components/DeleteModal.vue'
 import { PlayerName } from '@/logic/ThePlayer/useThePlayer'
-import { createErrorAlert, type ErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
+import { createErrorAlert, type ErrorAlert } from '@/models/Alerts/errorAlert'
+import { logError } from '@/utils/errorUtils'
+import { createCustomError, CustomError, type CustomErrorData } from '@/models/customError'
+import { thePlayerKey } from '@/interfaces/symbols'
 
 const alertStore = useAlertStore()
 
-function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
-  const errorAlert = createErrorAlert(error, {
+function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+  const customError = createCustomError(error, {
     ...errorData,
     file: 'ThePlayer.vue',
   })
-  alertStore.add(errorAlert)
+  logError(customError)
 
-  return errorAlert
+  return customError
 }
 
 const { showTheHelp } = useMainStore()
@@ -85,7 +88,7 @@ const isPinedItem = eagerComputed<boolean>(() => pinedPlayerStore.has(item.value
 const historyCount = historyPlayerStore.count
 
 // Refs to Components element in template.
-const ItemsPlayerCmp = ref<ItemsPlayerCmpExpose | null>(null)
+const ItemsPlayerCmp = ref<InstanceType<typeof ItemsPlayer> | null>(null)
 
 // #region Delete Item Modal
 const deleteModal = {
@@ -445,6 +448,11 @@ watch(showTheHelp, (isShow) => {
   isShow
     ? stopKSListener()
     : startKSListener()
+})
+
+// Provide
+provide(thePlayerKey, {
+  stopPlayer,
 })
 
 onMounted(async () => {

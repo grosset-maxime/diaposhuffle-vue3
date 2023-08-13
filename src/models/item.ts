@@ -1,6 +1,7 @@
 // Types
 import type { TagId } from '@/models/tag'
-import { createErrorAlert } from '@/models/Alerts/errorAlert'
+import { logError } from '@/utils/errorUtils'
+import { createCustomError, CustomError, type CustomErrorData } from './customError'
 
 export enum ItemVideoExt {
   webm = 'webm',
@@ -36,6 +37,16 @@ function getComputedPath (src: string) {
   computedPath.pop()
 
   return computedPath.join('/')
+}
+
+function onError (error: any, errorData: CustomErrorData): CustomError {
+  return logError(
+    createCustomError(error, {
+      file: 'models/item.ts',
+      isBackend: false,
+      ...errorData,
+    }),
+  )
 }
 
 export interface ItemData {
@@ -86,8 +97,8 @@ export class Item {
     isVideo,
   }: ItemData) {
     if (!src) {
-      throw createErrorAlert(`Invalid item, item has no src. Item src: ${src}`, {
-        file: 'item.ts',
+      throw onError('Invalid item, item has no src.', {
+        actionName: 'Item#Constructor',
       })
     }
 
@@ -114,9 +125,9 @@ export class Item {
 
     if (!this.isImage && !this.isVideo) {
       const errorMsg = `Invalid item, not an image and not a video. Item extension: ${extension}`
-      console.error(errorMsg, this)
-      throw createErrorAlert(errorMsg, {
-        file: 'item.ts',
+      console.error('###', errorMsg, this)
+      throw onError(errorMsg, {
+        actionName: 'Item#Constructor',
       })
     }
   }

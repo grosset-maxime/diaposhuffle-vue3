@@ -23,7 +23,7 @@ export enum PlayerName {
 
 export interface UsePlayerArg {
   setNextItem: (item: Item) => void
-  showNextItem: () => void
+  showNextItem: (opts?: { animate?: boolean }) => void
   getItemDuration: () => number
   playItem?: () => void
   pauseItem?: () => void
@@ -53,7 +53,7 @@ export interface UsePlayerExpose {
 
 interface UseThePlayer {
   setNextItem: (item: Item) => void
-  showNextItem: () => void
+  showNextItem: (opts?: { animate?: boolean }) => void
   getItemDuration: () => number
   playItem: () => void
   pauseItem: () => void
@@ -139,14 +139,17 @@ export const useThePlayer = ({
   })
 
   // #region Actions
-  const start = (): void => {
+  const start = async (): Promise<void> => {
     reset()
 
-    player.start()
+    const promise = player.start()
+
     isStopped.value = false
 
     // Allow to switch player after the first start.
     canSwitchPlayer.value = true
+
+    return promise
   }
 
   const pause = (): void => {

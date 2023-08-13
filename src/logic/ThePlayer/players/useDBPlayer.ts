@@ -20,8 +20,8 @@ import {
   ON_THE_PLAYER_STOP,
   emitter,
 } from '@/logic/useEmitter'
-import { useAlertStore } from '@/stores/alertStore'
-import { createErrorAlert, type ErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
+import { createCustomError, type CustomError, type CustomErrorData } from '@/models/customError'
+import { logError } from '@/utils/errorUtils'
 
 export const useDBPlayer = ({
   showNextItem,
@@ -34,7 +34,6 @@ export const useDBPlayer = ({
   const playerOptsStore = usePlayerOptionsStore()
   const theLoopStore = useTheLoopStore()
   const historyPlayerStore = useHistoryPlayerStore()
-  const alertStore = useAlertStore()
 
   const isFetchItemRandomly = playerOptsStore.isFetchItemRandomly
 
@@ -58,13 +57,14 @@ export const useDBPlayer = ({
   } = useDBPlayerStore()
 
   // #region Private Methods
-  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
-    const errorAlert = createErrorAlert(error, {
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    const customError = createCustomError(error, {
       ...errorData,
-      file: 'useDBPlayer.ts',
+      file: 'players/useDBPlayer.ts',
     })
-    alertStore.add(errorAlert)
-    return errorAlert
+    logError(customError)
+
+    return customError
   }
 
   function activatePlayerFeatures (): void {
@@ -149,12 +149,16 @@ export const useDBPlayer = ({
     theLoopStore.indeterminate.value = true
     isStopped.value = false
 
-    items.value = await fetchItems()
-    itemIndex.value = -1
+    try {
+      items.value = await fetchItems()
+      itemIndex.value = -1
 
-    if (!items.value.length) {
-      isStopped.value = true
-      throw onError('Items are empty.')
+      if (!items.value.length) {
+        isStopped.value = true
+        throw onError('Fetch items from DB are empty.')
+      }
+    } catch (e) {
+      throw onError(e)
     }
 
     initPlayerStates()
@@ -164,6 +168,7 @@ export const useDBPlayer = ({
 
   function stop (): void {
     isStopped.value = true
+    theLoopStore.indeterminate.value = false
     theLoop.stopLooping()
     removeEventsListeners()
   }

@@ -14,8 +14,8 @@ import {
   ON_THE_PLAYER_STOP,
   emitter,
 } from '@/logic/useEmitter'
-import { useAlertStore } from '@/stores/alertStore'
-import { createErrorAlert, ErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
+import { createCustomError, type CustomError, type CustomErrorData } from '@/models/customError'
+import { logError } from '@/utils/errorUtils'
 
 export const useHistoryPlayer = ({
   showNextItem,
@@ -23,7 +23,6 @@ export const useHistoryPlayer = ({
 }: UsePlayerArg) => {
 
   const thePlayerStore = useThePlayerStore()
-  const alertStore = useAlertStore()
 
   const isActivePlayer = computed<boolean>(
     () => thePlayerStore.playerName.value === PlayerName.history,
@@ -42,13 +41,14 @@ export const useHistoryPlayer = ({
   } = useHistoryPlayerStore()
 
   // #region Private Methods
-  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
-    const errorAlert = createErrorAlert(error, {
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    const customError = createCustomError(error, {
       ...errorData,
-      file: 'useHistoryPlayer.ts',
+      file: 'players/useHistoryPlayer.ts',
     })
-    alertStore.add(errorAlert)
-    return errorAlert
+    logError(customError)
+
+    return customError
   }
 
   function activatePlayerFeatures (): void {

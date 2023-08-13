@@ -24,14 +24,11 @@ import {
   deleteCategory as deleteCategoryAPI,
 } from '@/api/tags'
 import useReactiveMap from '@/logic/useReactiveMap'
-import { useAlertStore } from './alertStore'
-import { createErrorAlert, ErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
-import type { AlertId } from '@/models/Alerts/abstractAlert'
+import { createCustomError, type CustomError, type CustomErrorData } from '@/models/customError'
+import { logError } from '@/utils/errorUtils'
 
 
 export const useTheTaggerStore = createGlobalState(() => {
-  const alertStore = useAlertStore()
-
   // State
   const taggerReadyPromise = ref<Promise<void> | undefined>()
   const taggerReady = ref(false)
@@ -43,7 +40,8 @@ export const useTheTaggerStore = createGlobalState(() => {
 
   const lastUsedTags = useReactiveMap<TagId, Tag>()
 
-  const errors = ref<Array<AlertId>>([])
+  // TODO:
+  const errors = ref<Array<CustomError>>([])
 
   // Computed
   const isTaggerReady = computed<boolean>(() => taggerReady.value)
@@ -54,19 +52,19 @@ export const useTheTaggerStore = createGlobalState(() => {
   // Getters
   const getTag = (id: TagId): Tag | undefined => tags.value.get(id)
   const getCategory = (id: TagCategoryId): TagCategory | undefined => categories.value.get(id)
-  const getErrors = (): Array<AlertId> => errors.value
+  const getErrors = (): Array<CustomError> => errors.value
 
   // #region Mutations
-  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
-    const errorAlert = createErrorAlert(error, {
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    const customError = createCustomError(error, {
       ...errorData,
-      file: 'TheTaggerStore.ts',
+      file: 'stores/TheTaggerStore.ts',
     })
-    alertStore.add(errorAlert)
+    logError(customError)
 
-    errors.value.push(errorAlert.id)
+    errors.value.push(customError)
 
-    return errorAlert
+    return customError
   }
 
   const addLastUsedTag = (tagId: Tag | TagId): void => {

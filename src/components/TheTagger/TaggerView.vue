@@ -32,6 +32,7 @@ import EditCategoryModal from './EditCategoryModal.vue'
 import { useTagFocus, TagsSection } from '@/logic/TheTagger/useTagFocus'
 import useReactiveMap from '@/logic/useReactiveMap'
 import useReactiveSet from '@/logic/useReactiveSet'
+import type { VTextField } from 'vuetify/lib/components/index.mjs'
 
 const theTaggerStore = useTheTaggerStore()
 const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
@@ -90,9 +91,7 @@ const SORTS_SELECT_OPTS = {
   ],
 }
 
-const filterTextCmp = ref<{
-  focus: () => void;
-    } | null>(null)
+const filterTextCmp = ref<InstanceType<typeof VTextField> | null>(null)
 
 const isFilterTextHasFocus = ref(false)
 
@@ -511,7 +510,6 @@ defineExpose({
 
       <div class="sort-by-field input-action">
         <v-select
-          ref="sortByField"
           v-model="sorts.field"
           :items="SORTS_SELECT_OPTS.fieldItems"
           color="primary"
@@ -524,7 +522,6 @@ defineExpose({
 
       <div class="sort-direction input-action">
         <v-select
-          ref="sortDirection"
           v-model="sorts.direction"
           :items="SORTS_SELECT_OPTS.directionItems"
           label="Sort Direction"

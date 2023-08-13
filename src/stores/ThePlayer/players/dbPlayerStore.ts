@@ -93,9 +93,8 @@ export const useDBPlayerStore = createGlobalState(() => {
 
     } catch (e) {
       throw logError(createCustomError(e, {
-        file: 'dbPlayerStore.ts',
-        actionName: 'PLAYER_A_FETCH_ITEMS_FROM_BDD',
-        isBackend: true,
+        file: 'stores/dbPlayerStore.ts',
+        actionName: 'fetchItems',
       }))
     }
   }

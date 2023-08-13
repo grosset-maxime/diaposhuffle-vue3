@@ -4,7 +4,18 @@ import type { Item } from '@/models/item'
 
 import { toValue } from '@vueuse/core'
 import { getRandomElementWithIndex } from './utils'
-import { createErrorAlert } from '@/models/Alerts/errorAlert'
+import { createCustomError, type CustomError, type CustomErrorData } from '@/models/customError'
+import { logError } from './errorUtils'
+
+function onError (error: any, errorData: CustomErrorData): CustomError {
+  return logError(
+    createCustomError(error, {
+      file: 'utils/playerUtils.ts',
+      isBackend: false,
+      ...errorData,
+    }),
+  )
+}
 
 export const getRandomItem = (
   items: MaybeRefOrGetter<Array<Item>>,
@@ -12,8 +23,8 @@ export const getRandomItem = (
   const { el: itm, index } = getRandomElementWithIndex(toValue(items))
 
   if (!itm) {
-    throw createErrorAlert('No random item found.', {
-      file: 'playerUtils.ts',
+    throw onError('No random item found.', {
+      actionName: 'getRandomItem',
     })
   }
 
@@ -42,8 +53,8 @@ export const getNextItem = (
   const itm: Item = itms[ index ]
 
   if (!itm) {
-    throw createErrorAlert('No next item found.', {
-      file: 'playerUtils.ts',
+    throw onError('No next item found.', {
+      actionName: 'getNextItem',
     })
   }
 
@@ -67,8 +78,8 @@ export const getPreviousItem = (
   const itm: Item = itms[ index ]
 
   if (!itm) {
-    throw createErrorAlert('No previous item found.', {
-      file: 'playerUtils.ts',
+    throw onError('No previous item found.', {
+      actionName: 'getPreviousItem',
     })
   }
 

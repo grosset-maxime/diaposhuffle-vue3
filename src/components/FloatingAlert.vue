@@ -57,29 +57,33 @@ watch(
   () => alertIndex.value = alertsList.value.length - 1,
 )
 
+function onClose () {
+  emit('close')
+}
+
 </script>
 
 <template>
   <div v-if="show" class="floating-alert">
-    <div class="close-btn">
-      <v-btn icon="mdi-close" @click="emit('close')" />
+    <div class="close-btn" v-if="false">
+      <v-btn icon="mdi-close" @click="onClose" />
     </div>
     <template v-if="errorAlert">
       <ErrorAlertCmp
         :error-alert="errorAlert"
-        mode="single"
+        @close="onClose"
       />
     </template>
     <template v-if="infoAlert">
       <InfoAlertCmp
         :info-alert="infoAlert"
-        mode="single"
+        @close="onClose"
       />
     </template>
     <template v-if="warningAlert">
       <WarningAlertCmp
         :warning-alert="warningAlert"
-        mode="single"
+        @close="onClose"
       />
     </template>
   </div>
@@ -94,7 +98,9 @@ watch(
   height: 100vh;
   z-index: 9999999;
   padding: 20px;
-  background-color: #ffffff20;
+  background-color: #ffffff10;
+  backdrop-filter: blur(5px);
+  cursor: not-allowed;
 
   .close-btn {
     position: absolute;
@@ -102,9 +108,5 @@ watch(
     right: 5px;
     z-index: 999999;
   }
-}
-
-.scrollable {
-  @include w-scrollbar(auto, hidden);
 }
 </style>

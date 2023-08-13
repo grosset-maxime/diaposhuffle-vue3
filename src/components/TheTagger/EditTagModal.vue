@@ -1,6 +1,5 @@
 <script setup lang="ts">
 // Types
-import type { Ref } from 'vue'
 import type { Tag, TagId, TagData } from '@/models/tag'
 
 // Vendors Libs
@@ -14,6 +13,7 @@ import CircularLoading from '../CircularLoading.vue'
 
 // Stores
 import { useTheTaggerStore } from '@/stores/TheTaggerStore'
+import type { VAutocomplete, VForm } from 'vuetify/lib/components/index.mjs'
 
 const EMPTY_TAG_DATA: TagData = {
   id: '',
@@ -49,13 +49,8 @@ const isFormValid = ref(false)
 const showDeleteModal = ref(false)
 const loading = ref(false)
 
-const formCmp = ref<{
-  reset: () => void
-  validate: () => Promise<{
-    valid: boolean
-    errors: { id: string | number; errorMessages: string[] }[]
-  }>} | null>(null)
-const categorySelectCmp = ref<{ menu: Ref<boolean>, isFocused: Ref<boolean> } | null>(null)
+const formCmp = ref<InstanceType<typeof VForm> | null>(null)
+const categorySelectCmp = ref<InstanceType<typeof VAutocomplete> | null>(null)
 
 // Computeds
 const tagModel = computed(

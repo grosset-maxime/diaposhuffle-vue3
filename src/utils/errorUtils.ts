@@ -1,13 +1,12 @@
-import {
-  buildCustomError,
-  type CustomError,
-  type CustomErrorConstructorData,
+import type {
+  CustomError,
+  CustomErrorConstructorData,
 } from '@/models/customError'
-
 import {
   ON_LOG_ERROR,
   emitter,
 } from '@/logic/useEmitter'
+import { buildCustomError } from '@/models/customError'
 
 export const ERRORS_LOG_LS_NAME = 'ds3-errors-log'
 

@@ -133,6 +133,7 @@ function keyboardShortcuts (key: string, e: KeyboardEvent) {
 }
 //#endregion Methods
 
+// Provide
 provide(theFolderBrowserKey, {
   selectedFolders,
   addSelectedFolder,

@@ -8,8 +8,8 @@ import { ref, computed, inject } from 'vue'
 // Stores
 import { useTheFolderBrowserStore } from '@/stores/TheFolderBrowserStore'
 import { theFolderBrowserKey } from '@/interfaces/symbols'
-import { useAlertStore } from '@/stores/alertStore'
-import { createErrorAlert } from '@/models/Alerts/errorAlert'
+import { logError } from '@/utils/errorUtils'
+import { createCustomError } from '@/models/customError'
 
 // Props
 interface Props {
@@ -17,15 +17,13 @@ interface Props {
 }
 const props = defineProps<Props>()
 
-const alertStore = useAlertStore()
-
 const selectedFoldersModal = inject(theFolderBrowserKey)
 
 if (!selectedFoldersModal) {
-  throw alertStore.add(
-    createErrorAlert(
+  throw logError(
+    createCustomError(
       `Could not resolve ${theFolderBrowserKey.description}`,
-      { file: 'FolderItem.vue' },
+      { file: 'FolderItem.vue', isBackend: false },
     ),
   )
 }

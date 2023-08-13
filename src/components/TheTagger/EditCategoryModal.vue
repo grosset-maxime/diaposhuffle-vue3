@@ -4,6 +4,7 @@ import type { TagCategoryId, TagCategoryData, TagCategory } from '@/models/tag'
 
 // Vendors Libs
 import { ref, computed, watch } from 'vue'
+import { VForm } from 'vuetify/lib/components/index.mjs'
 
 import { useKeyboardShortcutsListener } from '@/logic/useKeyboardShortcutsListener'
 
@@ -49,12 +50,7 @@ const isFormValid = ref(false)
 const showDeleteModal = ref(false)
 const loading = ref(false)
 
-const formCmp = ref<{
-  reset: () => void
-  validate: () => Promise<{
-    valid: boolean
-    errors: { id: string | number; errorMessages: string[] }[]
-  }>} | null>(null)
+const formCmp = ref<InstanceType<typeof VForm> | null>(null)
 
 // Computeds
 const categoryModel = computed(

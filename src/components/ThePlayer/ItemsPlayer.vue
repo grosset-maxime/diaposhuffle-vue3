@@ -2,32 +2,37 @@
 // Types
 import type { ItemName } from '@/logic/ThePlayer/useItemsPlayer'
 
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 
 import { useItemsPlayer } from '@/logic/ThePlayer/useItemsPlayer'
 import { useThePlayer } from '@/logic/ThePlayer/useThePlayer'
 
 import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptionsStore'
+import { useAlertStore } from '@/stores/alertStore'
+import { createAlert } from '@/utils/alertUtils'
+import { logError } from '@/utils/errorUtils'
+import { createCustomError, type CustomErrorData } from '@/models/customError'
+import { thePlayerKey } from '@/interfaces/symbols'
 
-export interface ItemsPlayerCmpExpose {
-  startPlayer: () => void
-  stopPlayer: () => void
-  pausePlayer: (opts?: { pauseItm?: boolean }) => void
-  resumePlayer: (opts?: { resumeItm?: boolean }) => void
-
-  goToNextItem: () => void
-  goToPreviousItem: () => void
-  switchToHistoryPlayer: () => void
-  switchBackToPreviousPlayer: () => void
-
-  playItem: () => void
-  pauseItem: () => void
-}
+const FILE_NAME = 'ThePlayer/ItemsPlayer.vue'
 
 // Emits
 const emit = defineEmits<{
-  (e: 'click'): void;
+  click: []
 }>()
+
+const thePlayerProvide = inject(thePlayerKey)
+
+if (!thePlayerProvide) {
+  throw logError(
+    createCustomError(
+      `Could not resolve ${thePlayerKey.description}`,
+      { file: FILE_NAME },
+    ),
+  )
+}
+
+const alertStore = useAlertStore()
 
 const {
   isMuteVideo,
@@ -35,6 +40,7 @@ const {
 
 // #region ItemsPlayer vue
 const itemsRefs = ref<Map<ItemName, HTMLDivElement>>(new Map())
+
 function onClick () {
   emit('click')
 }
@@ -64,35 +70,110 @@ const thePlayer = useThePlayer({
   pauseItem,
 })
 
-onMounted(async () => {
+function onError (error: any, errorData: CustomErrorData): void {
+  const customError = logError(
+    createCustomError(error, {
+      file: FILE_NAME,
+      ...errorData,
+    }),
+  )
+
+  alertStore.add(
+    createAlert({ error: customError }),
+  )
+
+  thePlayer.stop()
+  thePlayerProvide?.stopPlayer()
+}
+
+onMounted(() => {
   thePlayer.start()
+    .catch((e) => {
+      onError(e, { actionName: 'onMounted' })
+    })
 })
 
-defineExpose<ItemsPlayerCmpExpose>({
-  startPlayer: thePlayer.start,
-  stopPlayer: thePlayer.stop,
+defineExpose({
+  startPlayer () {
+    try {
+      thePlayer.start()
+    } catch(e) {
+      onError(e, { actionName: 'startPlayer' })
+    }
+  },
+  stopPlayer () {
+    try {
+      thePlayer.stop()
+    } catch(e) {
+      onError(e, { actionName: 'stopPlayer' })
+    }
+  },
   pausePlayer: function ({ pauseItm = false }: { pauseItm?: boolean } = {}) {
-    thePlayer.pause()
+    try {
+      thePlayer.pause()
 
-    if (pauseItm) {
-      pauseItem()
+      if (pauseItm) {
+        pauseItem()
+      }
+    } catch(e) {
+      onError(e, { actionName: 'pausePlayer' })
     }
   },
   resumePlayer: function ({ resumeItm = false }: { resumeItm?: boolean } = {}) {
-    thePlayer.resume()
+    try {
+      thePlayer.resume()
 
-    if (resumeItm) {
-      playItem()
+      if (resumeItm) {
+        playItem()
+      }
+    } catch(e) {
+      onError(e, { actionName: 'resumePlayer' })
     }
   },
 
-  goToNextItem: thePlayer.next,
-  goToPreviousItem: thePlayer.previous,
-  switchToHistoryPlayer: thePlayer.switchToHistoryPlayer,
-  switchBackToPreviousPlayer: thePlayer.switchBackToPreviousPlayer,
+  goToNextItem () {
+    try {
+      thePlayer.next()
+    } catch (e) {
+      onError(e, { actionName: 'goToNextItem' })
+    }
+  },
+  goToPreviousItem () {
+    try {
+      thePlayer.previous()
+    } catch (e) {
+      onError(e, { actionName: 'goToPreviousItem' })
+    }
+  },
+  switchToHistoryPlayer () {
+    try {
+      thePlayer.switchToHistoryPlayer()
+    } catch (e) {
+      onError(e, { actionName: 'switchToHistoryPlayer' })
+    }
+  },
+  switchBackToPreviousPlayer () {
+    try {
+      thePlayer.switchBackToPreviousPlayer()
+    } catch (e) {
+      onError(e, { actionName: 'switchBackToPreviousPlayer' })
+    }
+  },
 
-  playItem,
-  pauseItem,
+  playItem () {
+    try {
+      playItem()
+    } catch (e) {
+      onError(e, { actionName: 'playItem' })
+    }
+  },
+  pauseItem () {
+    try {
+      pauseItem()
+    } catch (e) {
+      onError(e, { actionName: 'pauseItem' })
+    }
+  },
 })
 </script>
 

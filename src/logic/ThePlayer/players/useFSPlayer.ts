@@ -23,8 +23,8 @@ import { useTheLoopStore } from '@/stores/ThePlayer/TheLoopStore'
 import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptionsStore'
 import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerStore'
 import { useFSPlayerStore } from '@/stores/ThePlayer/players/fsPlayerStore'
-import { useAlertStore } from '@/stores/alertStore'
-import { type ErrorAlert, createErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
+import { CustomError, createCustomError, type CustomErrorData } from '@/models/customError'
+import { logError } from '@/utils/errorUtils'
 
 export const useFSPlayer = ({
   showNextItem,
@@ -36,7 +36,6 @@ export const useFSPlayer = ({
   const playerOptsStore = usePlayerOptionsStore()
   const theLoopStore = useTheLoopStore()
   const historyPlayerStore = useHistoryPlayerStore()
-  const alertStore = useAlertStore()
 
   const isActivePlayer = computed<boolean>(
     () => thePlayerStore.playerName.value === PlayerName.fs,
@@ -57,13 +56,14 @@ export const useFSPlayer = ({
   } = useFSPlayerStore()
 
   // #region Private Methods
-  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
-    const errorAlert = createErrorAlert(error, {
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    const customError = createCustomError(error, {
       ...errorData,
-      file: 'useFSPlayer.ts',
+      file: 'players/useFSPlayer.ts',
     })
-    alertStore.add(errorAlert)
-    return errorAlert
+    logError(customError)
+
+    return customError
   }
 
   function activatePlayerFeatures (): void {

@@ -1,13 +1,24 @@
 import { useTheTaggerStore } from '@/stores/TheTaggerStore'
-import { createErrorAlert } from '@/models/Alerts/errorAlert'
+import { logError } from '@/utils/errorUtils'
+import { createCustomError, CustomError, type CustomErrorData } from './customError'
 
 export type TagCategoryId = string;
 
 export type TagCategoryData = {
-  id: TagCategoryId;
-  name?: string;
-  color?: string;
+  id: TagCategoryId
+  name?: string
+  color?: string
 };
+
+function onError (error: any, errorData: CustomErrorData): CustomError {
+  return logError(
+    createCustomError(error, {
+      file: 'models/tag.ts',
+      isBackend: false,
+      ...errorData,
+    }),
+  )
+}
 
 export class TagCategory {
   // Data
@@ -72,8 +83,8 @@ export class Tag {
 
   constructor ({ id, name, categoryId = '0' }: TagData) {
     if (!id) {
-      throw createErrorAlert(`Invalid tag, tag has no id: ${id}`, {
-        file: 'tag.ts',
+      throw onError(`Invalid tag, tag has no id: ${id}`, {
+        actionName: 'Tag#Constructor',
       })
     }
 

@@ -55,32 +55,50 @@ export class CustomError {
   }
 }
 
-export function createCustomError (error: any, errorData: CustomErrorData) {
-  console.error('### error:', error, errorData)
 
-  let publicMessage
-  let message
+export function extractErrorInfo (error: any) {
+  let publicMessage: string | undefined
+  let message: string | undefined
   let severity = CustomErrorSeverity.Error
+  let _error = error
 
   try {
     if (typeof error === 'string') {
       message = error
       publicMessage = error
-      error = { message, publicMessage, severity: CustomErrorSeverity.Error }
+      error = { message, publicMessage, severity }
     } else if (typeof error === 'object') {
       message = error.message
       publicMessage = error.publicMessage || error.message
-      severity = error.severity
+      severity = error.severity || severity
     }
 
     if (error instanceof CustomError) {
-      error = error.error
+      _error = error.error
     }
 
   } catch (er) { /* Fail silently */ }
 
+  return {
+    _error,
+    message,
+    publicMessage,
+    severity,
+  }
+}
+
+export function createCustomError (error: any, errorData: CustomErrorData) {
+  console.error('### error:', error, errorData)
+
+  const {
+    message,
+    publicMessage,
+    severity,
+    _error,
+  } = extractErrorInfo(error)
+
   return new CustomError({
-    error,
+    error: _error,
     message,
     publicMessage,
     severity,

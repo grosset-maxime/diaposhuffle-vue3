@@ -29,7 +29,7 @@ const selectedTagId = useReactiveSet<TagId>()
 
 const editMode = ref(false)
 const hasOpacity = ref(false)
-const theTaggerCmp = ref<{ selectRandom: () => void } | null>(null)
+const theTaggerCmp = ref<InstanceType<typeof TaggerView> | null>(null)
 const showTheTagger = ref(false)
 
 //#region Methods

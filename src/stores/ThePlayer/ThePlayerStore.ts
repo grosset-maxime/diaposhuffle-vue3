@@ -13,13 +13,10 @@ import {
   deleteItem as deleteItemAPI,
   setItemTags as setItemTagsAPI,
 } from '@/api/items'
-import { useAlertStore } from '../alertStore'
-import { createErrorAlert, type ErrorAlert, type ErrorAlertData } from '@/models/Alerts/errorAlert'
-import type { AlertId } from '@/models/Alerts/abstractAlert'
+import { createCustomError, type CustomError, type CustomErrorData } from '@/models/customError'
+import { logError } from '@/utils/errorUtils'
 
 export const useThePlayerStore = createGlobalState(() => {
-  const alertStore = useAlertStore()
-
   // Player states
   const isStopped = ref(true)
   const isPaused = ref(false)
@@ -39,19 +36,19 @@ export const useThePlayerStore = createGlobalState(() => {
   const historyEnabled = ref(false)
   const pauseEnabled = ref(false)
 
-  const errors = ref<Array<AlertId>>([])
+  const errors = ref<Array<CustomError>>([])
   // const getErrors = () => errors.value
 
-  function onError (error: unknown, errorData: ErrorAlertData = {}): ErrorAlert {
-    const errorAlert = createErrorAlert(error, {
+  function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
+    const customError = createCustomError(error, {
       ...errorData,
-      file: 'ThePlayerStore.ts',
+      file: 'stores/ThePlayerStore.ts',
     })
-    alertStore.add(errorAlert)
+    logError(customError)
 
-    errors.value.push(errorAlert.id)
+    errors.value.push(customError)
 
-    return errorAlert
+    return customError
   }
 
   // #region Methods
