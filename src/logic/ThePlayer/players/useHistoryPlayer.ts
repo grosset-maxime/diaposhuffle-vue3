@@ -11,7 +11,7 @@ import { useHistoryPlayerStore } from '@/stores/ThePlayer/players/historyPlayerS
 import { getNextItem, getPreviousItem } from '@/utils/playerUtils'
 import {
   ON_HISTORY_PLAYER_STORE_AFTER_DELETE_ITEM,
-  ON_THE_PLAYER_STOP,
+  ON_THE_PLAYER_EXIT,
   emitter,
 } from '@/logic/useEmitter'
 import { createCustomError, type CustomError, type CustomErrorData } from '@/models/customError'
@@ -59,12 +59,12 @@ export const useHistoryPlayer = ({
   function addEventsListeners (): void {
     removeEventsListeners()
     emitter.on(ON_HISTORY_PLAYER_STORE_AFTER_DELETE_ITEM, onAfterDeleteItem)
-    emitter.on(ON_THE_PLAYER_STOP, removeEventsListeners)
+    emitter.on(ON_THE_PLAYER_EXIT, removeEventsListeners)
   }
 
   function removeEventsListeners (): void {
     emitter.off(ON_HISTORY_PLAYER_STORE_AFTER_DELETE_ITEM, onAfterDeleteItem)
-    emitter.off(ON_THE_PLAYER_STOP, removeEventsListeners)
+    emitter.off(ON_THE_PLAYER_EXIT, removeEventsListeners)
   }
 
   function initPlayerStates (): void {

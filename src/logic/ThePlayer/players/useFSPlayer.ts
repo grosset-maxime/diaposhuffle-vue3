@@ -12,7 +12,7 @@ import { computed } from 'vue'
 // Libs
 import {
   ON_FS_PLAYER_STORE_AFTER_DELETE_ITEM,
-  ON_THE_PLAYER_STOP,
+  ON_THE_PLAYER_EXIT,
   emitter,
 } from '@/logic/useEmitter'
 import { useTheLoop } from '@/logic/ThePlayer/useTheLoop'
@@ -79,12 +79,12 @@ export const useFSPlayer = ({
   function addEventsListeners (): void {
     removeEventsListeners()
     emitter.on(ON_FS_PLAYER_STORE_AFTER_DELETE_ITEM, onAfterDeleteItem)
-    emitter.on(ON_THE_PLAYER_STOP, removeEventsListeners)
+    emitter.on(ON_THE_PLAYER_EXIT, removeEventsListeners)
   }
 
   function removeEventsListeners (): void {
     emitter.off(ON_FS_PLAYER_STORE_AFTER_DELETE_ITEM, onAfterDeleteItem)
-    emitter.off(ON_THE_PLAYER_STOP, removeEventsListeners)
+    emitter.off(ON_THE_PLAYER_EXIT, removeEventsListeners)
   }
 
   async function showItem (itemToShow: Item): Promise<void> {

@@ -10,7 +10,7 @@ import mitt from 'mitt'
 export const ON_ITEM_DELETED = 'item.deleted'
 export const ON_ITEM_UNPINED = 'item.unpined'
 
-export const ON_THE_PLAYER_STOP = 'thePlayer.stop'
+export const ON_THE_PLAYER_EXIT = 'thePlayer.stop'
 
 export const ON_DB_PLAYER_STORE_AFTER_DELETE_ITEM = 'dbPlayerStore.afterDeleteItem'
 export const ON_FS_PLAYER_STORE_AFTER_DELETE_ITEM = 'fsPlayerStore.afterDeleteItem'
@@ -23,7 +23,7 @@ export type MittEvents = {
   [ON_ITEM_DELETED]: Item
   [ON_ITEM_UNPINED]: Item
 
-  [ON_THE_PLAYER_STOP]: void
+  [ON_THE_PLAYER_EXIT]: void
 
   [ON_DB_PLAYER_STORE_AFTER_DELETE_ITEM]: Item
   [ON_FS_PLAYER_STORE_AFTER_DELETE_ITEM]: Item

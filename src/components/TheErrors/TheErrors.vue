@@ -2,9 +2,14 @@
 // Components
 import ErrorItem from '@/components/TheErrors/ErrorItem.vue'
 import { useErrorLogStore } from '@/stores/errorLogStore'
+import { computed } from 'vue'
 
 // Stores
 const { errors, remove, removeAll } = useErrorLogStore()
+
+const errorsList = computed(
+  () => errors.value.map((e, index) => ({ id: index, error: e })),
+)
 
 </script>
 
@@ -26,11 +31,11 @@ const { errors, remove, removeAll } = useErrorLogStore()
 
       <div class="errors-list-ctn scrollable">
         <ErrorItem
-          v-for="(error, index) in errors"
-          :key="index"
+          v-for="error in errorsList.slice().reverse()"
+          :key="`error-${error.id}-${Date.now()}`"
           class="error-item"
-          :custom-error="error"
-          @remove="remove(index)"
+          :custom-error="error.error"
+          @remove="remove(error.id)"
         />
       </div>
     </template>
@@ -57,7 +62,7 @@ const { errors, remove, removeAll } = useErrorLogStore()
   .errors-list-ctn {
     padding: 20px;
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
 
     .error-item {
       margin-bottom: 10px;

@@ -42,7 +42,9 @@ function onClose (): void {
       @click:close="onClose"
     >
       <template #title>
-        <div>{{ errorAlert.message }}</div>
+        <slot name="title">
+          <div>{{ errorAlert.message }}</div>
+        </slot>
       </template>
 
       <template #default>
@@ -56,6 +58,7 @@ function onClose (): void {
           <div style="margin-top: 10px;">Raw error:</div>
           <div>{{ customError.error }}</div>
         </div>
+        <slot name='footer'/>
       </template>
     </v-alert>
   </div>

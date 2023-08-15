@@ -13,7 +13,7 @@ import { usePinedPlayerStore } from '@/stores/ThePlayer/players/pinedPlayerStore
 // Logics
 import {
   ON_ITEM_UNPINED,
-  ON_THE_PLAYER_STOP,
+  ON_THE_PLAYER_EXIT,
   emitter,
 } from '@/logic/useEmitter'
 import { PlayerName, type UsePlayerArg, type UsePlayerExpose } from '@/logic/ThePlayer/useThePlayer'
@@ -76,12 +76,12 @@ export const usePinedPlayer = ({
   function addEventsListeners (): void {
     removeEventsListeners()
     emitter.on(ON_ITEM_UNPINED, onUnpined)
-    emitter.on(ON_THE_PLAYER_STOP, removeEventsListeners)
+    emitter.on(ON_THE_PLAYER_EXIT, removeEventsListeners)
   }
 
   function removeEventsListeners (): void {
     emitter.off(ON_ITEM_UNPINED, onUnpined)
-    emitter.off(ON_THE_PLAYER_STOP, removeEventsListeners)
+    emitter.off(ON_THE_PLAYER_EXIT, removeEventsListeners)
   }
 
   function initPlayerStates (): void {

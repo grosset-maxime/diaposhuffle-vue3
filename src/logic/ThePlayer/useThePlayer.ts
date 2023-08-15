@@ -13,7 +13,11 @@ import { useFSPlayer } from '@/logic/ThePlayer/players/useFSPlayer'
 import { useDBPlayer } from '@/logic/ThePlayer/players/useDBPlayer'
 import { usePinedPlayer } from '@/logic/ThePlayer/players/usePinedPlayer'
 import { useHistoryPlayer } from '@/logic/ThePlayer/players/useHistoryPlayer'
-import { createCustomError, CustomError, type CustomErrorData } from '@/models/customError'
+import {
+  createCustomError,
+  CustomError,
+  type CustomErrorData,
+} from '@/models/customError'
 import { logError } from '@/utils/errorUtils'
 
 export enum PlayerName {

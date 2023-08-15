@@ -1,4 +1,4 @@
-import { AbstractAlert } from './abstractAlert'
+import { AbstractAlert, AlertType } from './abstractAlert'
 
 export interface InfoAlertData {
   message: string
@@ -6,7 +6,7 @@ export interface InfoAlertData {
 
 export class InfoAlert extends AbstractAlert {
   constructor ({ message }: InfoAlertData) {
-    super({ message })
+    super({ message, type: AlertType.Info })
   }
 }
 

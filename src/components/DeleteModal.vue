@@ -109,9 +109,19 @@ function removeKeyboardShortcuts () {
     <v-divider class="separator" />
 
     <div class="modal-btns">
-      <v-btn class="modal-btn" @click="onCancel"> Cancel </v-btn>
-
-      <v-btn class="modal-btn primary" @click="onConfirm"> Delete </v-btn>
+      <v-btn
+        class="modal-btn"
+        @click="onCancel"
+      >
+        Cancel
+      </v-btn>
+      <v-btn
+        class="modal-btn"
+        color="primary"
+        @click="onConfirm"
+      >
+        Delete
+      </v-btn>
     </div>
   </v-dialog>
 </template>
@@ -122,9 +132,11 @@ function removeKeyboardShortcuts () {
 .delete-modal.delete-modal.delete-modal {
   top: 0;
   align-items: center;
-  background: #{$grey-7 + 'CC'};
+  background: #{$grey-7 + '90'};
   padding: 15px;
   width: 800px;
+  border-radius: 5px;
+  backdrop-filter: blur(5px);
 
   .separator {
     margin: 4px 0;

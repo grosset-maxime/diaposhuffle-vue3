@@ -11,7 +11,7 @@ import type { TagId } from '@/models/tag'
 import { Position } from '@/interfaces/components/PinWrapper'
 
 // Vendors Libs
-import { ref, computed, watch, onMounted, provide } from 'vue'
+import { ref, computed, watch, onMounted, type Ref } from 'vue'
 import { eagerComputed } from '@vueuse/shared'
 
 // Libs
@@ -19,11 +19,10 @@ import { useKeyboardShortcutsListener } from '@/logic/useKeyboardShortcutsListen
 import {
   emitter,
   ON_ITEM_DELETED,
-  ON_THE_PLAYER_STOP,
+  ON_THE_PLAYER_EXIT,
 } from '@/logic/useEmitter'
 
 // Stores
-import { useAlertStore } from '@/stores/alertStore'
 import { useMainStore } from '@/stores/mainStore'
 import { useDiapoShuffleStore } from '@/stores/diapoShuffleStore'
 import { useUIOptionsStore } from '@/stores/ThePlayerOptions/uiOptionsStore'
@@ -39,26 +38,17 @@ import TagsList from '@/components/ThePlayer/TagsList.vue'
 import ItemsInfoChip from '@/components/ThePlayer/ItemsInfoChipChip.vue'
 import PinWrapper from '@/components/ThePlayer/PinWrapper.vue'
 import ItemPathChip from '@/components/ThePlayer/ItemPathChip.vue'
-
 import TheTagger from '@/components/TheTagger/TheTagger.vue'
 import DeleteModal from '@/components/DeleteModal.vue'
+import FloatingAlert from '@/components/FloatingAlert.vue'
+
 import { PlayerName } from '@/logic/ThePlayer/useThePlayer'
-import { createErrorAlert, type ErrorAlert } from '@/models/Alerts/errorAlert'
+import type { ErrorAlert } from '@/models/Alerts/errorAlert'
 import { logError } from '@/utils/errorUtils'
 import { createCustomError, CustomError, type CustomErrorData } from '@/models/customError'
-import { thePlayerKey } from '@/interfaces/symbols'
-
-const alertStore = useAlertStore()
-
-function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
-  const customError = createCustomError(error, {
-    ...errorData,
-    file: 'ThePlayer.vue',
-  })
-  logError(customError)
-
-  return customError
-}
+import { createAlert } from '@/utils/alertUtils'
+import type { WarningAlert } from '@/models/Alerts/warningAlert'
+import type { InfoAlert } from '@/models/Alerts/infoAlert'
 
 const { showTheHelp } = useMainStore()
 const { showThePlayer } = useDiapoShuffleStore()
@@ -91,30 +81,45 @@ const historyCount = historyPlayerStore.count
 const ItemsPlayerCmp = ref<InstanceType<typeof ItemsPlayer> | null>(null)
 
 // #region Delete Item Modal
-const deleteModal = {
+const deleteModal: {
+  show: Ref<boolean>
+  itemData: Ref<Item | undefined>
+  onHide: Ref<(((submitted: boolean) => void) | undefined)>
+} = {
   show: ref(false),
-  itemData: ref<Item | undefined>(),
+  itemData: ref(),
+  onHide: ref(),
 }
 
 const deleteSrcText = computed<string>(() => {
   return `Src: ${deleteModal.itemData.value?.src}`
 })
 
-function showDeleteModal ({ item }: { item: Item }): void {
-  showUI()
-  pausePlayer()
-  stopKSListener()
-
+function showDeleteModal (
+  { item, onHide }: { item: Item, onHide?: (submitted: boolean) => void },
+): void {
   deleteModal.itemData.value = item
   deleteModal.show.value = true
+  deleteModal.onHide.value = onHide
+}
+
+function showDeleteModalFromCustomAlert (): void {
+  item.value && showDeleteModal({
+    item: item.value,
+    onHide (submitted) {
+      if (submitted) {
+        hideAlert()
+      }
+    },
+  })
 }
 
 async function hideDeleteModal (
-  { remove = false }: { remove?: boolean } = {},
+  { submitted = false }: { submitted?: boolean } = {},
 ): Promise<void> {
   const item = deleteModal.itemData.value
 
-  if (item && remove) {
+  if (item && submitted) {
     try {
       await thePlayerStore.deleteItem({ item })
 
@@ -122,18 +127,17 @@ async function hideDeleteModal (
 
       hideUI()
 
-    } catch (e: unknown) {
-      const error = onError(e)
-
-      pausePlayer()
-      displayAlert(error as Partial<Alert>)
+    } catch (e) {
+      throw onError(e)
     }
   }
 
   deleteModal.show.value = false
-  deleteModal.itemData.value = undefined
 
-  startKSListener()
+  deleteModal.onHide.value?.(submitted)
+
+  deleteModal.onHide.value = undefined
+  deleteModal.itemData.value = undefined
 }
 // #endregion Delete Item Modal
 
@@ -168,34 +172,54 @@ async function onSaveTaggerModal (selectedTagIds: Set<TagId>): Promise<void> {
   try {
     await thePlayerStore.setItemTags({ item: itemVal })
   } catch (e) {
-    const error = onError(e)
-
-    pausePlayer()
-    displayAlert(error as Partial<Alert>)
-
-    throw error
+    throw onError(e)
   }
 }
 // #endregion The Tagger
 
-// #region The Player vue
-const { startKSListener, stopKSListener }
-  = useKeyboardShortcutsListener(keyboardShortcuts)
-
+// #region The Player Alert
 const showAlert = ref(false)
 
-interface Alert {
-  publicMessage: string
-  severity: 'error'
+interface ThePlayerAlert {
+  customAlert?: ErrorAlert | InfoAlert | WarningAlert
   showDeleteBtn: boolean
   onClose: () => void
 }
-const alert = ref<Alert>({
-  publicMessage: '',
-  severity: 'error',
+const alert = ref<ThePlayerAlert>({
+  customAlert: undefined,
   showDeleteBtn: false,
   onClose: () => {},
 })
+
+function displayAlert ({
+  customAlert = undefined,
+  showDeleteBtn = false,
+  onClose = () => {},
+}: Partial<ThePlayerAlert> = {}): void {
+  alert.value = {
+    customAlert,
+    showDeleteBtn,
+    onClose,
+  }
+
+  showAlert.value = true
+}
+
+function hideAlert (): void {
+  showAlert.value = false
+  alert.value.onClose?.()
+
+  alert.value = {
+    customAlert: undefined,
+    showDeleteBtn: false,
+    onClose () {},
+  }
+}
+// #endregion The Player Alert
+
+// #region The Player vue
+const { startKSListener, stopKSListener }
+  = useKeyboardShortcutsListener(keyboardShortcuts)
 
 function switchToHistoryPlayer (): void {
   ItemsPlayerCmp.value?.switchToHistoryPlayer()
@@ -204,19 +228,50 @@ function closeActivePlayer (): void {
   ItemsPlayerCmp.value?.switchBackToPreviousPlayer()
 }
 
+function exitThePlayer (): void {
+  ItemsPlayerCmp.value?.stopPlayer()
+
+  showThePlayer.value = false
+
+  emitter.emit(ON_THE_PLAYER_EXIT)
+}
+
+async function startPlayer (): Promise<void> {
+  try {
+    await ItemsPlayerCmp.value?.startPlayer()
+  } catch (e) {
+    throw onError(e, { actionName: 'startPlayer' })
+  }
+}
 function stopPlayer (): void {
   ItemsPlayerCmp.value?.stopPlayer()
-  showThePlayer.value = false
-  emitter.emit(ON_THE_PLAYER_STOP)
+}
+function canPausePlayer (): boolean {
+  return !!ItemsPlayerCmp.value?.canPausePlayer()
 }
 function pausePlayer (opts: { pauseItm?: boolean } = {}): void {
   ItemsPlayerCmp.value?.pausePlayer(opts)
 }
+function canResumePlayer (): boolean {
+  return !!ItemsPlayerCmp.value?.canResumePlayer()
+}
 function resumePlayer (opts: { resumeItm?: boolean } = {}): void {
   ItemsPlayerCmp.value?.resumePlayer(opts)
 }
-function goToNextItem (): void { ItemsPlayerCmp.value?.goToNextItem() }
-function goToPreviousItem (): void { ItemsPlayerCmp.value?.goToPreviousItem() }
+async function goToNextItem (): Promise<void> {
+  try {
+    await ItemsPlayerCmp.value?.goToNextItem()
+  } catch (e) {
+    throw onError(e, { actionName: 'goToNextItem' })
+  }
+}
+async function goToPreviousItem (): Promise<void> {
+  try {
+    await ItemsPlayerCmp.value?.goToPreviousItem()
+  } catch (e) {
+    throw onError(e, { actionName: 'goToPreviousItem' })
+  }
+}
 
 function togglePinItem (): void {
   if (!item.value) { return }
@@ -230,7 +285,7 @@ function togglePinItem (): void {
   }
 }
 
-function onItemsPlayerClick () {
+function onItemsPlayerClick (): void {
   if (isPaused.value) {
     resumePlayer()
   } else {
@@ -238,24 +293,57 @@ function onItemsPlayerClick () {
   }
 }
 
-function displayAlert ({
-  publicMessage = 'Unknow error.',
-  severity = 'error',
-  showDeleteBtn = false,
-  onClose = () => {},
-}: Partial<Alert> = {}): void {
-  alert.value = {
-    publicMessage,
-    severity,
-    showDeleteBtn,
-    onClose,
-  }
-  showAlert.value = true
+function onPlayingItemError ({ item, error }: { item?: Item, error: CustomError }) {
+  console.error('### Failing item:', item)
+
+  canPausePlayer()
+    ? pausePlayer()
+    : stopPlayer()
+
+  stopKSListener()
+
+  const customAlert = createAlert({
+    error,
+  })
+
+  displayAlert({
+    showDeleteBtn: true,
+    customAlert,
+    async onClose () {
+      startKSListener()
+
+      await goToNextItem()
+
+      await canResumePlayer()
+        ? resumePlayer()
+        : startPlayer()
+    },
+  })
 }
 
-function hideAlert (): void {
-  showAlert.value = false
-  alert.value.onClose?.()
+function onError (error: unknown, errorData?: CustomErrorData): CustomError {
+  const customError = createCustomError(error, {
+    ...errorData,
+    file: 'ThePlayer.vue',
+  })
+  logError(customError)
+
+  canPausePlayer()
+    ? pausePlayer()
+    : stopPlayer()
+
+  stopKSListener()
+
+  const customAlert = createAlert({
+    error: customError,
+  })
+
+  displayAlert({
+    customAlert,
+    onClose: exitThePlayer,
+  })
+
+  return customError
 }
 
 function keyboardShortcuts (key: string): void {
@@ -279,7 +367,7 @@ function keyboardShortcuts (key: string): void {
     break
 
   case 'Escape':
-    stopPlayer()
+    exitThePlayer()
     break
 
   case 'ArrowRight':
@@ -291,7 +379,15 @@ function keyboardShortcuts (key: string): void {
     break
 
   case 'Delete':
-    showDeleteModal({ item: item.value! })
+    showUI()
+    pausePlayer()
+    stopKSListener()
+    showDeleteModal({
+      item: item.value!,
+      onHide () {
+        startKSListener()
+      },
+    })
     break
 
   case 'h':
@@ -450,11 +546,6 @@ watch(showTheHelp, (isShow) => {
     : startKSListener()
 })
 
-// Provide
-provide(thePlayerKey, {
-  stopPlayer,
-})
-
 onMounted(async () => {
   // Init pined states from UI options.
   itemPathChip.pined.value = pinPath.value
@@ -577,26 +668,20 @@ onMounted(async () => {
       }]"
     />
 
-    <v-alert
-      class="alert"
-      :model-value="showAlert"
-      :type="alert.severity"
-      dismissible
-      prominent
-      transition="slide-x-transition"
-      @input="hideAlert()"
+    <FloatingAlert
+      v-if="alert.customAlert"
+      :show="showAlert"
+      :custom-alert="alert.customAlert"
+      @close="hideAlert"
     >
-      <v-row align="center">
-        <v-col class="grow">
-          {{ alert.publicMessage }}
-        </v-col>
-        <v-col class="shrink" v-if="alert.showDeleteBtn">
-          <v-btn @click="item && showDeleteModal({ item })">
+      <template #errorAlertFooter v-if="alert.showDeleteBtn">
+        <div class="error-alert-footer">
+          <v-btn @click="showDeleteModalFromCustomAlert">
             Delete
           </v-btn>
-        </v-col>
-      </v-row>
-    </v-alert>
+        </div>
+      </template>
+    </FloatingAlert>
 
     <PinWrapper
       v-if="showTheItemsInfoChip"
@@ -636,9 +721,9 @@ onMounted(async () => {
       :show="deleteModal.show.value"
       :show-preview="!!deleteModal.itemData.value"
       :show-src="!!deleteModal.itemData.value"
-      @confirm="hideDeleteModal({ remove: true })"
-      @cancel="hideDeleteModal"
-      @click:outside="hideDeleteModal"
+      @confirm="hideDeleteModal({ submitted: true })"
+      @cancel="hideDeleteModal({ submitted: false })"
+      @click:outside="hideDeleteModal({ submitted: false })"
     >
       <template v-if="!!deleteModal.itemData.value" #preview>
         <img
@@ -662,6 +747,8 @@ onMounted(async () => {
       ref="ItemsPlayerCmp"
       class="the-items-player"
       @click="onItemsPlayerClick"
+      @load-error="onPlayingItemError"
+      @error="onError"
     />
 
     <PinWrapper
@@ -824,6 +911,11 @@ onMounted(async () => {
     top: calc(50% - 11px);
   }
 
+  .error-alert-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: end;
+  }
   .alert {
     $margin: 10px;
     z-index: 2000;

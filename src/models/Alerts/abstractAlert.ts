@@ -21,7 +21,7 @@ export class AbstractAlert {
   constructor ({ type, message }: AbstractAlertData) {
     this.id = alertIdTracker
     this.type = type || AlertType.Error
-    this.message = message
+    this.message = message || 'Empty message...'
 
     alertIdTracker = alertIdTracker + 1
   }

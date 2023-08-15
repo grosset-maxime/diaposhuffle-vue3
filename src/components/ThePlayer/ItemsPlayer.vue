@@ -1,38 +1,25 @@
 <script setup lang="ts">
 // Types
 import type { ItemName } from '@/logic/ThePlayer/useItemsPlayer'
+import type { Item } from '@/models/item'
 
-import { ref, onMounted, inject } from 'vue'
+import { ref, onMounted } from 'vue'
 
 import { useItemsPlayer } from '@/logic/ThePlayer/useItemsPlayer'
 import { useThePlayer } from '@/logic/ThePlayer/useThePlayer'
 
 import { usePlayerOptionsStore } from '@/stores/ThePlayerOptions/playerOptionsStore'
-import { useAlertStore } from '@/stores/alertStore'
-import { createAlert } from '@/utils/alertUtils'
 import { logError } from '@/utils/errorUtils'
-import { createCustomError, type CustomErrorData } from '@/models/customError'
-import { thePlayerKey } from '@/interfaces/symbols'
+import { createCustomError, CustomError, type CustomErrorData } from '@/models/customError'
 
 const FILE_NAME = 'ThePlayer/ItemsPlayer.vue'
 
 // Emits
 const emit = defineEmits<{
-  click: []
+  click: [],
+  loadError: [ {item?: Item, error: CustomError } ],
+  error: [ error: CustomError ],
 }>()
-
-const thePlayerProvide = inject(thePlayerKey)
-
-if (!thePlayerProvide) {
-  throw logError(
-    createCustomError(
-      `Could not resolve ${thePlayerKey.description}`,
-      { file: FILE_NAME },
-    ),
-  )
-}
-
-const alertStore = useAlertStore()
 
 const {
   isMuteVideo,
@@ -78,37 +65,56 @@ function onError (error: any, errorData: CustomErrorData): void {
     }),
   )
 
-  alertStore.add(
-    createAlert({ error: customError }),
+  emit('error', customError)
+}
+
+function onLoadItemError (itemName: ItemName, item: Item | undefined, event: Event) {
+  onItemError(itemName, event)
+
+  let src = ''
+  try {
+    const target = event.target as HTMLImageElement | HTMLVideoElement | undefined
+    src = target?.src || ''
+  } catch (e) { /* Fail silently */ }
+
+  const error = logError(
+    createCustomError(`Fail to load item: ${itemName} | src: ${src}`, {
+      file: FILE_NAME,
+      actionName: 'onLoadItemError',
+    }),
   )
 
-  thePlayer.stop()
-  thePlayerProvide?.stopPlayer()
+  emit('loadError', { item, error })
 }
 
 onMounted(() => {
   thePlayer.start()
-    .catch((e) => {
-      onError(e, { actionName: 'onMounted' })
-    })
+    .catch((e) => { onError(e, { actionName: 'onMounted#thePlayer.start' }) })
 })
 
 defineExpose({
-  startPlayer () {
+  async startPlayer () {
     try {
-      thePlayer.start()
+      await thePlayer.start()
     } catch(e) {
-      onError(e, { actionName: 'startPlayer' })
+      throw onError(e, { actionName: 'startPlayer' })
     }
   },
   stopPlayer () {
     try {
       thePlayer.stop()
     } catch(e) {
-      onError(e, { actionName: 'stopPlayer' })
+      throw onError(e, { actionName: 'stopPlayer' })
     }
   },
-  pausePlayer: function ({ pauseItm = false }: { pauseItm?: boolean } = {}) {
+  canPausePlayer (): boolean {
+    try {
+      return thePlayer.canPause()
+    } catch(e) {
+      throw onError(e, { actionName: 'canPausePlayer' })
+    }
+  },
+  pausePlayer ({ pauseItm = false }: { pauseItm?: boolean } = {}) {
     try {
       thePlayer.pause()
 
@@ -116,10 +122,17 @@ defineExpose({
         pauseItem()
       }
     } catch(e) {
-      onError(e, { actionName: 'pausePlayer' })
+      throw onError(e, { actionName: 'pausePlayer' })
     }
   },
-  resumePlayer: function ({ resumeItm = false }: { resumeItm?: boolean } = {}) {
+  canResumePlayer (): boolean {
+    try {
+      return thePlayer.canResume()
+    } catch(e) {
+      throw onError(e, { actionName: 'canResumePlayer' })
+    }
+  },
+  resumePlayer ({ resumeItm = false }: { resumeItm?: boolean } = {}) {
     try {
       thePlayer.resume()
 
@@ -127,36 +140,36 @@ defineExpose({
         playItem()
       }
     } catch(e) {
-      onError(e, { actionName: 'resumePlayer' })
+      throw onError(e, { actionName: 'resumePlayer' })
     }
   },
 
-  goToNextItem () {
+  async goToNextItem () {
     try {
-      thePlayer.next()
+      await thePlayer.next()
     } catch (e) {
-      onError(e, { actionName: 'goToNextItem' })
+      throw onError(e, { actionName: 'goToNextItem' })
     }
   },
-  goToPreviousItem () {
+  async goToPreviousItem () {
     try {
-      thePlayer.previous()
+      await thePlayer.previous()
     } catch (e) {
-      onError(e, { actionName: 'goToPreviousItem' })
+      throw onError(e, { actionName: 'goToPreviousItem' })
     }
   },
   switchToHistoryPlayer () {
     try {
       thePlayer.switchToHistoryPlayer()
     } catch (e) {
-      onError(e, { actionName: 'switchToHistoryPlayer' })
+      throw onError(e, { actionName: 'switchToHistoryPlayer' })
     }
   },
   switchBackToPreviousPlayer () {
     try {
       thePlayer.switchBackToPreviousPlayer()
     } catch (e) {
-      onError(e, { actionName: 'switchBackToPreviousPlayer' })
+      throw onError(e, { actionName: 'switchBackToPreviousPlayer' })
     }
   },
 
@@ -197,8 +210,9 @@ defineExpose({
         :src="item.src"
         class="item img"
         draggable="false"
+        :alt="item.src"
         @load="onItemLoaded(itemName)"
-        @error="onItemError(itemName, $event)"
+        @error="onLoadItemError(itemName, item.data, $event)"
       />
       <video
         v-if="item.src && (item.data || {})?.isVideo"
@@ -211,7 +225,7 @@ defineExpose({
         :controlsList="item.videoOptions.controlsList"
         disablePictureInPicture
         @canplay="onItemLoaded(itemName)"
-        @error="onItemError(itemName, $event)"
+        @error="onLoadItemError(itemName, item.data, $event)"
       />
     </div>
   </div>
@@ -241,7 +255,7 @@ defineExpose({
       object-fit: contain;
       width: 100%;
       height: 100%;
-      outline: none;
+      outline: 0;
     }
 
     .item.vid {
