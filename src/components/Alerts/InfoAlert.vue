@@ -31,9 +31,15 @@ function onClose (): void {
       :border-color="AlertType.Info"
       variant="tonal"
       :type="AlertType.Info"
-      :text="infoAlert.message"
       @click:close="onClose"
-    />
+    >
+      <template #default>
+        <div class="body">
+          {{ infoAlert.message }}
+        </div>
+        <slot name='footer'/>
+      </template>
+    </v-alert>
   </div>
 </template>
 

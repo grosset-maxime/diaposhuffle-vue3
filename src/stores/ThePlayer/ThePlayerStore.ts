@@ -36,17 +36,12 @@ export const useThePlayerStore = createGlobalState(() => {
   const historyEnabled = ref(false)
   const pauseEnabled = ref(false)
 
-  const errors = ref<Array<CustomError>>([])
-  // const getErrors = () => errors.value
-
   function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
     const customError = createCustomError(error, {
       ...errorData,
       file: 'stores/ThePlayerStore.ts',
     })
     logError(customError)
-
-    errors.value.push(customError)
 
     return customError
   }
@@ -63,16 +58,12 @@ export const useThePlayerStore = createGlobalState(() => {
 
   // #region Actions
   async function deleteItem ({ item }: { item: Item }): Promise<boolean> {
-    let result = false
-
     try {
       const response = await deleteItemAPI({ item })
-      result = response.success
+      return !!response.success
     } catch (e) {
       throw onError(e, { actionName: 'deleteItem' })
     }
-
-    return result
   }
 
   async function setItemTags ({ item }: { item: Item }): Promise<boolean> {

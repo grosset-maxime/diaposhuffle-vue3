@@ -40,9 +40,6 @@ export const useTheFolderBrowserStore = createGlobalState(() => {
   })
   const folders = useReactiveMap<FolderPath, Folder>([ [ ROOT_PATH, rootFolder ] ])
 
-  // TODO:
-  const errors = ref<Array<CustomError>>([])
-
   // Getters
   const getRootFolder = (): Folder => rootFolder
   const getFolder = (path: FolderPath): Folder | undefined => folders.value.get(path)
@@ -54,8 +51,6 @@ export const useTheFolderBrowserStore = createGlobalState(() => {
       file: 'stores/TheFolderBrowserStore.ts',
     })
     logError(customError)
-
-    errors.value.push(customError)
 
     return customError
   }

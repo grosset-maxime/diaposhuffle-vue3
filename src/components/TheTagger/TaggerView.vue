@@ -33,7 +33,12 @@ import { useTagFocus, TagsSection } from '@/logic/TheTagger/useTagFocus'
 import useReactiveMap from '@/logic/useReactiveMap'
 import useReactiveSet from '@/logic/useReactiveSet'
 import type { VTextField } from 'vuetify/lib/components/index.mjs'
+import { createCustomError, CustomError, type CustomErrorData } from '@/models/customError'
+import { logError } from '@/utils/errorUtils'
+import { useAlertStore } from '@/stores/alertStore'
+import { createAlert } from '@/utils/alertUtils'
 
+const alertStore = useAlertStore()
 const theTaggerStore = useTheTaggerStore()
 const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
 
@@ -56,6 +61,23 @@ const emit = defineEmits<{
   (e: 'toggleOpacity'): void;
   (e: 'toggleOpacity'): void;
 }>()
+
+
+function onError (error: unknown, errorData?: CustomErrorData): CustomError {
+  const customError = createCustomError(error, {
+    ...errorData,
+    file: 'TheTagger/TaggerView.vue',
+  })
+  logError(customError)
+
+  stopKSListener()
+
+  const customAlert = createAlert({ error: customError })
+
+  alertStore.add(customAlert)
+
+  return customError
+}
 
 const selectedTagsIdsSet = useReactiveSet<TagId>()
 watch(
@@ -95,37 +117,37 @@ const filterTextCmp = ref<InstanceType<typeof VTextField> | null>(null)
 
 const isFilterTextHasFocus = ref(false)
 
-const hasCategoriesFilter = eagerComputed(() => !!filters.categories.size)
+const hasCategoriesFilter = eagerComputed<boolean>(() => !!filters.categories.size)
 
-const isFiltering = eagerComputed(
+const isFiltering = eagerComputed<boolean>(
   () => !!(hasCategoriesFilter.value || filters.text),
 )
 
-function onSelectCategory (catId: TagCategoryId) {
+function onSelectCategory (catId: TagCategoryId): void {
   filters.categories.add(catId)
 }
 
-function onUnselectCategory (catId: TagCategoryId) {
+function onUnselectCategory (catId: TagCategoryId): void {
   filters.categories.delete(catId)
 }
 
-function onFilterTextFocus () {
+function onFilterTextFocus (): void {
   isFilterTextHasFocus.value = true
 }
 
-function onFilterTextBlur () {
+function onFilterTextBlur (): void {
   isFilterTextHasFocus.value = false
 }
 
-function clearFilterText () {
+function clearFilterText (): void {
   filters.text = ''
 }
 
-async function setFilterTextFocus () {
+function setFilterTextFocus (): void {
   filterTextCmp.value?.focus()
 }
 
-function resetFilters () {
+function resetFilters (): void {
   filters.text = ''
   filters.categories = new Set()
 }
@@ -175,7 +197,7 @@ const {
 //#endregion Tag Focus
 
 //#region Methods
-function onTagClick (tagId?: TagId) {
+function onTagClick (tagId?: TagId): void {
   if (!tagId) { return }
 
   if (selectedTagsIdsSet.value.has(tagId)) {
@@ -199,7 +221,7 @@ function onTagClick (tagId?: TagId) {
   setFocusRight()
 }
 
-function selectRandom () {
+function selectRandom (): void {
   const randomdTagId = getRandomElement(Array.from(unselectedTagsMap.value.keys()))
 
   if (randomdTagId) {
@@ -209,15 +231,15 @@ function selectRandom () {
   setFilterTextFocus()
 }
 
-function addLastUsedTag (tagId: TagId) {
+function addLastUsedTag (tagId: TagId): void {
   theTaggerStore.addLastUsedTag(tagId)
 }
 
-function updateSelectedTagIdsMap () {
+function updateSelectedTagIdsMap (): void {
   selectedTagsIdsSet.value.addValues(props.selected, { clear: true })
 }
 
-function keyboardShortcuts (key: string, e: KeyboardEvent) {
+function keyboardShortcuts (key: string, e: KeyboardEvent): void {
   let preventDefault = false
   const stopPropagation = false
 
@@ -345,43 +367,59 @@ const editTagModal = ref<{
   tagId: undefined,
 })
 
-async function onDeleteEditTagModal (tagId: TagId) {
-  await theTaggerStore.deleteTag(tagId)
+async function onDeleteEditTagModal (tagId: TagId): Promise<void> {
+  let hasError = false
 
-  updateSelectedTagIdsMap()
+  try {
+    await theTaggerStore.deleteTag(tagId)
+
+    updateSelectedTagIdsMap()
+  } catch (e) {
+    hasError = true
+    onError(e, { actionName: 'onDeleteEditTagModal' })
+  }
+
+  hideEditTagModal({ hasError })
+}
+
+async function onConfirmEditTagModal (tagData: TagData): Promise<void> {
+  let hasError = false
+
+  try {
+    await (editTagModal.value.add
+      ? theTaggerStore.addTag(tagData)
+      : theTaggerStore.updateTag(tagData))
+
+    updateSelectedTagIdsMap()
+  } catch (e) {
+    hasError = true
+    onError(e, { actionName: 'onConfirmEditTagModal' })
+  }
+
+  hideEditTagModal({ hasError })
+}
+
+function onCancelEditTagModal (): void {
   hideEditTagModal()
 }
 
-async function onConfirmEditTagModal (tagData: TagData) {
-  await (editTagModal.value.add
-    ? theTaggerStore.addTag(tagData)
-    : theTaggerStore.updateTag(tagData))
-
-  updateSelectedTagIdsMap()
-  hideEditTagModal()
-}
-
-function onCancelEditTagModal () {
-  hideEditTagModal()
-}
-
-function showAddTagModal () {
+function showAddTagModal (): void {
   stopKSListener()
   editTagModal.value.add = true
   editTagModal.value.tagId = undefined
   editTagModal.value.show = true
 }
 
-function showEditTagModal (tagId: TagId) {
+function showEditTagModal (tagId: TagId): void {
   stopKSListener()
   editTagModal.value.add = false
   editTagModal.value.tagId = tagId
   editTagModal.value.show = true
 }
 
-function hideEditTagModal () {
+function hideEditTagModal ({ hasError }: { hasError?: boolean } = {}): void {
   editTagModal.value.show = false
-  startKSListener()
+  !hasError && startKSListener()
 }
 //#endregion Edit/Add Tag Modal
 
@@ -396,57 +434,71 @@ const editCategoryModal = ref<{
   categoryId: undefined,
 })
 
-async function onDeleteEditCategoryModal (catId: TagCategoryId) {
-  await theTaggerStore.deleteCategory(catId)
+async function onDeleteEditCategoryModal (catId: TagCategoryId): Promise<void> {
+  let hasError = false
 
+  try {
+    await theTaggerStore.deleteCategory(catId)
+  } catch(e) {
+    hasError = true
+    onError(e, { actionName: 'onDeleteEditCategoryModal' })
+  }
+
+  hideEditCategoryModal({ hasError })
+}
+
+async function onConfirmEditCategoryModal (categoryData: TagCategoryData): Promise<void> {
+  let hasError = false
+
+  try {
+    await (editCategoryModal.value.add
+      ? theTaggerStore.addCategory(categoryData)
+      : theTaggerStore.updateCategory(categoryData))
+  } catch(e) {
+    hasError = true
+    onError(e, { actionName: 'onConfirmEditCategoryModal' })
+  }
+
+  hideEditCategoryModal({ hasError })
+}
+
+function onCancelEditCategoryModal (): void {
   hideEditCategoryModal()
 }
 
-async function onConfirmEditCategoryModal (categoryData: TagCategoryData) {
-  await (editCategoryModal.value.add
-    ? theTaggerStore.addCategory(categoryData)
-    : theTaggerStore.updateCategory(categoryData))
-
-  hideEditCategoryModal()
-}
-
-function onCancelEditCategoryModal () {
-  hideEditCategoryModal()
-}
-
-function showAddCategoryModal () {
+function showAddCategoryModal (): void {
   stopKSListener()
   editCategoryModal.value.add = true
   editCategoryModal.value.categoryId = undefined
   editCategoryModal.value.show = true
 }
 
-function showEditCategoryModal (catId: TagCategoryId) {
+function showEditCategoryModal (catId: TagCategoryId): void {
   stopKSListener()
   editCategoryModal.value.add = false
   editCategoryModal.value.categoryId = catId
   editCategoryModal.value.show = true
 }
 
-function hideEditCategoryModal () {
+function hideEditCategoryModal ({ hasError }: { hasError?: boolean } = {}): void {
   editCategoryModal.value.show = false
-  startKSListener()
+  !hasError && startKSListener()
 }
 //#endregion Edit/Add TagCategory Modal
 
-const noSelectedTagsText = eagerComputed(() => {
+const noSelectedTagsText = eagerComputed<string>(() => {
   return isFiltering.value && !selectedTagsIdsSet.value.size
     ? 'No tags results'
     : 'No tags selected'
 })
 
-const noLastUsedTagsText = eagerComputed(() => {
+const noLastUsedTagsText = eagerComputed<string>(() => {
   return isFiltering.value
     ? 'No tags results'
     : 'No last used tags'
 })
 
-const noUnselectedTagsText = eagerComputed(() => {
+const noUnselectedTagsText = eagerComputed<string>(() => {
   return isFiltering.value
     ? 'No tags results'
     : ''

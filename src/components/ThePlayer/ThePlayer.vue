@@ -125,17 +125,13 @@ async function hideDeleteModal (
 
       emitter.emit(ON_ITEM_DELETED, item)
 
-      hideUI()
-
+      deleteModal.onHide.value?.(submitted)
     } catch (e) {
-      throw onError(e)
+      onError(e)
     }
   }
 
   deleteModal.show.value = false
-
-  deleteModal.onHide.value?.(submitted)
-
   deleteModal.onHide.value = undefined
   deleteModal.itemData.value = undefined
 }
@@ -182,22 +178,26 @@ const showAlert = ref(false)
 
 interface ThePlayerAlert {
   customAlert?: ErrorAlert | InfoAlert | WarningAlert
-  showDeleteBtn: boolean
+  showFooter?: boolean
+  showDeleteBtn?: boolean
   onClose: () => void
 }
 const alert = ref<ThePlayerAlert>({
   customAlert: undefined,
+  showFooter: false,
   showDeleteBtn: false,
   onClose: () => {},
 })
 
 function displayAlert ({
   customAlert = undefined,
+  showFooter = false,
   showDeleteBtn = false,
   onClose = () => {},
 }: Partial<ThePlayerAlert> = {}): void {
   alert.value = {
     customAlert,
+    showFooter,
     showDeleteBtn,
     onClose,
   }
@@ -211,6 +211,7 @@ function hideAlert (): void {
 
   alert.value = {
     customAlert: undefined,
+    showFooter: false,
     showDeleteBtn: false,
     onClose () {},
   }
@@ -302,9 +303,7 @@ function onPlayingItemError ({ item, error }: { item?: Item, error: CustomError 
 
   stopKSListener()
 
-  const customAlert = createAlert({
-    error,
-  })
+  const customAlert = createAlert({ error })
 
   displayAlert({
     showDeleteBtn: true,
@@ -324,7 +323,7 @@ function onPlayingItemError ({ item, error }: { item?: Item, error: CustomError 
 function onError (error: unknown, errorData?: CustomErrorData): CustomError {
   const customError = createCustomError(error, {
     ...errorData,
-    file: 'ThePlayer.vue',
+    file: 'ThePlayer/ThePlayer.vue',
   })
   logError(customError)
 
@@ -334,13 +333,13 @@ function onError (error: unknown, errorData?: CustomErrorData): CustomError {
 
   stopKSListener()
 
-  const customAlert = createAlert({
-    error: customError,
-  })
+  const customAlert = createAlert({ error: customError })
 
   displayAlert({
     customAlert,
-    onClose: exitThePlayer,
+    onClose () {
+      startKSListener()
+    },
   })
 
   return customError
@@ -386,6 +385,7 @@ function keyboardShortcuts (key: string): void {
       item: item.value!,
       onHide () {
         startKSListener()
+        hideUI()
       },
     })
     break
@@ -674,10 +674,16 @@ onMounted(async () => {
       :custom-alert="alert.customAlert"
       @close="hideAlert"
     >
-      <template #errorAlertFooter v-if="alert.showDeleteBtn">
-        <div class="error-alert-footer">
-          <v-btn @click="showDeleteModalFromCustomAlert">
+      <template #alertFooter>
+        <div class="alert-footer">
+          <v-btn
+            v-if="alert.showDeleteBtn"
+            @click="showDeleteModalFromCustomAlert"
+          >
             Delete
+          </v-btn>
+          <v-btn @click="exitThePlayer">
+            Exit Player
           </v-btn>
         </div>
       </template>
@@ -911,7 +917,7 @@ onMounted(async () => {
     top: calc(50% - 11px);
   }
 
-  .error-alert-footer {
+  .alert-footer {
     margin-top: 20px;
     display: flex;
     justify-content: end;

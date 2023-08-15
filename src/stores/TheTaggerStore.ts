@@ -40,9 +40,6 @@ export const useTheTaggerStore = createGlobalState(() => {
 
   const lastUsedTags = useReactiveMap<TagId, Tag>()
 
-  // TODO:
-  const errors = ref<Array<CustomError>>([])
-
   // Computed
   const isTaggerReady = computed<boolean>(() => taggerReady.value)
   const tagsList = computed<Array<Tag>>(() => Array.from(tags.value.values()))
@@ -52,7 +49,6 @@ export const useTheTaggerStore = createGlobalState(() => {
   // Getters
   const getTag = (id: TagId): Tag | undefined => tags.value.get(id)
   const getCategory = (id: TagCategoryId): TagCategory | undefined => categories.value.get(id)
-  const getErrors = (): Array<CustomError> => errors.value
 
   // #region Mutations
   function onError (error: unknown, errorData: CustomErrorData = {}): CustomError {
@@ -61,8 +57,6 @@ export const useTheTaggerStore = createGlobalState(() => {
       file: 'stores/TheTaggerStore.ts',
     })
     logError(customError)
-
-    errors.value.push(customError)
 
     return customError
   }
@@ -140,11 +134,11 @@ export const useTheTaggerStore = createGlobalState(() => {
 
       _updateTags()
       _updateCategories()
+
+      taggerReady.value = true
     } catch (e) {
       throw onError(e, { actionName: 'initStore' })
     }
-
-    taggerReady.value = true
   }
 
   async function addTag (tagData: TagData): Promise<void> {
@@ -324,7 +318,6 @@ export const useTheTaggerStore = createGlobalState(() => {
     // Getters
     getTag,
     getCategory,
-    getErrors,
 
     // Mutations
     addLastUsedTag,

@@ -5,12 +5,27 @@ import ThePlayer from '@/components/ThePlayer/ThePlayer.vue'
 
 import { useDiapoShuffleStore } from '@/stores/diapoShuffleStore'
 import { useTheTaggerStore } from '@/stores/TheTaggerStore'
+import { useAlertStore } from '@/stores/alertStore'
+import { createAlert } from '@/utils/alertUtils'
+import { createCustomError } from '@/models/customError'
+import { logError } from '@/utils/errorUtils'
 
 const { showThePlayer } = useDiapoShuffleStore()
 
+const alertStore = useAlertStore()
+
 // To pre-fetch tags and categories list.
 const theTaggerStore = useTheTaggerStore()
+
 theTaggerStore.initStore()
+  .catch((error) => {
+    const customError = logError(createCustomError(error, {
+      file: 'views/DiapoShuffleView.vue',
+      actionName: 'script',
+    }))
+
+    alertStore.add(createAlert({ error: customError }))
+  })
 </script>
 
 <template>

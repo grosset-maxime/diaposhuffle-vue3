@@ -2,7 +2,7 @@
 import type { Item } from '@/models/item'
 
 // Vendors Libs
-import { ref, watch, type ComputedRef } from 'vue'
+import { ref, watch, type ComputedRef, computed } from 'vue'
 
 // Stores
 import { useThePlayerStore } from '@/stores/ThePlayer/ThePlayerStore'
@@ -240,6 +240,7 @@ export const useThePlayer = ({
   return {
     playerName,
     player,
+    isStopped: computed(() => isStopped.value),
 
     start,
     stop,

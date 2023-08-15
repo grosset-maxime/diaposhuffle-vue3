@@ -91,24 +91,34 @@ function onClose () {
             :error-alert="_errorAlert"
             @close="onClose"
           >
-          <template #footer>
-            <slot name="errorAlertFooter"/>
-          </template>
+            <template #footer>
+              <slot name="alertFooter"/>
+            </template>
           </ErrorAlertCmp>
         </template>
-        <template v-if="infoAlert">
+
+        <template v-else-if="infoAlert">
           <InfoAlertCmp
             class="floating-alert floating-alert-info"
             :info-alert="infoAlert"
             @close="onClose"
-          />
+          >
+            <template #footer>
+              <slot name="alertFooter"/>
+            </template>
+          </InfoAlertCmp>
         </template>
-        <template v-if="warningAlert">
+
+        <template v-else-if="warningAlert">
           <WarningAlertCmp
             class="floating-alert floating-alert-warning"
             :warning-alert="warningAlert"
             @close="onClose"
-          />
+          >
+            <template #footer>
+              <slot name="alertFooter"/>
+            </template>
+          </WarningAlertCmp>
         </template>
       </slot>
     </div>

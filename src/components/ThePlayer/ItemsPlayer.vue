@@ -93,6 +93,7 @@ onMounted(() => {
 })
 
 defineExpose({
+  isStopped: thePlayer.isStopped,
   async startPlayer () {
     try {
       await thePlayer.start()
