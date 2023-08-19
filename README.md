@@ -33,11 +33,23 @@ npm install
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+### Compile and Minify for Production
 
-```sh
-npm run build
-```
+1. Install p7zip utils:
+    ```
+    brew install p7zip
+    ```
+1. Run in local:
+    ```
+    npm run build-nas
+    ```
+1. Copy manually `./scripts/prd-nas.sh` file to `/var/services/web/diaposhuffle-vue3`.
+1. Copy manually 7z file `dist.7z` to maxou home `/volume1/homes/maxou`.
+1. Run in nas:
+    ```
+    bash /var/services/web/diaposhuffle-vue3/prd-nas.sh
+    ```
+1. Done :D
 
 ### Lint with [ESLint](https://eslint.org/)
 

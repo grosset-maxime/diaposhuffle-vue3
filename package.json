@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "run-p type-check build-only",
+    "build": "run-p type-check build-nas",
     "preview": "vite preview",
-    "build-only": "vite build",
+    "build-nas": "vite build && mv ./dist/index.html ./dist/index.php && rm -dR ./dist/pic && 7za a ./dist.7z ./dist/*",
     "type-check": "vue-tsc --noEmit",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
