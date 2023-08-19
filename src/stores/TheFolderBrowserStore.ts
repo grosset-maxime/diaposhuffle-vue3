@@ -1,7 +1,7 @@
 // Types
 
 // Vendors Libs
-import { ref, reactive } from 'vue'
+import { reactive } from 'vue'
 import { createGlobalState } from '@vueuse/core'
 
 // APIs
@@ -98,9 +98,7 @@ export const useTheFolderBrowserStore = createGlobalState(() => {
         folder.children.push(childPath)
       })
     } catch (e) {
-      onError(e, {
-        actionName: 'FOLDER_BROWSER_A_FETCH_FOLDERS',
-      })
+      throw onError(e, { actionName: 'fetchChildrenFolders' })
     }
 
     folder.fetching = false

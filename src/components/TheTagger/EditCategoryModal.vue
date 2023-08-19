@@ -14,14 +14,10 @@ import { useTheTaggerStore } from '@/stores/TheTaggerStore'
 // Components
 import DeleteModal from '@/components/DeleteModal.vue'
 import CircularLoading from '../CircularLoading.vue'
-
-const EMPTY_CATEGORY_DATA: TagCategoryData = {
-  id: '',
-  name: '',
-  color: '',
-}
-const theTaggerStore = useTheTaggerStore()
-const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
+import { createCustomError, type CustomError, type CustomErrorData } from '@/models/customError'
+import { logError } from '@/utils/errorUtils'
+import { createAlert } from '@/utils/alertUtils'
+import { useAlertStore } from '@/stores/alertStore'
 
 // Props
 interface Props {
@@ -41,6 +37,16 @@ const emit = defineEmits<{
   (e: 'cancel'): void;
   (e: 'delete', id: TagCategoryId): void;
 }>()
+
+const EMPTY_CATEGORY_DATA: TagCategoryData = {
+  id: '',
+  name: '',
+  color: '',
+}
+
+const theTaggerStore = useTheTaggerStore()
+const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
+const alertStore = useAlertStore()
 
 // Refs
 const categoryData = ref<TagCategoryData>({ ...EMPTY_CATEGORY_DATA })
@@ -69,6 +75,18 @@ const confirmBtnText = computed(() => (props.add
 const categoriesList = theTaggerStore.categoriesList
 
 //#region Methods
+function onError (error: unknown, errorData?: CustomErrorData): CustomError {
+  const customError = createCustomError(error, {
+    ...errorData,
+    file: 'TheTagger/EditCategoryModal.vue',
+  })
+  logError(customError)
+
+  alertStore.add(createAlert({ error: customError }))
+
+  return customError
+}
+
 function resetForm () {
   formCmp.value?.reset()
 }
@@ -94,12 +112,19 @@ const rules = {
 async function onConfirm () {
   if (!formCmp.value) { return }
 
-  const { valid } = await formCmp.value.validate()
+  loading.value = true
 
-  if (valid) {
-    emit('confirm', { ...categoryData.value })
-  } else {
+  try {
+    const { valid } = await formCmp.value.validate()
+
+    if (valid) {
+      emit('confirm', { ...categoryData.value })
+    } else {
+      loading.value = false
+    }
+  } catch (e) {
     loading.value = false
+    onError(e, { actionName: 'onConfirm' })
   }
 }
 

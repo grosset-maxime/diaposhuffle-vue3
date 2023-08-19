@@ -18,7 +18,7 @@ const FILE_NAME = 'api/tags.ts'
  * Fetch the entire tags list.
  * @returns All tags list.
  */
-export const fetchTags = async (): Promise<Tag[]> => {
+export async function fetchTags (): Promise<Tag[]> {
   try {
     const url = `${BASE_URL}/api/getAllTags`
 
@@ -53,7 +53,7 @@ export const fetchTags = async (): Promise<Tag[]> => {
  * Fetch list of categories (tags categories).
  * @returns Promise with
  */
-export const fetchCategories = async (): Promise<TagCategory[]> => {
+export async function fetchCategories (): Promise<TagCategory[]> {
   try {
     const url = `${BASE_URL}/api/getAllTagCategories`
 
@@ -93,7 +93,7 @@ export const fetchCategories = async (): Promise<TagCategory[]> => {
  * @param options.tag - Tag data or Tag.
  * @returns - Promise with Success or failure.
  */
-const editTag = async ({
+async function editTag ({
   isNew,
   isDelete,
   tag,
@@ -101,7 +101,7 @@ const editTag = async ({
   isNew?: boolean;
   isDelete?: boolean;
   tag: Tag | TagData;
-}): Promise<boolean> => {
+}): Promise<boolean> {
   if (!tag) {
     throw logError(createCustomError('Missing tag option to edit tag.', {
       file: FILE_NAME,
@@ -141,7 +141,7 @@ const editTag = async ({
  * @param tagData - Tag data.
  * @returns - Promise with new Tag.
  */
-export const addTag = async (tagData: TagData) => {
+export async function addTag (tagData: TagData): Promise<Tag> {
   if (!tagData) {
     throw logError(createCustomError('Missing tagData option to add tag.', {
       file: FILE_NAME,
@@ -181,7 +181,7 @@ export const addTag = async (tagData: TagData) => {
  * @param tagData - Tag data or Tag.
  * @returns - Promise with updated Tag.
  */
-export const updateTag = async (tagData: TagData | Tag) => {
+export async function updateTag (tagData: TagData | Tag): Promise<Tag> {
   if (!tagData) {
     throw logError(createCustomError('Missing tag option to edit a tag.', {
       file: FILE_NAME,
@@ -218,7 +218,7 @@ export const updateTag = async (tagData: TagData | Tag) => {
  * @param tag - Tag data or Tag.
  * @returns - Promise with Success or failure.
  */
-export const deleteTag = async (tag: TagData | Tag) => {
+export async function deleteTag (tag: TagData | Tag): Promise<boolean> {
   if (!tag) {
     throw logError(createCustomError('Missing tag option to delete tag.', {
       file: FILE_NAME,
@@ -251,7 +251,7 @@ export const deleteTag = async (tag: TagData | Tag) => {
  * @param options.category - Category data or Category.
  * @returns - Promise with Response object.
  */
-const editCategory = async ({
+async function editCategory ({
   isNew,
   isDelete,
   category,
@@ -262,7 +262,7 @@ const editCategory = async ({
 }): Promise<{
   success: boolean;
   tagCategoryId: TagCategoryId;
-}> => {
+}> {
   try {
     const url = `${BASE_URL}/api/editTagCategory`
 
@@ -292,16 +292,14 @@ const editCategory = async ({
  * @param categoryData - Category data.
  * @returns - Promise with new Category.
  */
-export const addCategory = async (categoryData: TagCategoryData) => {
-  if (!categoryData) {
-    throw logError(createCustomError('Missing categoryData option to add a new category.', {
-      file: FILE_NAME,
-      actionName: 'addCategory',
-      isBackend: false,
-    }))
-  }
-
+export async function addCategory (
+  categoryData: TagCategoryData,
+): Promise<TagCategory> {
   try {
+    if (!categoryData) {
+      throw 'Missing categoryData option to add a new category.'
+    }
+
     const response = await editCategory({
       isNew: true,
       category: categoryData,
@@ -309,11 +307,7 @@ export const addCategory = async (categoryData: TagCategoryData) => {
     categoryData.id = response.tagCategoryId
 
     if (!response.success) {
-      throw logError(createCustomError('Add category not successful.', {
-        file: FILE_NAME,
-        actionName: 'addCategory',
-        isBackend: true,
-      }))
+      throw 'Add category not successful.'
     }
   } catch (e) {
     throw logError(createCustomError(e, {
@@ -331,27 +325,19 @@ export const addCategory = async (categoryData: TagCategoryData) => {
  * @param category - Category data or Category.
  * @returns - Promise with updated Category.
  */
-export const updateCategory = async (categoryData: TagCategoryData | TagCategory) => {
-  if (!categoryData) {
-    throw logError(createCustomError('Missing category option to edit a category.', {
-      file: FILE_NAME,
-      actionName: 'updateCategory',
-      isBackend: false,
-    }))
-  }
-
-  let success = false
-
+export async function updateCategory (
+  categoryData: TagCategoryData | TagCategory,
+): Promise<TagCategory> {
   try {
+    if (!categoryData) {
+      throw 'Missing category option to edit a category.'
+    }
+
     const response = await editCategory({ category: categoryData })
-    success = response.success
+    const success = response.success
 
     if (!success) {
-      throw logError(createCustomError('Update category not successful.', {
-        file: FILE_NAME,
-        actionName: 'updateCategory',
-        isBackend: true,
-      }))
+      throw 'Update category not successful.'
     }
   } catch (e) {
     throw logError(createCustomError(e, {
@@ -371,20 +357,17 @@ export const updateCategory = async (categoryData: TagCategoryData | TagCategory
  * @param category - Category data or Category.
  * @returns - Promise with Success or failure.
  */
-export const deleteCategory = async (category: TagCategoryData | TagCategory) => {
-  if (!category) {
-    throw logError(createCustomError('Missing category option to delete category.', {
-      file: FILE_NAME,
-      actionName: 'deleteCategory',
-      isBackend: false,
-    }))
-  }
-
-  let success = false
-
+export async function deleteCategory (
+  category: TagCategoryData | TagCategory,
+): Promise<boolean> {
   try {
+    if (!category) {
+      throw 'Missing category option to delete category.'
+    }
+
     const response = await editCategory({ category, isDelete: true })
-    success = response.success
+
+    return  response.success
   } catch (e) {
     throw logError(createCustomError(e, {
       file: FILE_NAME,
@@ -392,6 +375,4 @@ export const deleteCategory = async (category: TagCategoryData | TagCategory) =>
       isBackend: true,
     }))
   }
-
-  return success
 }

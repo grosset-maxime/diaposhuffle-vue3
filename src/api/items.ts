@@ -16,9 +16,9 @@ const FILE_NAME = 'api/items.ts'
  * @param folders - Custom folders list.
  * @returns Promise with fetched item from FS.
  */
-export const fetchRandomItem = async (
+export async function fetchRandomItem (
   { folders }: { folders?: Array<string> } = {},
-): Promise<Item> => {
+): Promise<Item> {
   try {
     const url = `${BASE_URL}/api/getRandomPic`
 
@@ -64,7 +64,7 @@ export const fetchRandomItem = async (
  * @param options.tagsOperator - Operator for tags filtering ('AND' or 'OR').
  * @returns Promise with Fetched items list from DB.
  */
-export const fetchItemsFromBdd = async ({
+export async function fetchItemsFromBdd ({
   tags,
   tagsOperator,
   types,
@@ -72,7 +72,7 @@ export const fetchItemsFromBdd = async ({
   tags?: Array<TagId>
   types?: Array<FileType>
   tagsOperator?: TagsOperator
-} = {}): Promise<Array<Item>> => {
+} = {}): Promise<Array<Item>> {
   try {
     const url = `${BASE_URL}/api/getPicsFromBdd`
 
@@ -119,11 +119,11 @@ export const fetchItemsFromBdd = async ({
  * @param itemSrc - Item src.
  * @returns Promise with success
  */
-export const deleteItem = async ({
+export async function deleteItem ({
   item,
 }: {
   item: Item;
-}): Promise<{ success: boolean }> => {
+}): Promise<{ success: boolean }> {
   if (!item || !item.src) {
     throw logError(createCustomError('Missing mandatory options.', {
       file: FILE_NAME,
@@ -163,9 +163,9 @@ export const deleteItem = async ({
  * @param options.item - Item.
  * @returns Promise with success
  */
-export const setItemTags = async (
+export async function setItemTags (
   { item }: { item: Item },
-): Promise<{ success: boolean }> => {
+): Promise<{ success: boolean }> {
   const { name, path, tags } = item
 
   if (!name || !path) {

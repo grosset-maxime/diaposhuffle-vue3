@@ -52,8 +52,12 @@ export const useFSPlayerStore = createGlobalState(() => {
       item.value = undefined
     }
 
-    if (isFetchingNextItem.value) {
-      await fetchNextItemPromise.value
+    try {
+      if (isFetchingNextItem.value) {
+        await fetchNextItemPromise.value
+      }
+    } catch (e) {
+      onError(e, { actionName: 'onDeleteItem' })
     }
 
     if (nextItem.value && nextItem.value.src === itm.src) {

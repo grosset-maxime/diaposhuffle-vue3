@@ -8,9 +8,7 @@ import { logError } from '@/utils/errorUtils'
  * @param path - Parent folder path (default is the root).
  * @returns List of folders names (NOT PATHES).
  */
-export const getFolders = async ({ path }: { path?: string } = {}) => {
-  let folders: Array<string> = []
-
+export async function getFolders ({ path }: { path?: string } = {}): Promise<string[]> {
   try {
     const url = `${BASE_URL}/api/getFolderList`
     const opts = {
@@ -24,7 +22,7 @@ export const getFolders = async ({ path }: { path?: string } = {}) => {
       folderList: Array<string>;
     } = await fetchJson(url, opts)
 
-    folders = json.folderList
+    return json.folderList
   } catch (e) {
     throw logError(createCustomError(e, {
       file: 'api/folders.ts',
@@ -32,6 +30,4 @@ export const getFolders = async ({ path }: { path?: string } = {}) => {
       isBackend: true,
     }))
   }
-
-  return folders
 }

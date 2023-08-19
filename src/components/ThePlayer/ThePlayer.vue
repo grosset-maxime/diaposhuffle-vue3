@@ -127,7 +127,7 @@ async function hideDeleteModal (
 
       deleteModal.onHide.value?.(submitted)
     } catch (e) {
-      onError(e)
+      throw onError(e)
     }
   }
 
@@ -168,7 +168,7 @@ async function onSaveTaggerModal (selectedTagIds: Set<TagId>): Promise<void> {
   try {
     await thePlayerStore.setItemTags({ item: itemVal })
   } catch (e) {
-    throw onError(e)
+    onError(e)
   }
 }
 // #endregion The Tagger
@@ -311,11 +311,15 @@ function onPlayingItemError ({ item, error }: { item?: Item, error: CustomError 
     async onClose () {
       startKSListener()
 
-      await goToNextItem()
+      try {
+        await goToNextItem()
 
-      await canResumePlayer()
-        ? resumePlayer()
-        : startPlayer()
+        await canResumePlayer()
+          ? resumePlayer()
+          : startPlayer()
+      } catch (e) {
+        onError(e, { actionName: 'displayAlert#onClose' })
+      }
     },
   })
 }

@@ -14,15 +14,10 @@ import CircularLoading from '../CircularLoading.vue'
 // Stores
 import { useTheTaggerStore } from '@/stores/TheTaggerStore'
 import type { VAutocomplete, VForm } from 'vuetify/lib/components/index.mjs'
-
-const EMPTY_TAG_DATA: TagData = {
-  id: '',
-  name: '',
-  categoryId: '0',
-}
-
-const theTaggerStore = useTheTaggerStore()
-const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
+import { createCustomError, type CustomError, type CustomErrorData } from '@/models/customError'
+import { logError } from '@/utils/errorUtils'
+import { createAlert } from '@/utils/alertUtils'
+import { useAlertStore } from '@/stores/alertStore'
 
 // Props
 interface Props {
@@ -42,6 +37,16 @@ const emit = defineEmits<{
   (e: 'cancel'): void;
   (e: 'delete', id: TagId): void;
 }>()
+
+const EMPTY_TAG_DATA: TagData = {
+  id: '',
+  name: '',
+  categoryId: '0',
+}
+
+const theTaggerStore = useTheTaggerStore()
+const { startKSListener, stopKSListener } = useKeyboardShortcutsListener(keyboardShortcuts)
+const alertStore = useAlertStore()
 
 // Refs
 const tagData = ref<TagData>({ ...EMPTY_TAG_DATA })
@@ -81,6 +86,18 @@ const tagDataCategoryColor = computed(
 )
 
 //#region Methods
+function onError (error: unknown, errorData?: CustomErrorData): CustomError {
+  const customError = createCustomError(error, {
+    ...errorData,
+    file: 'TheTagger/EditTagModal.vue',
+  })
+  logError(customError)
+
+  alertStore.add(createAlert({ error: customError }))
+
+  return customError
+}
+
 function resetForm () {
   formCmp.value?.reset()
 }
@@ -108,12 +125,17 @@ async function onConfirm () {
 
   loading.value = true
 
-  const { valid } = await formCmp.value.validate()
+  try {
+    const { valid } = await formCmp.value.validate()
 
-  if (valid) {
-    emit('confirm', { ...tagData.value })
-  } else {
+    if (valid) {
+      emit('confirm', { ...tagData.value })
+    } else {
+      loading.value = false
+    }
+  } catch(e) {
     loading.value = false
+    onError(e, { actionName: 'onConfirm' })
   }
 }
 

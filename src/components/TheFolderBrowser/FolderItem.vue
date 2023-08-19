@@ -9,7 +9,9 @@ import { ref, computed, inject } from 'vue'
 import { useTheFolderBrowserStore } from '@/stores/TheFolderBrowserStore'
 import { theFolderBrowserKey } from '@/interfaces/symbols'
 import { logError } from '@/utils/errorUtils'
-import { createCustomError } from '@/models/customError'
+import { createCustomError, CustomError, type CustomErrorData } from '@/models/customError'
+import { createAlert } from '@/utils/alertUtils'
+import { useAlertStore } from '@/stores/alertStore'
 
 // Props
 interface Props {
@@ -34,6 +36,7 @@ const {
   removeSelectedFolder,
 } = selectedFoldersModal
 
+const alertStore = useAlertStore()
 const theFolderBrowserStore = useTheFolderBrowserStore()
 
 const folderChildren = ref<Array<FolderPath> | undefined>()
@@ -46,11 +49,29 @@ const hasChildren = computed<boolean>(() => !!folder.value?.children.length)
 const noExpand = computed<boolean>(() => !!(!hasChildren.value && folder.value?.fetched))
 
 // Metods
-async function expandFolder (): Promise<void> {
-  if (!folder.value || noExpand.value) { return }
+function onError (error: unknown, errorData?: CustomErrorData): CustomError {
+  const customError = createCustomError(error, {
+    ...errorData,
+    file: 'TheFolderBrowser/FolderItem.vue',
+  })
+  logError(customError)
 
-  expanded.value = !expanded.value
-  folderChildren.value = await theFolderBrowserStore.fetchChildrenFolders(props.path)
+  const customAlert = createAlert({ error: customError })
+
+  alertStore.add(customAlert)
+
+  return customError
+}
+
+async function expandFolder (): Promise<void> {
+  try {
+    if (!folder.value || noExpand.value) { return }
+
+    expanded.value = !expanded.value
+    folderChildren.value = await theFolderBrowserStore.fetchChildrenFolders(props.path)
+  } catch (e) {
+    onError(e, { actionName: 'expandFolder' })
+  }
 }
 
 function toggleSelect (): void {

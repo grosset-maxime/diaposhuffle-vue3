@@ -8,7 +8,7 @@ export const getHeaders = () => ({
   'Content-Type': 'application/json',
 })
 
-export const fetchJson = async (url: string, opts: object) => {
+export async function fetchJson (url: string, opts: object): Promise<any> {
   try {
     const headersOpts = { headers: getHeaders() }
     const response = await fetch(url, { ...opts, ...headersOpts })
