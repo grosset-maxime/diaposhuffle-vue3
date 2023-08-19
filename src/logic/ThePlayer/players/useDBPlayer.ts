@@ -3,7 +3,7 @@ import type { Item } from '@/models/item'
 import { PlayerName, type UsePlayerArg, type UsePlayerExpose } from '@/logic/ThePlayer/useThePlayer'
 
 // Vendors Libs
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 // Libs
 import { useTheLoop } from '@/logic/ThePlayer/useTheLoop'
@@ -40,6 +40,8 @@ export const useDBPlayer = ({
   const isActivePlayer = computed<boolean>(
     () => thePlayerStore.playerName.value === PlayerName.db,
   )
+
+  const shouldAnimateItem = ref(true)
 
   const {
     isStopped,
@@ -97,7 +99,9 @@ export const useDBPlayer = ({
   async function showItem (itemToShow: Item, itemIndexToShow: number): Promise<void> {
     try {
       setNextItem(itemToShow)
-      await showNextItem()
+      await showNextItem({ animate: shouldAnimateItem.value })
+
+      shouldAnimateItem.value = true
 
       item.value = itemToShow
       itemIndex.value = itemIndexToShow
@@ -193,7 +197,7 @@ export const useDBPlayer = ({
     thePlayerStore.isPaused.value = false
   }
 
-  async function next (): Promise<void> {
+  async function next ({ animate = true }: { animate?: boolean } = {}): Promise<void> {
     try {
       const { itm, index } = getNextItem({ items, itemIndex, isFetchItemRandomly })
       nextItem.value = itm
@@ -205,6 +209,9 @@ export const useDBPlayer = ({
       }
 
       await theLoop.stopLooping()
+
+      shouldAnimateItem.value = animate
+
       await onLoopEnd()
 
     } catch (e) {
@@ -212,7 +219,7 @@ export const useDBPlayer = ({
     }
   }
 
-  async function previous (): Promise<void> {
+  async function previous ({ animate = true }: { animate?: boolean } = {}): Promise<void> {
     try {
       const { itm, index } = getPreviousItem({ items, itemIndex })
       nextItem.value = itm
@@ -224,6 +231,9 @@ export const useDBPlayer = ({
       }
 
       await theLoop.stopLooping()
+
+      shouldAnimateItem.value = animate
+
       await onLoopEnd()
 
     } catch (e) {

@@ -44,8 +44,8 @@ export interface UsePlayerExpose {
   stop: () => void
   pause: () => void
   resume: () => void
-  next: () => Promise<void>
-  previous: () => Promise<void>
+  next: (opts?: { animate?: boolean }) => Promise<void>
+  previous: (opts?: { animate?: boolean }) => Promise<void>
 
   canNext: () => boolean
   canPrevious: () => boolean
@@ -188,19 +188,19 @@ export const useThePlayer = ({
     canSwitchPlayer.value = false
   }
 
-  const next = async (): Promise<void> => {
+  const next = async ({ animate }: {animate?: boolean } = {}): Promise<void> => {
     try {
       if (canNext()) {
-        await player.next()
+        await player.next({ animate })
       }
     } catch (e) {
       throw onError(e, { actionName: 'next' })
     }
   }
-  const previous = async (): Promise<void> => {
+  const previous = async ({ animate }: {animate?: boolean } = {}): Promise<void> => {
     try {
       if (canPrevious()) {
-        player.previous()
+        player.previous({ animate })
       }
     } catch (e) {
       throw onError(e, { actionName: 'previous' })

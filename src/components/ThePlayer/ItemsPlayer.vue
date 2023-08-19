@@ -145,16 +145,16 @@ defineExpose({
     }
   },
 
-  async goToNextItem () {
+  async goToNextItem ({ animate }: {animate?: boolean } = {}) {
     try {
-      await thePlayer.next()
+      await thePlayer.next({ animate })
     } catch (e) {
       throw onError(e, { actionName: 'goToNextItem' })
     }
   },
-  async goToPreviousItem () {
+  async goToPreviousItem ({ animate }: {animate?: boolean } = {}) {
     try {
-      await thePlayer.previous()
+      await thePlayer.previous({ animate })
     } catch (e) {
       throw onError(e, { actionName: 'goToPreviousItem' })
     }

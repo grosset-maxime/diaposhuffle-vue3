@@ -7,7 +7,7 @@ import {
 } from '@/logic/ThePlayer/useThePlayer'
 
 // Vendors Libs
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 // Libs
 import {
@@ -40,6 +40,8 @@ export const useFSPlayer = ({
   const isActivePlayer = computed<boolean>(
     () => thePlayerStore.playerName.value === PlayerName.fs,
   )
+
+  const shouldAnimateItem = ref(true)
 
   const {
     isStopped,
@@ -90,7 +92,9 @@ export const useFSPlayer = ({
   async function showItem (itemToShow: Item): Promise<void> {
     try {
       setNextItem(itemToShow)
-      await showNextItem()
+      await showNextItem({ animate: shouldAnimateItem.value })
+
+      shouldAnimateItem.value = true
 
       item.value = itemToShow
       thePlayerStore.item.value = item.value
@@ -191,9 +195,12 @@ export const useFSPlayer = ({
     thePlayerStore.isPaused.value = false
   }
 
-  async function next (): Promise<void> {
+  async function next ({ animate = true }: { animate?: boolean } = {}): Promise<void> {
     try {
       await theLoop.stopLooping()
+
+      shouldAnimateItem.value = animate
+
       await onLoopEnd()
     } catch (e) {
       throw onError(e, { actionName: 'next' })

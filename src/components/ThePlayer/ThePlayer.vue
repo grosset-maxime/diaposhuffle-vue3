@@ -259,16 +259,16 @@ function canResumePlayer (): boolean {
 function resumePlayer (opts: { resumeItm?: boolean } = {}): void {
   ItemsPlayerCmp.value?.resumePlayer(opts)
 }
-async function goToNextItem (): Promise<void> {
+async function goToNextItem ({ animate }: { animate?: boolean} = {}): Promise<void> {
   try {
-    await ItemsPlayerCmp.value?.goToNextItem()
+    await ItemsPlayerCmp.value?.goToNextItem({ animate })
   } catch (e) {
     throw onError(e, { actionName: 'goToNextItem' })
   }
 }
-async function goToPreviousItem (): Promise<void> {
+async function goToPreviousItem ({ animate }: {animate?: boolean } = {}): Promise<void> {
   try {
-    await ItemsPlayerCmp.value?.goToPreviousItem()
+    await ItemsPlayerCmp.value?.goToPreviousItem({ animate })
   } catch (e) {
     throw onError(e, { actionName: 'goToPreviousItem' })
   }
@@ -374,11 +374,11 @@ function keyboardShortcuts (key: string): void {
     break
 
   case 'ArrowRight':
-    goToNextItem()
+    goToNextItem({ animate: false })
     break
 
   case 'ArrowLeft':
-    goToPreviousItem()
+    goToPreviousItem({ animate: false })
     break
 
   case 'Delete':
