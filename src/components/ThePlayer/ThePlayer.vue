@@ -689,6 +689,9 @@ onMounted(async () => {
           <v-btn @click="exitThePlayer">
             Exit Player
           </v-btn>
+          <v-btn @click="hideAlert">
+            Ignore
+          </v-btn>
         </div>
       </template>
     </FloatingAlert>
@@ -925,6 +928,7 @@ onMounted(async () => {
     margin-top: 20px;
     display: flex;
     justify-content: end;
+    column-gap: 5px;
   }
   .alert {
     $margin: 10px;
