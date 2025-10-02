@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Types
-import { ErrorAlert } from '@/models/Alerts/errorAlert'
+import type { ErrorAlert } from '@/models/Alerts/errorAlert'
 
 // Vendors Libs
 import { computed } from 'vue'

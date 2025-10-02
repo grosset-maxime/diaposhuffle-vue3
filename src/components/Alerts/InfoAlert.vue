@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Types
-import { InfoAlert } from '@/models/Alerts/infoAlert'
+import type { InfoAlert } from '@/models/Alerts/infoAlert'
 
 // Stores
 import { AlertType } from '@/models/Alerts/abstractAlert'

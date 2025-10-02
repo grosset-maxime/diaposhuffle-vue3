@@ -15,29 +15,29 @@ export interface ReactiveSet<T> extends Set<T> {
   ) => ReactiveSet<T>
 }
 
-export default function useReactiveSet<T> (values?: T[] | Set<T>) {
+export default function useReactiveSet<T>(values?: T[] | Set<T>) {
   const version = ref<number>(1)
 
   class ReactiveSet extends Set<T> {
-    add (value: T): this {
+    add(value: T): this {
       super.add(value)
       this.#incVersion()
       return this
     }
 
-    delete (value: T): boolean {
+    delete(value: T): boolean {
       const res = super.delete(value)
       res && this.#incVersion()
       return res
     }
 
-    clear (): this {
+    clear(): this {
       super.clear()
       this.#incVersion()
       return this
     }
 
-    addValues (
+    addValues(
       values: T[] | Set<T>,
       { clear = false }: { clear?: boolean } = {},
     ): this {
@@ -49,7 +49,7 @@ export default function useReactiveSet<T> (values?: T[] | Set<T>) {
     /**
      * @private
      */
-    #incVersion (): this {
+    #incVersion(): this {
       version.value += 1
       return this
     }
@@ -60,6 +60,7 @@ export default function useReactiveSet<T> (values?: T[] | Set<T>) {
   if (values)
     inner.value.addValues(values)
 
+  // @ts-expect-error TODO: to fix later.
   const set = computed<ReactiveSet>(() => {
     // Eslint bypass to avoid no-unused-expressions error,
     // but need to update this computed when version.value change.

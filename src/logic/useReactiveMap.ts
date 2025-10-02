@@ -15,29 +15,29 @@ export interface ReactiveMap<K, V> extends Map<K, V> {
   ) => ReactiveMap<K, V>
 }
 
-export default function useReactiveMap<K, V> (values?: [K, V][] | Map<K, V>) {
+export default function useReactiveMap<K, V>(values?: [K, V][] | Map<K, V>) {
   const version = ref<number>(1)
 
   class ReactiveMap extends Map<K, V> {
-    set (key: K, value: V): this {
+    set(key: K, value: V): this {
       super.set(key, value)
       this.#incVersion()
       return this
     }
 
-    delete (key: K): boolean {
+    delete(key: K): boolean {
       const res = super.delete(key)
       res && this.#incVersion()
       return res
     }
 
-    clear (): this {
+    clear(): this {
       super.clear()
       this.#incVersion()
       return this
     }
 
-    setValues (
+    setValues(
       values: [K, V][] | Map<K, V>,
       { clear = false }: { clear?: boolean } = {},
     ): this {
@@ -47,14 +47,14 @@ export default function useReactiveMap<K, V> (values?: [K, V][] | Map<K, V>) {
         ? values
         : Array.from(values)
 
-      vals.forEach(([ k, v ]) => this.set(k, v))
+      vals.forEach(([k, v]) => this.set(k, v))
       return this
     }
 
     /**
      * @private
      */
-    #incVersion (): this {
+    #incVersion(): this {
       version.value += 1
       return this
     }
@@ -65,6 +65,7 @@ export default function useReactiveMap<K, V> (values?: [K, V][] | Map<K, V>) {
   if (values)
     inner.value.setValues(values)
 
+  // @ts-expect-error TODO: to fix later.
   const map = computed<ReactiveMap>(() => {
     // Eslint bypass to avoid no-unused-expressions error,
     // but need to update this computed when version.value change.

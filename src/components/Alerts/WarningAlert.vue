@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Types
-import { WarningAlert } from '@/models/Alerts/warningAlert'
+import type { WarningAlert } from '@/models/Alerts/warningAlert'
 
 // Stores
 import { AlertType } from '@/models/Alerts/abstractAlert'

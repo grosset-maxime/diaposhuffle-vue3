@@ -1,19 +1,27 @@
 {
   "extends": "@vue/tsconfig/tsconfig.web.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
+  "include": [
+    "env.d.ts",
+    "src/**/*",
+    "src/**/*.vue"
+  ],
   "compilerOptions": {
     "baseUrl": ".",
-    "lib": ["ESNext", "DOM"],
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     },
     // workaround for https://github.com/vuejs/tsconfig/issues/6
     "preserveValueImports": false,
-    "importsNotUsedAsValues": "remove",
+    // "importsNotUsedAsValues": "remove",
     "verbatimModuleSyntax": true,
     // end workaround
   },
-
   "references": [
     {
       "path": "./tsconfig.config.json"
